@@ -9,17 +9,22 @@ import java.math.BigDecimal;
 @Data
 public class VendaPagamento {
 
-    @ManyToOne
-    @JoinColumn(name = "venda_id", nullable = false)
+    @EmbeddedId
+    private VendaPagamentoId idVendaPagamento;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @MapsId("vendaId")
+    @JoinColumn(name = "venda_id")
     private Venda venda;
 
-    @ManyToOne
-    @JoinColumn(name = "forma_pagamento_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @MapsId("formaPagamentoId")
+    @JoinColumn(name = "forma_pagamento_id")
     private FormaPagamento formaPagamento;
-    
-     @Column(name = "valor_pago", precision = 10, scale = 2)
-    private BigDecimal valorPago; 
+
+    @Column(name = "valor_pago", precision = 10, scale = 2)
+    private BigDecimal valorPago;
 
     @Column(name = "numero_parcelas")
-    private int numeroParcelas; 
+    private Integer numeroParcelas; 
 }
