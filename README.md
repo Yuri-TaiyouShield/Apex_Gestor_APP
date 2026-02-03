@@ -57,9 +57,7 @@ Ficou interessado em contribuir? Confira nosso guia de contribuição `CONTRIBUT
 
 | Foto | Nome | Função | GitHub | LinkedIn |
 | :--: | :----------------------------------------------------------: | :----------------: | :----------------------------------------------------------: | :----------------------------------------------------------: |
-| <img src="URL_DA_FOTO_AQUI" width="70" height="70"> | **Diego Oliveira** | Desenvolvedor Full Stack | [GitHub](URL_DO_GITHUB_AQUI) | [LinkedIn](URL_DO_LINKEDIN_AQUI) |
-| <img src="URL_DA_FOTO_AQUI" width="70" height="70"> | **Jorginho Vigas** | Desenvolvedor Full Stack | [GitHub](https://github.com/JorginhoVigas) | [LinkedIn](URL_DO_LINKEDIN_AQUI) |
-| <img src="URL_DA_FOTO_AQUI" width="70" height="70"> | **Yuri Alcantara** | Desenvolvedor Full Stack | [GitHub](URL_DO_GITHUB_AQUI) | [LinkedIn](URL_DO_LINKEDIN_AQUI) |
+| <img src="URL_DA_FOTO_AQUI" width="70" height="70"> | **Yuri Alcantara** | Desenvolvedor Full Stack | [GitHub](https://github.com/Yuri-TaiyouShield) | [LinkedIn](https://www.linkedin.com/in/yuri-alcantara-802a76243/) |
 
 
 ---
@@ -67,3 +65,4 @@ Ficou interessado em contribuir? Confira nosso guia de contribuição `CONTRIBUT
 ## 📄 Licença
 
 Este projeto está sob a licença [MIT](link-para-o-arquivo-de-licenca). Veja o arquivo `LICENSE` para mais detalhes.
+
