@@ -1,7 +1,7 @@
 package Service;
 
 import Model.*;
-import Repository.*;
+import Repository.PerfilRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.util.List;
@@ -31,7 +31,4 @@ public class PerfilService { // Replique para as outras classes CRUD simples
         return repository.save(obj);
     }
 
-    public void deletar(Long id) {
-        throw new UnsupportedOperationException("Not supported yet."); 
-    }
 }
