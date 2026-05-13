@@ -16,6 +16,8 @@ Sistema hibrido de ERP, PDV e e-commerce multi-nicho para empresas de comercio e
 - [Roadmap de Producao](docs/ROADMAP_PRODUCAO.md)
 - [Guia GitHub Releases](docs/GUIA_GITHUB_RELEASES.md)
 - [Guia de Seguranca](SECURITY.md)
+- [Guia de Banco de Dados Local](docs/GUIA_BANCO_DADOS_LOCAL.md)
+- [Guia de Escalabilidade do Banco](docs/GUIA_ESCALABILIDADE_BANCO.md)
 
 ## Desenvolvimento local
 
@@ -28,6 +30,16 @@ npm run test -- --watch=false
 ```
 
 Backend:
+
+```bash
+docker compose up -d apex-mysql
+cd Apex-Gestordemo
+./mvnw spring-boot:run
+```
+
+O MySQL local sobe na porta `2705`, banco `apex_db`, usuario `root` e senha de desenvolvimento `apex_dev_2026`. Para diagnostico de conexao e variaveis de ambiente, veja [Guia de Banco de Dados Local](docs/GUIA_BANCO_DADOS_LOCAL.md).
+
+Validacao backend:
 
 ```bash
 cd Apex-Gestordemo

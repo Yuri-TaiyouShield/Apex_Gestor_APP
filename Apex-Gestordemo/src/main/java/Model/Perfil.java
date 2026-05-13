@@ -8,7 +8,7 @@ import lombok.ToString;
 import java.util.Set;
 
 @Entity
-@Table(name = "Perfil")
+@Table(name = "perfil")
 @Data
 public class Perfil {
 

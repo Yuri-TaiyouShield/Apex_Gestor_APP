@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
-@Table(name = "Nota_Fiscal_Entrada")
+@Table(name = "nota_fiscal_entrada")
 @Data
 public class NotaFiscalEntrada {
 

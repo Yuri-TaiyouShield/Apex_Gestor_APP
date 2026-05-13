@@ -5,7 +5,7 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "Privacy_Request")
+@Table(name = "privacy_request")
 @Data
 public class PrivacyRequest {
 
