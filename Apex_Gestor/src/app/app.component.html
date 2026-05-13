@@ -1,6 +1,6 @@
 <ion-app>
-  <ion-split-pane contentId="main-content" when="lg">
-    <ion-menu contentId="main-content" menuId="main-menu" type="overlay">
+  <ion-split-pane class="apex-shell-pane" contentId="main-content" when="(min-width: 992px)">
+    <ion-menu contentId="main-content" menuId="main-menu" side="start" type="overlay" [disabled]="false">
       <ion-header>
         <ion-toolbar color="primary">
           <ion-title>Apex Gestor</ion-title>
@@ -40,7 +40,7 @@
       <ion-header class="app-header">
         <ion-toolbar>
           <ion-buttons slot="start">
-            <ion-menu-button></ion-menu-button>
+            <ion-menu-button menu="main-menu" [autoHide]="false" aria-label="Abrir menu principal"></ion-menu-button>
           </ion-buttons>
           <ion-title>{{ title() }}</ion-title>
           <ion-buttons slot="end" class="header-actions">

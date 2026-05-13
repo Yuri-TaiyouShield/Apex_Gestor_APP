@@ -7,6 +7,12 @@ ion-menu {
   --background: var(--apex-sidebar);
 }
 
+ion-split-pane {
+  --side-max-width: 288px;
+  --side-min-width: 288px;
+  --side-width: 288px;
+}
+
 ion-menu ion-content,
 ion-menu ion-list {
   --background: var(--apex-sidebar);
@@ -68,12 +74,12 @@ ion-menu ion-item.selected {
   --border-radius: 8px;
 }
 
+.app-header ion-menu-button {
+  display: inline-flex;
+}
+
 @media (min-width: 992px) {
   ion-menu ion-header {
-    display: none;
-  }
-
-  .app-header ion-menu-button {
     display: none;
   }
 }
