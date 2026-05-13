@@ -22,6 +22,7 @@ Apex_BD.pdf
 Apex_BD.sql
 *.sql
 *.zip
+tools/mysql-workbench-*/
 
 # Local editor and OS files
 .idea/

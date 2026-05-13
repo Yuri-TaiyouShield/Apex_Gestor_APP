@@ -1,0 +1,309 @@
+# Apex Gestor - DER MySQL Workbench
+
+Gerado em 2026-05-13 a partir do schema real `apex_db` no MySQL 8.4 local, porta `2705`. O arquivo fonte do diagrama fica em [`der-apex-gestor.mmd`](der-apex-gestor.mmd) e pode ser aberto pelo GitHub, Mermaid Live Editor ou usado como referencia ao refazer o reverse engineering no MySQL Workbench.
+
+## Resumo do modelo
+
+- Tabelas mapeadas: 27.
+- Relacionamentos por chave estrangeira: 25.
+- Nucleos do ERP/e-commerce: catalogo, clientes, fornecedores, usuarios/perfis, venda/PDV, formas de pagamento, NF de entrada, estoque, despesas, entregas, auditoria/LGPD e licenciamento.
+- Padrao de escala: IDs numericos, FKs explicitas, tabelas de movimento para estoque, logs separados para auditoria/privacidade e indices nos campos operacionais mais consultados.
+
+## Como reproduzir no MySQL Workbench
+
+1. Abra o Workbench portatil extraido em `tools/mysql-workbench-8.0.41/PFiles64/MySQL/MySQL Workbench 8.0 CE/MySQLWorkbench.exe`.
+2. Crie uma conexao para `127.0.0.1`, porta `2705`, usuario local do MySQL e schema `apex_db`.
+3. Acesse `Database > Reverse Engineer`, selecione a conexao, escolha o schema `apex_db` e avance ate concluir a importacao.
+4. No modelo gerado, use `Model > Create Diagram from Catalog Objects` para posicionar as tabelas e salve como `.mwb` se quiser manter o arquivo visual do Workbench.
+5. Para exportar imagem ou PDF, use `File > Export > Forward Engineer SQL CREATE Script` ou `File > Print to File`/exportacao do diagrama, conforme o formato desejado.
+
+## Diagrama
+
+```mermaid
+erDiagram
+    CLIENTE ||--o{ CLIENTE_ENDERECO : fk_cliente_endereco_cliente
+    ENDERECO ||--o{ CLIENTE_ENDERECO : fk_cliente_endereco_endereco
+    TIPO_DESPESA ||--o{ DESPESAS : fk_despesas_tipo
+    VENDA ||--o| ENTREGA : fk_entrega_venda
+    NOTA_FISCAL_ENTRADA ||--o{ ESTOQUE_MOVIMENTO : fk_estoque_movimento_nf
+    PRODUTOS ||--o{ ESTOQUE_MOVIMENTO : fk_estoque_movimento_produto
+    VENDA ||--o{ ESTOQUE_MOVIMENTO : fk_estoque_movimento_venda
+    ENDERECO ||--o{ FORNECEDOR : fk_fornecedor_endereco
+    NOTA_FISCAL_ENTRADA ||--o{ ITEM_NOTA_FISCAL : fk_item_nf_entrada
+    PRODUTOS ||--o{ ITEM_NOTA_FISCAL : fk_item_nf_produto
+    MENU ||--o{ MENU_PERFIL : fk_menu_perfil_menu
+    PERFIL ||--o{ MENU_PERFIL : fk_menu_perfil_perfil
+    FORNECEDOR ||--o{ NOTA_FISCAL_ENTRADA : fk_nf_entrada_fornecedor
+    PRODUTOS ||--o{ PRODUTO_VENDA : fk_produto_venda_produto
+    VENDA ||--o{ PRODUTO_VENDA : fk_produto_venda_venda
+    CATEGORIA ||--o{ PRODUTOS : fk_produtos_categoria
+    FORNECEDOR ||--o{ PRODUTOS : fk_produtos_fornecedor
+    USUARIO ||--o{ REFRESH_TOKEN : fk_refresh_token_usuario
+    PERFIL ||--o{ USUARIO : fk_usuario_perfil
+    CLIENTE ||--o{ VENDA : fk_venda_cliente
+    USUARIO ||--o{ VENDA : fk_venda_usuario
+    FORMAS_PAGAMENTO ||--o{ VENDA_FORMAS_PAGAMENTO : fk_venda_formapagamento_forma
+    VENDA ||--o{ VENDA_FORMAS_PAGAMENTO : fk_venda_formapagamento_venda
+    PRODUTOS ||--o{ VENDA_PRODUTO : fk_venda_produto_produto
+    VENDA ||--o{ VENDA_PRODUTO : fk_venda_produto_venda
+
+    AUDIT_LOG {
+        BIGINT id_audit_log PK
+        VARCHAR ator_login IDX
+        VARCHAR metodo
+        VARCHAR recurso IDX
+        INT status
+        VARCHAR ip_hash
+        VARCHAR user_agent_hash
+        DATETIME criado_em IDX
+    }
+
+    CATEGORIA {
+        INT id_categoria PK
+        VARCHAR descricao IDX
+        TINYINT status IDX
+    }
+
+    CLIENTE {
+        INT id_cliente PK
+        VARCHAR nome_razao IDX
+        VARCHAR telefone
+        TINYINT tipo_documento IDX
+        CHAR cpf_cnpj
+        DATETIME data_cadastro
+        TINYINT status IDX
+    }
+
+    CLIENTE_ENDERECO {
+        INT cliente_id PK,FK
+        INT endereco_id PK,FK
+    }
+
+    CONSENT_AUDIT {
+        BIGINT id_consent_audit PK
+        VARCHAR titular_id
+        VARCHAR tipo_titular IDX
+        VARCHAR documento_hash IDX
+        VARCHAR versao
+        DATETIME aceito_em IDX
+        VARCHAR canal
+        VARCHAR ip_hash
+        VARCHAR user_agent_hash
+    }
+
+    DATA_ERASURE_LOG {
+        BIGINT id_data_erasure_log PK
+        VARCHAR titular_hash IDX
+        VARCHAR motivo
+        VARCHAR operador_login
+        DATETIME executado_em IDX
+    }
+
+    DESPESAS {
+        INT id_despesa PK
+        VARCHAR descricao
+        DECIMAL valor
+        DATE data_vencimento
+        DATE data_pagamento
+        INT tipo_despesa_id FK
+        TINYINT status IDX
+    }
+
+    ENDERECO {
+        INT id_endereco PK
+        VARCHAR estado
+        VARCHAR cidade
+        VARCHAR cep
+        VARCHAR bairro
+        VARCHAR logradouro
+        CHAR uf
+        VARCHAR numero
+        VARCHAR complemento
+    }
+
+    ENTREGA {
+        BIGINT id_entrega PK
+        INT venda_id FK
+        VARCHAR status IDX
+        VARCHAR codigo_rastreio
+        VARCHAR transportadora
+        DATETIME previsao_entrega
+        DATETIME enviado_em
+        DATETIME entregue_em
+        DATETIME atualizado_em
+    }
+
+    ESTOQUE_MOVIMENTO {
+        BIGINT id_estoque_movimento PK
+        INT produto_id FK
+        INT venda_id FK
+        INT nf_entrada_id FK
+        VARCHAR tipo
+        INT quantidade
+        INT saldo_apos_movimento
+        DECIMAL custo_unitario
+        VARCHAR origem
+        DATETIME criado_em
+    }
+
+    FORMAS_PAGAMENTO {
+        INT id_forma_pagamento PK
+        TEXT descricao
+        VARCHAR nome
+        TINYINT status IDX
+        TINYINT tipo_pagamento IDX
+    }
+
+    FORNECEDOR {
+        INT id_fornecedor PK
+        TINYINT status IDX
+        VARCHAR razao_social
+        VARCHAR nome_fantasia IDX
+        VARCHAR cnpj UK
+        VARCHAR inscricao_estadual
+        TIMESTAMP data_cadastro
+        VARCHAR telefone
+        INT endereco_id FK
+    }
+
+    ITEM_NOTA_FISCAL {
+        INT id_item_nf PK
+        INT nf_entrada_id FK
+        INT produto_id FK
+        INT quantidade
+        DECIMAL valor_custo_unitario
+    }
+
+    LICENSE_ACTIVATION {
+        BIGINT id_license_activation PK
+        VARCHAR license_key_hash IDX
+        VARCHAR device_hash IDX
+        VARCHAR device_label
+        VARCHAR platform
+        VARCHAR app_version
+        VARCHAR status
+        DATETIME activated_at
+        DATETIME last_validated_at
+        DATETIME valid_until
+    }
+
+    MENU {
+        INT id_menu PK
+        VARCHAR nome
+        VARCHAR link
+        VARCHAR icone
+        TINYINT exibir IDX
+    }
+
+    MENU_PERFIL {
+        INT menu_id PK,FK
+        INT perfil_id PK,FK
+    }
+
+    NOTA_FISCAL_ENTRADA {
+        INT id_nf_entrada PK
+        VARCHAR numero
+        VARCHAR serie
+        INT fornecedor_id FK
+        DATETIME data_emissao
+        DATETIME data_entrada IDX
+        DECIMAL valor_total
+    }
+
+    PERFIL {
+        INT id_perfil PK
+        VARCHAR nome UK
+        TINYINT status IDX
+    }
+
+    PRIVACY_REQUEST {
+        BIGINT id_privacy_request PK
+        VARCHAR protocolo UK
+        VARCHAR titular_id IDX
+        VARCHAR tipo
+        VARCHAR status IDX
+        DATETIME solicitado_em
+        DATETIME concluido_em
+        VARCHAR solicitante_login
+    }
+
+    PRODUTO_VENDA {
+        INT produto_id PK,FK
+        INT venda_id PK,FK
+        INT quantidade
+        DECIMAL preco_unitario
+        DECIMAL custo_unitario
+        DECIMAL preco_total
+    }
+
+    PRODUTOS {
+        INT id_produto PK
+        VARCHAR descricao IDX
+        DECIMAL custo
+        INT fornecedor_id FK
+        VARCHAR codigo_barras UK
+        VARCHAR marca
+        VARCHAR unidade_medida
+        TIMESTAMP data_aquisicao
+        INT quantidade_estoque
+        INT estoque_minimo
+        DECIMAL valor_venda
+        TINYINT status IDX
+        INT categoria_id FK
+    }
+
+    REFRESH_TOKEN {
+        BIGINT id_refresh_token PK
+        INT usuario_id FK
+        VARCHAR token_hash UK
+        DATETIME expires_at IDX
+        DATETIME created_at
+        DATETIME revoked_at
+        VARCHAR ip_hash
+        VARCHAR user_agent_hash
+    }
+
+    TIPO_DESPESA {
+        INT id_tipo_despesa PK
+        VARCHAR nome UK
+        TINYINT status IDX
+    }
+
+    USUARIO {
+        INT id_usuario PK
+        VARCHAR nome
+        VARCHAR login UK
+        VARCHAR senha
+        DATE data_nascimento
+        TINYINT status IDX
+        INT perfil_id FK
+    }
+
+    VENDA {
+        INT id_venda PK
+        INT usuario_id FK
+        INT cliente_id FK
+        TINYINT status IDX
+        DECIMAL valor_total
+        DECIMAL desconto
+        VARCHAR observacao
+        DATETIME data_venda
+    }
+
+    VENDA_FORMAS_PAGAMENTO {
+        INT venda_id PK,FK
+        INT forma_pagamento_id PK,FK
+        DECIMAL valor_pago
+        INT numero_parcelas
+    }
+
+    VENDA_PRODUTO {
+        INT id_venda_produto PK
+        INT venda_id FK
+        INT produto_id FK
+        INT quantidade
+        DECIMAL valor_unitario
+        DECIMAL subtotal
+    }
+
+```
