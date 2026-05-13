@@ -5,12 +5,14 @@ import Model.*;
 import Repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
+@Transactional(readOnly = true)
 public class FinanceiroService {
 
     @Autowired
@@ -20,6 +22,7 @@ public class FinanceiroService {
     @Autowired
     private TipoDespesaRepository tipoDespesaRepository;
 
+    @Transactional
     public Despesa salvarDespesa(Despesa despesa) {
         return despesaRepository.save(despesa);
     }
@@ -28,6 +31,7 @@ public class FinanceiroService {
         return despesaRepository.findAll();
     }
 
+    @Transactional
     public TipoDespesa salvarTipoDespesa(TipoDespesa td) {
         return tipoDespesaRepository.save(td);
     }

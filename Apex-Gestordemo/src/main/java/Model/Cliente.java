@@ -8,8 +8,12 @@ import java.time.LocalDateTime;
 import java.util.Set;
 
 @Entity
-@Table(name = "Cliente", uniqueConstraints = {
-    @UniqueConstraint(columnNames = {"tipo_documento", "cpf_cnpj"})})
+@Table(name = "Cliente",
+        uniqueConstraints = @UniqueConstraint(columnNames = {"tipo_documento", "cpf_cnpj"}),
+        indexes = {
+                @Index(name = "idx_cliente_status", columnList = "status"),
+                @Index(name = "idx_cliente_nome", columnList = "nome_razao")
+        })
 @Data
 public class Cliente {
 

@@ -1,68 +1,47 @@
-# Apex Gestor 🏗️
+# Apex Gestor 3.0
 
-![GitHub last commit](https://img.shields.io/github/last-commit/JorginhoVigas/apex-gestor?style=for-the-badge&logo=github)
-![GitHub language count](https://img.shields.io/github/languages/count/JorginhoVigas/apex-gestor?style=for-the-badge)
-![License](https://img.shields.io/github/license/JorginhoVigas/apex-gestor?style=for-the-badge)
+Sistema hibrido de ERP, PDV e e-commerce multi-nicho para empresas de comercio em geral. A arquitetura atual usa Angular/Ionic para web e mobile, Electron para desktop e Spring Boot/MySQL no backend.
 
-> Sistema completo para gerenciamento de lojas de material de construção. O Apex Gestor foi desenvolvido para otimizar processos, controlar o estoque e facilitar a gestão financeira do seu negócio.
+## Plataformas
 
----
+- Web Cliente: e-commerce Angular/Ionic para consumidor final.
+- Mobile Cliente: APK Android Ionic/Capacitor para compras, carrinho e rastreio.
+- Mobile Empresa: APK Android Ionic/Capacitor para funcionarios, estoque, vendas rapidas e indicadores.
+- Desktop Empresa: Electron para PDV, caixa e administracao pesada.
+- Backend: Spring Boot com JWT, BCrypt, RBAC, LGPD, licenciamento e API REST.
 
-## 📋 Índice
+## Documentacao
 
-- [Visão Geral do Projeto](#-visão-geral-do-projeto)
-- [✨ Funcionalidades Principais](#-funcionalidades-principais)
-- [🚀 Tecnologias Utilizadas](#-tecnologias-utilizadas)
-- [🤝 Como Contribuir](#-como-contribuir)
-- [👥 Equipe](#-equipe)
-- [📄 Licença](#-licença)
+- [Documentacao Apex Gestor 3.0](docs/APEX_GESTOR_3_0_DOCUMENTACAO.md)
+- [Roadmap de Producao](docs/ROADMAP_PRODUCAO.md)
+- [Guia GitHub Releases](docs/GUIA_GITHUB_RELEASES.md)
+- [Guia de Seguranca](SECURITY.md)
 
----
+## Desenvolvimento local
 
-## 📖 Visão Geral do Projeto
+```bash
+cd Apex_Gestor
+npm install
+npm run start:web
+npm run build:web
+npm run test -- --watch=false
+```
 
-O **Apex Gestor** é uma solução de software robusta, pensada para atender às necessidades específicas de uma loja de material de construção. O sistema centraliza informações e automatiza tarefas, desde o controle de entrada e saída de produtos até a geração de relatórios gerenciais, proporcionando uma visão 360° da empresa.
+Backend:
 
----
+```bash
+cd Apex-Gestordemo
+./mvnw test
+./mvnw -DskipTests package
+```
 
-## ✨ Funcionalidades Principais
+## Releases automatizadas
 
-- **Gestão de Estoque:** Controle de produtos, lotes, fornecedores e notificações de estoque baixo.
-- **Módulo de Vendas (PDV):** Interface rápida para registro de vendas, orçamentos e emissão de notas.
-- **Controle Financeiro:** Gerenciamento de contas a pagar e a receber, fluxo de caixa e relatórios financeiros.
-- **Cadastro de Clientes e Fornecedores:** Base de dados centralizada para contatos e histórico de transações.
-- **Relatórios Gerenciais:** Dashboards intuitivos com indicadores de performance, vendas por período, produtos mais vendidos, etc.
-- **Controle de Acesso:** Níveis de permissão por usuário (vendedor, gerente, administrador).
+O workflow `.github/workflows/main.yml` compila e publica:
 
----
+- Web Cliente (`.zip`)
+- Desktop Windows Electron (`.exe`)
+- Mobile Empresa Android (`.apk`)
+- Mobile Cliente Android (`.apk`)
 
-## 🚀 Tecnologias Utilizadas
-
-- **Frontend:** `HTML`, `CSS`, `Bootstrap`
-- **Backend:** `Java (Servlets & JSP)`
-- **Banco de Dados:** `PostgreSQL`
-- **Servidor de Aplicação:** `Apache Tomcat`
-- **Controle de Versão:** `Git & GitHub`
-- **Gerenciador de Dependências:** `Maven`
-
----
-
-## 🤝 Como Contribuir
-
-Ficou interessado em contribuir? Confira nosso guia de contribuição `CONTRIBUTING.md` para saber mais detalhes sobre o fluxo de trabalho, como abrir *issues* e submeter *pull requests*. Toda ajuda é bem-vinda!
-
----
-
-## 👥 Equipe
-
-| Foto | Nome | Função | GitHub | LinkedIn |
-| :--: | :----------------------------------------------------------: | :----------------: | :----------------------------------------------------------: | :----------------------------------------------------------: |
-| <img src="URL_DA_FOTO_AQUI" width="70" height="70"> | **Yuri Alcantara** | Desenvolvedor Full Stack | [GitHub](https://github.com/Yuri-TaiyouShield) | [LinkedIn](https://www.linkedin.com/in/yuri-alcantara-802a76243/) |
-
-
----
-
-## 📄 Licença
-
-Este projeto está sob a licença [MIT](link-para-o-arquivo-de-licenca). Veja o arquivo `LICENSE` para mais detalhes.
-
+Push em `main` gera artifacts na aba Actions. Tags `v*`, como `v3.0.0`, publicam os arquivos na aba Releases.

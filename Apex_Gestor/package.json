@@ -1,0 +1,104 @@
+{
+  "name": "apex-gestor",
+  "version": "1.0.0",
+  "private": true,
+  "author": "Apex Gestor",
+  "description": "Apex Gestor ERP, e-commerce, PDV desktop e apps mobile com Angular, Ionic, Capacitor e Electron.",
+  "main": "electron/main.cjs",
+  "scripts": {
+    "ng": "ng",
+    "start:web": "ng serve --host 0.0.0.0 --port 4200 --proxy-config proxy.conf.json",
+    "build:web": "ng build --configuration production",
+    "build:web:client": "ng build --configuration production,web-client",
+    "build:web:stats": "ng build --configuration production --stats-json",
+    "build:mobile:staff": "ng build --configuration production,mobile-staff",
+    "build:mobile:client": "ng build --configuration production,mobile-client",
+    "obfuscate:web": "javascript-obfuscator dist/apex-gestor/browser --output dist/apex-gestor/browser --compact true --string-array true --string-array-threshold 0.2 --target browser --ignore-imports true",
+    "security:manifest": "node scripts/security-manifest.cjs",
+    "build:web:secure": "npm run build:web && npm run obfuscate:web && npm run security:manifest",
+    "build:web:client:secure": "npm run build:web:client && npm run obfuscate:web && npm run security:manifest",
+    "test": "ng test",
+    "start:electron": "concurrently -k \"npm run start:web\" \"wait-on http://localhost:4200 && electron .\"",
+    "build:electron": "npm run build:web && node scripts/electron-package.cjs",
+    "build:electron:dir": "npm run build:web && node scripts/electron-package.cjs --dir",
+    "build:electron:secure": "npm run build:web:secure && node scripts/electron-package.cjs",
+    "build:electron:secure:dir": "npm run build:web:secure && node scripts/electron-package.cjs --dir",
+    "cap:sync": "npm run build:web && capacitor sync",
+    "cap:run:android": "npm run build:web && capacitor run android",
+    "cap:open:android": "capacitor open android"
+  },
+  "dependencies": {
+    "@angular/animations": "19.2.16",
+    "@angular/common": "19.2.16",
+    "@angular/compiler": "19.2.16",
+    "@angular/core": "19.2.16",
+    "@angular/forms": "19.2.16",
+    "@angular/platform-browser": "19.2.16",
+    "@angular/platform-browser-dynamic": "19.2.16",
+    "@angular/router": "19.2.16",
+    "@capacitor/core": "8.3.4",
+    "@ionic/angular": "8.8.6",
+    "ionicons": "8.0.13",
+    "rxjs": "~7.8.0",
+    "tslib": "^2.3.0",
+    "zone.js": "0.15.1"
+  },
+  "devDependencies": {
+    "@angular-devkit/build-angular": "19.2.16",
+    "@angular/cli": "19.2.16",
+    "@angular/compiler-cli": "19.2.16",
+    "@capacitor/android": "8.3.4",
+    "@capacitor/cli": "8.3.4",
+    "@ionic/angular-toolkit": "12.3.0",
+    "@types/jasmine": "~5.1.0",
+    "@types/node": "^22.10.2",
+    "concurrently": "^9.2.1",
+    "electron": "42.0.1",
+    "electron-builder": "26.8.1",
+    "jasmine-core": "~5.2.0",
+    "javascript-obfuscator": "^4.1.1",
+    "karma": "~6.4.0",
+    "karma-chrome-launcher": "~3.2.0",
+    "karma-coverage": "~2.2.0",
+    "karma-jasmine": "~5.1.0",
+    "karma-jasmine-html-reporter": "~2.1.0",
+    "typescript": "~5.5.4",
+    "wait-on": "^9.0.3"
+  },
+  "build": {
+    "appId": "br.com.apexgestor.desktop",
+    "productName": "Apex Gestor",
+    "directories": {
+      "output": "release"
+    },
+    "asar": true,
+    "compression": "maximum",
+    "npmRebuild": false,
+    "nodeGypRebuild": false,
+    "buildDependenciesFromSource": false,
+    "files": [
+      "dist/apex-gestor/browser/**/*",
+      "electron/**/*",
+      "package.json",
+      "!node_modules/**/*",
+      "!release/**/*",
+      "!release-check/**/*",
+      "!src/**/*",
+      "!android/**/*"
+    ],
+    "extraMetadata": {
+      "main": "electron/main.cjs",
+      "dependencies": {}
+    },
+    "win": {
+      "target": "nsis",
+      "signAndEditExecutable": false
+    },
+    "mac": {
+      "target": "dmg"
+    },
+    "linux": {
+      "target": "AppImage"
+    }
+  }
+}

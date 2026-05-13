@@ -1,0 +1,63 @@
+<ion-app>
+  <ion-split-pane contentId="main-content" when="lg">
+    <ion-menu contentId="main-content" menuId="main-menu" type="overlay">
+      <ion-header>
+        <ion-toolbar color="primary">
+          <ion-title>Apex Gestor</ion-title>
+        </ion-toolbar>
+      </ion-header>
+
+      <ion-content>
+        <section class="brand-panel">
+          <div class="brand-mark">A</div>
+          <div>
+            <strong>{{ title() }}</strong>
+            <span>{{ platformLabel() }} | {{ session.roleLabel() }}</span>
+          </div>
+        </section>
+
+        <ion-list lines="none">
+          @for (item of visibleNavItems(); track item.path) {
+            <ion-menu-toggle auto-hide="true">
+              <ion-item
+                button
+                detail="false"
+                [routerLink]="item.path"
+                routerLinkActive="selected"
+                [routerLinkActiveOptions]="{ exact: item.path === '/' }"
+                (click)="closeMenu()"
+              >
+                <ion-icon slot="start" [name]="item.icon"></ion-icon>
+                <ion-label>{{ item.label }}</ion-label>
+              </ion-item>
+            </ion-menu-toggle>
+          }
+        </ion-list>
+      </ion-content>
+    </ion-menu>
+
+    <div class="ion-page app-shell" id="main-content">
+      <ion-header class="app-header">
+        <ion-toolbar>
+          <ion-buttons slot="start">
+            <ion-menu-button></ion-menu-button>
+          </ion-buttons>
+          <ion-title>{{ title() }}</ion-title>
+          <ion-buttons slot="end" class="header-actions">
+            <ion-button routerLink="/store">
+              <ion-icon slot="icon-only" name="storefront-outline"></ion-icon>
+            </ion-button>
+            <ion-button routerLink="/cart">
+              <ion-icon slot="icon-only" name="cart-outline"></ion-icon>
+            </ion-button>
+            <ion-button routerLink="/login">
+              <ion-icon slot="icon-only" name="log-in-outline"></ion-icon>
+            </ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+
+      <ion-router-outlet></ion-router-outlet>
+    </div>
+  </ion-split-pane>
+</ion-app>

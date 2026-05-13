@@ -7,7 +7,10 @@ import jakarta.persistence.*;
 import lombok.Data;
 
 @Entity
-@Table(name = "Despesas")
+@Table(name = "Despesas", indexes = {
+    @Index(name = "idx_despesas_status_vencimento", columnList = "status, data_vencimento"),
+    @Index(name = "idx_despesas_tipo", columnList = "tipo_despesa_id")
+})
 @Data
 public class Despesa {
 

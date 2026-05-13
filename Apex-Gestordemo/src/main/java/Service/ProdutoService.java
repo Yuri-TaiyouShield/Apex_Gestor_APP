@@ -4,11 +4,13 @@ import Model.Produto;
 import Repository.ProdutoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
 @Service
+@Transactional(readOnly = true)
 public class ProdutoService {
 
     @Autowired
@@ -22,6 +24,7 @@ public class ProdutoService {
         return produtoRepository.findById(id);
     }
 
+    @Transactional
     public Produto salvar(Produto produto) {
         if (produto.getCusto() == null) {
             produto.setCusto(BigDecimal.ZERO);
@@ -29,6 +32,7 @@ public class ProdutoService {
         return produtoRepository.save(produto);
     }
 
+    @Transactional
     public Produto desativar(Long id) {
         Produto p = produtoRepository.findById(id).orElseThrow(() -> new RuntimeException("Não encontrado"));
         p.setStatus(0);
