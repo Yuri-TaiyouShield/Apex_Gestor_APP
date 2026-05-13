@@ -10,7 +10,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/itensvenda")
-@CrossOrigin(origins = "http://localhost:4200")
+@CrossOrigin(originPatterns = {"http://localhost:*", "capacitor://localhost", "ionic://localhost", "app://localhost"})
 public class ProdutoVendaController {
 
     @Autowired private ProdutoVendaService ProdutoVendaService;

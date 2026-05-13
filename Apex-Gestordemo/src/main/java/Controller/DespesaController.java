@@ -12,7 +12,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/despesas")
-@CrossOrigin(origins = "http://localhost:4200")
+@CrossOrigin(originPatterns = {"http://localhost:*", "capacitor://localhost", "ionic://localhost", "app://localhost"})
 public class DespesaController {
 
     @Autowired
