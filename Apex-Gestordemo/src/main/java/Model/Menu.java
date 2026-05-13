@@ -7,7 +7,7 @@ import lombok.ToString;
 import java.util.Set;
 
 @Entity
-@Table(name = "Menu")
+@Table(name = "menu")
 @Data
 public class Menu {
 
@@ -24,7 +24,7 @@ public class Menu {
     @Column(nullable = false)
     private int exibir;
     @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(name = "Menu_Perfil", joinColumns = @JoinColumn(name = "menu_id"), inverseJoinColumns = @JoinColumn(name = "perfil_id"))
+    @JoinTable(name = "menu_perfil", joinColumns = @JoinColumn(name = "menu_id"), inverseJoinColumns = @JoinColumn(name = "perfil_id"))
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     private Set<Perfil> perfis;

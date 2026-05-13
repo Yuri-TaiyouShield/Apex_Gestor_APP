@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 import java.util.Set;
 
 @Entity
-@Table(name = "Cliente",
+@Table(name = "cliente",
         uniqueConstraints = @UniqueConstraint(columnNames = {"tipo_documento", "cpf_cnpj"}),
         indexes = {
                 @Index(name = "idx_cliente_status", columnList = "status"),
@@ -34,7 +34,7 @@ public class Cliente {
     @Column(nullable = false)
     private int status;
     @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(name = "Cliente_Endereco", joinColumns = @JoinColumn(name = "cliente_id"), inverseJoinColumns = @JoinColumn(name = "endereco_id"))
+    @JoinTable(name = "cliente_endereco", joinColumns = @JoinColumn(name = "cliente_id"), inverseJoinColumns = @JoinColumn(name = "endereco_id"))
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     private Set<Endereco> enderecos;

@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 
 @Entity
-@Table(name = "Formas_Pagamento")
+@Table(name = "formas_pagamento")
 @Data
 public class FormaPagamento {
 

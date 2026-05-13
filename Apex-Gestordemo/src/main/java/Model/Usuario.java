@@ -6,7 +6,7 @@ import java.time.LocalDate;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @Entity
-@Table(name = "Usuario")
+@Table(name = "usuario")
 @Data
 public class Usuario {
 

@@ -50,7 +50,7 @@ public class VendaService {
                 .map(item -> item.getProduto().getIdProduto())
                 .distinct()
                 .toList();
-        Map<Long, Produto> produtosPorId = produtoRepository.findAllById(produtoIds).stream()
+        Map<Long, Produto> produtosPorId = produtoRepository.findAllByIdForUpdate(produtoIds).stream()
                 .collect(Collectors.toMap(Produto::getIdProduto, Function.identity()));
 
         for (ProdutoVenda item : itens) {

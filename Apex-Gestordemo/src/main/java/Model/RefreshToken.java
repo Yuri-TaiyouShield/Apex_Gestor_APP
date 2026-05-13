@@ -5,7 +5,7 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "Refresh_Token", indexes = {
+@Table(name = "refresh_token", indexes = {
         @Index(name = "idx_refresh_token_hash", columnList = "token_hash", unique = true)
 })
 @Data

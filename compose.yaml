@@ -1,0 +1,27 @@
+services:
+  apex-mysql:
+    image: mysql:8.0
+    container_name: apex-gestor-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-apex_dev_2026}
+      MYSQL_DATABASE: ${DB_NAME:-apex_db}
+      TZ: America/Sao_Paulo
+    ports:
+      - "${DB_PORT:-2705}:3306"
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --default-time-zone=-03:00
+    volumes:
+      - apex_mysql_data:/var/lib/mysql
+      - ./Apex_BD.sql:/docker-entrypoint-initdb.d/01-apex-schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$${MYSQL_ROOT_PASSWORD} --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+volumes:
+  apex_mysql_data:

@@ -13,7 +13,7 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "License_Activation",
+@Table(name = "license_activation",
         uniqueConstraints = @UniqueConstraint(columnNames = {"license_key_hash", "device_hash"}),
         indexes = {
                 @Index(name = "idx_license_key_hash", columnList = "license_key_hash"),
