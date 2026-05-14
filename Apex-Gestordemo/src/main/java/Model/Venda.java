@@ -4,11 +4,15 @@ import jakarta.persistence.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
+import org.hibernate.envers.Audited;
+import org.hibernate.envers.NotAudited;
+import org.hibernate.envers.RelationTargetAuditMode;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
+@Audited
 @Table(name = "venda", indexes = {
     @Index(name = "idx_venda_status_data", columnList = "status, data_venda"),
     @Index(name = "idx_venda_cliente", columnList = "cliente_id"),
@@ -22,9 +26,11 @@ public class Venda {
     @Column(name = "id_venda")
     private Long idVenda;
     @ManyToOne
+    @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
     @JoinColumn(name = "usuario_id", nullable = false)
     private Usuario usuario;
     @ManyToOne
+    @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
     @JoinColumn(name = "cliente_id", nullable = false)
     private Cliente cliente;
     @Column(nullable = false)
@@ -42,6 +48,7 @@ public class Venda {
     @EqualsAndHashCode.Exclude
     private List<ProdutoVenda> itens;
     @OneToMany(mappedBy = "venda", cascade = CascadeType.ALL, orphanRemoval = true)
+    @NotAudited
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     private List<VendaPagamento> pagamentos;

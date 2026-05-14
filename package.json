@@ -1,0 +1,37 @@
+{
+  "name": "apex-gestor-monorepo",
+  "version": "4.0.0",
+  "private": true,
+  "description": "Apex Gestor enterprise monorepo governance for backend API, Angular/Ionic clients and Electron PDV.",
+  "scripts": {
+    "prepare": "husky",
+    "backend:test": "node scripts/run-maven.cjs -q test",
+    "backend:package": "node scripts/run-maven.cjs -q -DskipTests package",
+    "frontend:lint": "npm --prefix Apex_Gestor run lint",
+    "frontend:test": "npm --prefix Apex_Gestor run test -- --watch=false --browsers=ChromeHeadless",
+    "frontend:build:web": "npm --prefix Apex_Gestor run build:web:client:secure",
+    "frontend:build:mobile:staff": "npm --prefix Apex_Gestor run build:mobile:staff",
+    "frontend:build:mobile:client": "npm --prefix Apex_Gestor run build:mobile:client",
+    "desktop:build": "npm --prefix Apex_Gestor run build:electron:secure:dir",
+    "quality": "node scripts/audit-spring-data-jpa.cjs && npm run backend:test && npm run frontend:lint && npm run frontend:test"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "devDependencies": {
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.7"
+  },
+  "lint-staged": {
+    "Apex_Gestor/src/**/*.{ts,html}": [
+      "npm --prefix Apex_Gestor run lint -- --quiet"
+    ],
+    "Apex-Gestordemo/src/main/java/**/*.java": [
+      "node scripts/audit-spring-data-jpa.cjs"
+    ],
+    "*.{md,yml,yaml,json}": [
+      "node scripts/validate-text-files.cjs"
+    ]
+  }
+}

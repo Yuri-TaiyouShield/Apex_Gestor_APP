@@ -5,6 +5,7 @@ import DTO.FinancialDocumentDTO;
 import DTO.FinancialDocumentRequestDTO;
 import DTO.SignFinancialDocumentRequestDTO;
 import Model.FinancialDigitalDocument;
+import Model.FinancialDocumentStatus;
 import Repository.FinancialDigitalDocumentRepository;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -22,26 +23,29 @@ import java.util.Set;
 @Service
 public class FinancialDocumentWorkflowService {
 
-    public static final String STATUS_PENDING_SIGNATURE = "PENDENTE_ASSINATURA";
-    public static final String STATUS_SIGNED = "ASSINADO";
-    public static final String STATUS_SENT = "ENVIADO";
+    public static final String STATUS_PENDING_SIGNATURE = "PENDING_SIGNATURE";
+    public static final String STATUS_SIGNED = "SIGNED";
+    public static final String STATUS_SENT = "SENT";
 
     private static final Set<String> PRIVILEGED_SIGNER_ROLES = Set.of("ADMIN", "ADMINISTRACAO", "CONTADOR", "ADVOGADO");
 
     private final FinancialDigitalDocumentRepository repository;
     private final FinancialAuditTrailService auditTrailService;
-    private final FinancialDocumentMessagingService messagingService;
+    private final FinancialDocumentDeliveryService deliveryService;
+    private final FinancialDocumentStateMachine stateMachine;
     private final DataProtectionService dataProtectionService;
 
     public FinancialDocumentWorkflowService(
             FinancialDigitalDocumentRepository repository,
             FinancialAuditTrailService auditTrailService,
-            FinancialDocumentMessagingService messagingService,
+            FinancialDocumentDeliveryService deliveryService,
+            FinancialDocumentStateMachine stateMachine,
             DataProtectionService dataProtectionService
     ) {
         this.repository = repository;
         this.auditTrailService = auditTrailService;
-        this.messagingService = messagingService;
+        this.deliveryService = deliveryService;
+        this.stateMachine = stateMachine;
         this.dataProtectionService = dataProtectionService;
     }
 
@@ -52,7 +56,7 @@ public class FinancialDocumentWorkflowService {
         document.setTipoDocumento(request.tipoDocumento());
         document.setFuncionarioNome(request.funcionarioNome());
         document.setFuncionarioEmail(request.funcionarioEmail());
-        document.setStatus(STATUS_PENDING_SIGNATURE);
+        document.setStatus(FinancialDocumentStatus.DRAFT.name());
         document.setCargoAssinanteObrigatorio(normalizeRole(defaultIfBlank(request.cargoAssinanteObrigatorio(), "CONTADOR")));
         document.setGeradoPor(actor);
         document.setGeradoEm(LocalDateTime.now());
@@ -63,6 +67,10 @@ public class FinancialDocumentWorkflowService {
         document.setMensagemEmail("Seu documento foi aprovado e assinado digitalmente no Apex Gestor.");
         FinancialDigitalDocument saved = repository.save(document);
         auditTrailService.record("DOCUMENTO_GERADO", "financial_digital_document", saved.getIdFinancialDigitalDocument(), actor, null, saved.getStatus(), saved);
+        String before = saved.getStatus();
+        saved.setStatus(stateMachine.transition(before, FinancialDocumentStatus.PENDING_SIGNATURE));
+        saved = repository.save(saved);
+        auditTrailService.record("DOCUMENTO_PENDENTE_ASSINATURA", "financial_digital_document", saved.getIdFinancialDigitalDocument(), actor, before, saved.getStatus(), saved);
         return toDto(saved);
     }
 
@@ -82,7 +90,7 @@ public class FinancialDocumentWorkflowService {
     public FinancialDocumentDTO sign(Long id, SignFinancialDocumentRequestDTO request, Authentication authentication) {
         String actor = actor(authentication);
         FinancialDigitalDocument document = findDocument(id);
-        if (!STATUS_PENDING_SIGNATURE.equals(document.getStatus())) {
+        if (stateMachine.parse(document.getStatus()) != FinancialDocumentStatus.PENDING_SIGNATURE) {
             throw new IllegalStateException("Documento nao esta pendente de assinatura");
         }
         if (!request.aprovado()) {
@@ -95,17 +103,10 @@ public class FinancialDocumentWorkflowService {
         document.setCargoAssinante(signerRole);
         document.setAssinadoEm(LocalDateTime.now());
         document.setAssinaturaDigitalHash(dataProtectionService.hash(document.getConteudoHash() + ":" + actor + ":" + signerRole + ":" + request.certificadoFingerprint()));
-        document.setStatus(STATUS_SIGNED);
-        try {
-            if (messagingService.sendSignedDocument(document)) {
-                document.setStatus(STATUS_SENT);
-                document.setEnviadoEm(LocalDateTime.now());
-            }
-            document.setUltimoErro(null);
-        } catch (RuntimeException ex) {
-            document.setUltimoErro(dataProtectionService.maskSensitiveText(ex.getMessage()));
-        }
+        document.setStatus(stateMachine.transition(before, FinancialDocumentStatus.SIGNED));
+        document.setUltimoErro(null);
         FinancialDigitalDocument saved = repository.save(document);
+        deliveryService.enqueueSignedDocument(saved, actor);
         auditTrailService.record("DOCUMENTO_ASSINADO", "financial_digital_document", saved.getIdFinancialDigitalDocument(), actor, before, saved.getStatus(), saved);
         return toDto(saved);
     }

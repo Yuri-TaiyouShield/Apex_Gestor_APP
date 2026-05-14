@@ -51,9 +51,9 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/actuator/health", "/api/auth/**", "/api/privacy/consents", "/api/licenses/validate").permitAll()
                         .requestMatchers("/api/privacy/**").authenticated()
-                        .requestMatchers("/api/usuarios/**", "/api/perfis/**", "/api/menus/**").hasAnyRole("ADMIN", "GERENTE")
-                        .requestMatchers("/api/despesas/**", "/api/relatorios/**").hasAnyRole("ADMIN", "GERENTE", "FINANCEIRO", "FINANCAS", "ADMINISTRACAO")
-                        .requestMatchers("/api/financeiro/**").hasAnyRole("ADMIN", "ADMINISTRACAO", "FINANCEIRO", "FINANCAS", "GERENTE", "CONTADOR", "ADVOGADO")
+                        .requestMatchers("/api/usuarios/**", "/api/perfis/**", "/api/menus/**").hasAnyRole("ADMIN", "GERENTE", "GESTOR")
+                        .requestMatchers("/api/despesas/**", "/api/relatorios/**").hasAnyRole("ADMIN", "GERENTE", "GESTOR", "FINANCEIRO", "FINANCAS", "ADMINISTRACAO", "AUDITOR")
+                        .requestMatchers("/api/financeiro/**").hasAnyRole("ADMIN", "ADMINISTRACAO", "FINANCEIRO", "FINANCAS", "GERENTE", "GESTOR", "AUDITOR", "CONTADOR", "ADVOGADO")
                         .requestMatchers("/api/**").authenticated()
                         .anyRequest().denyAll())
                 .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())))

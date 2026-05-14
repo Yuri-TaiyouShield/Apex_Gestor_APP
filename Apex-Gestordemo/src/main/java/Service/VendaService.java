@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -35,8 +36,8 @@ public class VendaService {
         venda.setDataVenda(LocalDateTime.now());
         venda.setStatus(1);
         BigDecimal valorTotal = BigDecimal.ZERO;
-        List<ProdutoVenda> itens = venda.getItens();
-        List<VendaPagamento> pagamentos = venda.getPagamentos();
+        List<ProdutoVenda> itens = venda.getItens() == null ? List.of() : new ArrayList<>(venda.getItens());
+        List<VendaPagamento> pagamentos = venda.getPagamentos() == null ? null : new ArrayList<>(venda.getPagamentos());
 
         if (itens == null || itens.isEmpty()) {
             throw new RuntimeException("Venda sem itens.");

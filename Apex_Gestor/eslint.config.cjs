@@ -6,6 +6,7 @@ const commonGlobals = {
   Buffer: 'readonly',
   console: 'readonly',
   crypto: 'readonly',
+  fetch: 'readonly',
   globalThis: 'readonly',
   localStorage: 'readonly',
   module: 'readonly',
@@ -14,6 +15,7 @@ const commonGlobals = {
   sessionStorage: 'readonly',
   window: 'readonly',
   __dirname: 'readonly',
+  setTimeout: 'readonly',
   URL: 'readonly'
 };
 
