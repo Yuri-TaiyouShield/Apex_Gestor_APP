@@ -7,14 +7,17 @@ import java.util.stream.Collectors;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
+import Service.LicenseService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
+import org.springframework.core.Ordered;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.GrantedAuthority;
@@ -48,8 +51,8 @@ public class SecurityConfig {
     @Order(1)
     SecurityFilterChain publicSecurityFilterChain(HttpSecurity http) throws Exception {
         http
-                .securityMatcher("/actuator/health", "/api/auth/**", "/api/privacy/consents")
-                .csrf(csrf -> csrf.ignoringRequestMatchers("/actuator/health", "/api/auth/**", "/api/privacy/consents"))
+                .securityMatcher("/actuator/health", "/api/auth/**", "/api/privacy/consents", "/api/licenses/**")
+                .csrf(csrf -> csrf.ignoringRequestMatchers("/actuator/health", "/api/auth/**", "/api/privacy/consents", "/api/licenses/**"))
                 .cors(Customizer.withDefaults())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize.anyRequest().permitAll())
@@ -95,8 +98,14 @@ public class SecurityConfig {
     }
 
     @Bean
-    WebSecurityCustomizer publicBootstrapEndpoints() {
-        return web -> web.ignoring().requestMatchers("/api/licenses/**");
+    FilterRegistrationBean<LicenseBootstrapFilter> licenseBootstrapFilter(LicenseService licenseService) {
+        ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
+        FilterRegistrationBean<LicenseBootstrapFilter> registration = new FilterRegistrationBean<>(
+                new LicenseBootstrapFilter(licenseService, objectMapper)
+        );
+        registration.setOrder(Ordered.HIGHEST_PRECEDENCE);
+        registration.addUrlPatterns("/api/licenses/validate");
+        return registration;
     }
 
     @Bean
