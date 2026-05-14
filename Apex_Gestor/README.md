@@ -1,18 +1,18 @@
-# Apex Gestor
+# Apex Gestor Frontend
 
-Sistema híbrido de gestão, PDV e e-commerce com Angular, Ionic, Capacitor e Electron.
+Frontend hibrido de gestao, PDV e e-commerce com Angular, Ionic, Capacitor e Electron.
 
 ## Plataformas
 
-- Web: Angular/Ionic em `http://localhost:4200`, com loja B2C e área interna.
-- Desktop: Electron para PDV e administração pesada.
-- Mobile: Ionic + Capacitor para staff e cliente.
+- Web: Angular/Ionic em `http://localhost:4200`, com loja B2C e area interna.
+- Desktop: Electron para PDV e administracao pesada.
+- Mobile Empresa: Ionic + Capacitor para funcionarios.
+- Mobile Cliente: Ionic + Capacitor para consumidor final.
 
 ## Requisitos
 
 - Node.js 22.12 ou superior com `npm` no PATH.
-- Java 21+ para o backend Spring Boot.
-- MySQL com o banco `apex_db` na porta `2705`.
+- Backend Spring Boot em `http://localhost:8080`.
 - Android SDK apenas para rodar `cap:run:android`.
 
 ## Scripts
@@ -32,4 +32,4 @@ O desenvolvimento web usa `proxy.conf.json` para encaminhar `/api` ao backend em
 
 ## Arquitetura
 
-Veja [docs/architecture.md](docs/architecture.md) para a estrutura de pastas, principais entidades e fluxo de integração entre estoque e e-commerce.
+Veja [docs/architecture.md](docs/architecture.md) para a estrutura de pastas, principais entidades e fluxo de integracao entre estoque e e-commerce.

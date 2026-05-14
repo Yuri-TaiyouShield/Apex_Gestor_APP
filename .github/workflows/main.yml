@@ -79,9 +79,17 @@ jobs:
         shell: bash
         run: |
           VERSION_NAME="${GITHUB_REF_NAME//\//-}"
-          mkdir -p release-web
-          cd dist/apex-gestor/browser
-          zip -r "../../../release-web/apex-gestor-web-cliente-${VERSION_NAME}.zip" .
+          mkdir -p "release-web/App Site Web"
+          cp -R dist/apex-gestor/browser/. "release-web/App Site Web/"
+          cat > "release-web/App Site Web/LEIA-ME.txt" <<EOF
+          Apex Gestor - App Site Web
+
+          Conteudo: build web de producao do e-commerce.
+          Para testar no navegador, publique esta pasta em um servidor estatico ou use o artefato direto em um hosting.
+          Em desenvolvimento pelo GitHub Codespaces, execute npm run start:web e abra a porta 4200.
+          EOF
+          cd release-web
+          zip -r "apex-gestor-app-site-web-${VERSION_NAME}.zip" "App Site Web"
 
       - name: Upload web artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -113,14 +121,32 @@ jobs:
       - name: Build Electron installer
         run: npm run build:electron:secure
 
+      - name: Package desktop folder
+        shell: pwsh
+        run: |
+          $versionName = $env:GITHUB_REF_NAME -replace '/', '-'
+          $folder = Join-Path "release-desktop" "App Desktop"
+          New-Item -ItemType Directory -Force -Path $folder | Out-Null
+          $files = Get-ChildItem -Path "release" -File | Where-Object {
+            $_.Name -like "*.exe" -or $_.Name -like "*.blockmap" -or $_.Name -like "latest*.yml"
+          }
+          if (-not $files) {
+            throw "Nenhum arquivo desktop encontrado em Apex_Gestor/release."
+          }
+          Copy-Item -LiteralPath $files.FullName -Destination $folder
+          @"
+          Apex Gestor - App Desktop
+
+          Conteudo: instalador Windows Electron do PDV/administrativo.
+          Execute o arquivo .exe para instalar e abrir o Apex Gestor Desktop.
+          "@ | Set-Content -Path (Join-Path $folder "LEIA-ME.txt") -Encoding UTF8
+          Compress-Archive -Path $folder -DestinationPath "release-desktop/apex-gestor-app-desktop-$versionName.zip" -Force
+
       - name: Upload desktop artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: apex-desktop-windows
-          path: |
-            Apex_Gestor/release/*.exe
-            Apex_Gestor/release/*.blockmap
-            Apex_Gestor/release/latest*.yml
+          path: Apex_Gestor/release-desktop/*.zip
           if-no-files-found: error
 
   mobile-android:
@@ -179,7 +205,17 @@ jobs:
           ./gradlew assembleStaffDebug --stacktrace
           cd ..
           mkdir -p release-mobile
-          cp android/app/build/outputs/apk/staff/debug/app-staff-debug.apk "release-mobile/apex-gestor-mobile-empresa-${VERSION_NAME}.apk"
+          mkdir -p "release-mobile/App Mobile Empresa"
+          cp android/app/build/outputs/apk/staff/debug/app-staff-debug.apk "release-mobile/App Mobile Empresa/apex-gestor-mobile-empresa-${VERSION_NAME}.apk"
+          cat > "release-mobile/App Mobile Empresa/LEIA-ME.txt" <<EOF
+          Apex Gestor - App Mobile Empresa
+
+          Conteudo: APK Android Ionic para funcionarios.
+          Instale o .apk em um Android de teste para acessar estoque, vendas rapidas e indicadores.
+          EOF
+          cd release-mobile
+          zip -r "apex-gestor-app-mobile-empresa-${VERSION_NAME}.zip" "App Mobile Empresa"
+          cd ..
 
       - name: Build client APK
         shell: bash
@@ -190,13 +226,23 @@ jobs:
           cd android
           ./gradlew assembleClientDebug --stacktrace
           cd ..
-          cp android/app/build/outputs/apk/client/debug/app-client-debug.apk "release-mobile/apex-gestor-mobile-cliente-${VERSION_NAME}.apk"
+          mkdir -p "release-mobile/App Mobile Cliente"
+          cp android/app/build/outputs/apk/client/debug/app-client-debug.apk "release-mobile/App Mobile Cliente/apex-gestor-mobile-cliente-${VERSION_NAME}.apk"
+          cat > "release-mobile/App Mobile Cliente/LEIA-ME.txt" <<EOF
+          Apex Gestor - App Mobile Cliente
+
+          Conteudo: APK Android Ionic para consumidor final.
+          Instale o .apk em um Android de teste para acessar loja, carrinho e checkout.
+          EOF
+          cd release-mobile
+          zip -r "apex-gestor-app-mobile-cliente-${VERSION_NAME}.zip" "App Mobile Cliente"
+          cd ..
 
       - name: Upload mobile artifacts
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: apex-mobile-android
-          path: Apex_Gestor/release-mobile/*.apk
+          path: Apex_Gestor/release-mobile/*.zip
           if-no-files-found: error
 
   github-release:
