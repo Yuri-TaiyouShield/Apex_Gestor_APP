@@ -181,6 +181,9 @@ erDiagram
         VARCHAR device_label
         VARCHAR platform
         VARCHAR app_version
+        VARCHAR app_id IDX
+        VARCHAR license_plan
+        VARCHAR licensed_apps
         VARCHAR status
         DATETIME activated_at
         DATETIME last_validated_at

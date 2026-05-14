@@ -33,6 +33,18 @@ Depois abra:
 - API: `http://localhost:8080/actuator/health`
 - MySQL: `localhost:2705`
 
+Licencas demo para desenvolvimento:
+
+- `APEX-DEMO-ALL`: libera todos os apps.
+- `APEX-DEMO-DESKTOP`: libera somente Desktop.
+- `APEX-DEMO-EMPRESA`: libera somente Mobile Empresa.
+- `APEX-DEMO-CLIENTE`: libera somente Mobile Cliente.
+- `APEX-DEMO-WEB`: libera somente Web Cliente.
+- `APEX-DEMO-DUO`: libera Desktop + Mobile Empresa.
+- `APEX-DEMO-TRIO`: libera Desktop + Mobile Empresa + Web Cliente.
+
+Em producao, configure `APEX_LICENSE_CATALOG` no backend no formato `CHAVE|apps|limite_dispositivos|validade_dias`. Exemplo: `CLIENTE-001|desktop+mobile-staff|2|365`.
+
 ## Desenvolvimento manual
 
 ```bash

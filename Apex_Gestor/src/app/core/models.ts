@@ -158,6 +158,7 @@ export interface LicenseValidationRequest {
   deviceLabel: string;
   platform: string;
   appVersion: string;
+  appId: string;
 }
 
 export interface LicenseValidationResponse {
@@ -167,4 +168,8 @@ export interface LicenseValidationResponse {
   expiresAt?: string;
   remainingActivations?: number;
   deviceHash?: string;
+  appId?: string;
+  licensePlan?: string;
+  allowedApps?: string[];
+  activatedApps?: string[];
 }

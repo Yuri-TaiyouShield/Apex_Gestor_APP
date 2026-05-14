@@ -101,7 +101,7 @@ Tambem manter:
 - Bloqueio de navegacao para fora de `app://localhost` em producao.
 - `safeStorage` para segredos locais e refresh token.
 - `asar: true`, manifesto SHA-256, assinatura de instalador e verificacao de integridade.
-- Validacao de licenca por servidor com fingerprint do dispositivo e limite de ativacoes.
+- Validacao de licenca por servidor com fingerprint do dispositivo, pacote de apps (`desktop`, `mobile-staff`, `mobile-client`, `web-client`) e limite de ativacoes.
 
 ## 5. Ofuscacao e propriedade intelectual
 

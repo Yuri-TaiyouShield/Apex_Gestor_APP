@@ -1,6 +1,7 @@
 package DTO;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public record LicenseValidationResponseDTO(
         boolean valid,
@@ -8,6 +9,10 @@ public record LicenseValidationResponseDTO(
         String message,
         LocalDateTime expiresAt,
         Long remainingActivations,
-        String deviceHash
+        String deviceHash,
+        String appId,
+        String licensePlan,
+        List<String> allowedApps,
+        List<String> activatedApps
 ) {
 }
