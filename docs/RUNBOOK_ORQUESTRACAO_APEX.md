@@ -39,7 +39,7 @@ APEX_LICENSE_CATALOG="CLIENTE-GERAL|all|5|365;CLIENTE-PDV|desktop|1|365;CLIENTE-
 docker compose up -d --build
 ```
 
-Bancos ja existentes precisam receber o upgrade em `docs/upgrade-license-entitlements.sql`.
+Bancos ja existentes precisam receber os upgrades em `docs/upgrade-license-entitlements.sql` e `docs/upgrade-admcalc-financeiro.sql`.
 
 ## 2. Validar saude da pilha
 
@@ -61,6 +61,14 @@ O endpoint `/api/produtos` deve responder `402`, `401` ou `403` sem licenca/toke
 ```bash
 curl -i http://localhost:8080/api/produtos
 ```
+
+O modulo financeiro avancado fica em `http://localhost:4200/finance`. Para testar a API diretamente, valide primeiro uma licenca em `/api/licenses/validate`, faca login com um perfil `financeiro` ou `admin`, e chame:
+
+```bash
+curl -i http://localhost:8080/api/financeiro/calculos/admcalc
+```
+
+Sem token ou role adequada, o esperado e `401` ou `403`.
 
 ## 3. Validar que o frontend aguarda o backend
 

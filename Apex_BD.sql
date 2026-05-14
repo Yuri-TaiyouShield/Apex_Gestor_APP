@@ -374,6 +374,62 @@ CREATE TABLE IF NOT EXISTS `license_activation` (
   KEY `idx_license_status` (`license_key_hash`, `status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS `financial_calculation` (
+  `id_financial_calculation` bigint NOT NULL AUTO_INCREMENT,
+  `tipo_calculo` varchar(60) NOT NULL,
+  `ator_login` varchar(120) NOT NULL,
+  `input_hash` varchar(128) NOT NULL,
+  `input_snapshot` longtext NOT NULL,
+  `resultado_snapshot` longtext NOT NULL,
+  `criado_em` datetime NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id_financial_calculation`),
+  KEY `idx_fin_calc_tipo_data` (`tipo_calculo`, `criado_em`),
+  KEY `idx_fin_calc_ator` (`ator_login`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `financial_audit_event` (
+  `id_financial_audit_event` bigint NOT NULL AUTO_INCREMENT,
+  `tipo_evento` varchar(80) NOT NULL,
+  `alvo_tipo` varchar(80) NOT NULL,
+  `alvo_id` bigint DEFAULT NULL,
+  `ator_login` varchar(120) NOT NULL,
+  `valor_anterior` varchar(255) DEFAULT NULL,
+  `valor_novo` varchar(255) DEFAULT NULL,
+  `metadados` longtext DEFAULT NULL,
+  `metadados_hash` varchar(128) DEFAULT NULL,
+  `criado_em` datetime NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id_financial_audit_event`),
+  KEY `idx_fin_audit_alvo` (`alvo_tipo`, `alvo_id`),
+  KEY `idx_fin_audit_evento_data` (`tipo_evento`, `criado_em`),
+  KEY `idx_fin_audit_ator` (`ator_login`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `financial_digital_document` (
+  `id_financial_digital_document` bigint NOT NULL AUTO_INCREMENT,
+  `tipo_documento` varchar(80) NOT NULL,
+  `funcionario_nome` varchar(160) NOT NULL,
+  `funcionario_email` varchar(160) NOT NULL,
+  `status` varchar(40) NOT NULL,
+  `cargo_assinante_obrigatorio` varchar(80) NOT NULL,
+  `gerado_por` varchar(120) NOT NULL,
+  `gerado_em` datetime NOT NULL DEFAULT current_timestamp(),
+  `assinado_por` varchar(160) DEFAULT NULL,
+  `cargo_assinante` varchar(80) DEFAULT NULL,
+  `assinado_em` datetime DEFAULT NULL,
+  `enviado_em` datetime DEFAULT NULL,
+  `assinatura_digital_hash` varchar(128) DEFAULT NULL,
+  `conteudo_hash` varchar(128) NOT NULL,
+  `conteudo` longtext NOT NULL,
+  `assunto_email` varchar(180) DEFAULT NULL,
+  `mensagem_email` longtext DEFAULT NULL,
+  `referencia` varchar(120) DEFAULT NULL,
+  `ultimo_erro` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`id_financial_digital_document`),
+  KEY `idx_fin_doc_status_data` (`status`, `gerado_em`),
+  KEY `idx_fin_doc_funcionario` (`funcionario_email`),
+  KEY `idx_fin_doc_referencia` (`referencia`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS `estoque_movimento` (
   `id_estoque_movimento` bigint NOT NULL AUTO_INCREMENT,
   `produto_id` int(11) NOT NULL,
@@ -434,7 +490,10 @@ INSERT INTO `perfil` (`id_perfil`, `nome`, `status`) VALUES
 (1, 'admin', 1),
 (2, 'gerente', 1),
 (3, 'vendedor', 1),
-(4, 'estoquista', 1);
+(4, 'estoquista', 1),
+(5, 'financeiro', 1),
+(6, 'contador', 1),
+(7, 'advogado', 1);
 
 INSERT INTO `usuario` (`id_usuario`, `nome`, `login`, `senha`, `data_nascimento`, `status`, `perfil_id`) VALUES
 (1, 'Júlia Moraes', 'julia', '$2a$10$d7pRK.L04FIpbAaEZ1.Pg.uee3HgjIOZFynclkEiqmWHmDok9sxgG', '1995-06-13', 2, 2),

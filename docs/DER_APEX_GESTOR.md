@@ -4,9 +4,9 @@ Gerado em 2026-05-13 a partir do schema real `apex_db` no MySQL 8.4 local, porta
 
 ## Resumo do modelo
 
-- Tabelas mapeadas: 27.
+- Tabelas mapeadas: 30.
 - Relacionamentos por chave estrangeira: 25.
-- Nucleos do ERP/e-commerce: catalogo, clientes, fornecedores, usuarios/perfis, venda/PDV, formas de pagamento, NF de entrada, estoque, despesas, entregas, auditoria/LGPD e licenciamento.
+- Nucleos do ERP/e-commerce: catalogo, clientes, fornecedores, usuarios/perfis, venda/PDV, formas de pagamento, NF de entrada, estoque, despesas, entregas, auditoria/LGPD, licenciamento e financeiro AdmCalc.
 - Padrao de escala: IDs numericos, FKs explicitas, tabelas de movimento para estoque, logs separados para auditoria/privacidade e indices nos campos operacionais mais consultados.
 
 ## Como reproduzir no MySQL Workbench
@@ -56,6 +56,50 @@ erDiagram
         VARCHAR ip_hash
         VARCHAR user_agent_hash
         DATETIME criado_em IDX
+    }
+
+    FINANCIAL_AUDIT_EVENT {
+        BIGINT id_financial_audit_event PK
+        VARCHAR tipo_evento IDX
+        VARCHAR alvo_tipo IDX
+        BIGINT alvo_id IDX
+        VARCHAR ator_login IDX
+        VARCHAR valor_anterior
+        VARCHAR valor_novo
+        LONGTEXT metadados
+        VARCHAR metadados_hash
+        DATETIME criado_em IDX
+    }
+
+    FINANCIAL_CALCULATION {
+        BIGINT id_financial_calculation PK
+        VARCHAR tipo_calculo IDX
+        VARCHAR ator_login IDX
+        VARCHAR input_hash
+        LONGTEXT input_snapshot
+        LONGTEXT resultado_snapshot
+        DATETIME criado_em IDX
+    }
+
+    FINANCIAL_DIGITAL_DOCUMENT {
+        BIGINT id_financial_digital_document PK
+        VARCHAR tipo_documento
+        VARCHAR funcionario_nome
+        VARCHAR funcionario_email IDX
+        VARCHAR status IDX
+        VARCHAR cargo_assinante_obrigatorio
+        VARCHAR gerado_por
+        DATETIME gerado_em IDX
+        VARCHAR assinado_por
+        VARCHAR cargo_assinante
+        DATETIME assinado_em
+        DATETIME enviado_em
+        VARCHAR assinatura_digital_hash
+        VARCHAR conteudo_hash
+        LONGTEXT conteudo
+        VARCHAR assunto_email
+        LONGTEXT mensagem_email
+        VARCHAR referencia IDX
     }
 
     CATEGORIA {
