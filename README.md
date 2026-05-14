@@ -15,6 +15,7 @@ Sistema hibrido de ERP, PDV e e-commerce multi-nicho para empresas de comercio e
 - [Documentacao Apex Gestor 3.0](docs/APEX_GESTOR_3_0_DOCUMENTACAO.md)
 - [Roadmap de Producao](docs/ROADMAP_PRODUCAO.md)
 - [Guia GitHub Releases](docs/GUIA_GITHUB_RELEASES.md)
+- [Guia de Execucao e Testes pelo GitHub](docs/GUIA_EXECUCAO_TESTES_GITHUB.md)
 - [Guia de Seguranca](SECURITY.md)
 - [Guia de Banco de Dados Local](docs/GUIA_BANCO_DADOS_LOCAL.md)
 - [Guia de Escalabilidade do Banco](docs/GUIA_ESCALABILIDADE_BANCO.md)
@@ -51,9 +52,9 @@ cd Apex-Gestordemo
 
 O workflow `.github/workflows/main.yml` compila e publica:
 
-- Web Cliente (`.zip`)
-- Desktop Windows Electron (`.exe`)
-- Mobile Empresa Android (`.apk`)
-- Mobile Cliente Android (`.apk`)
+- App Site Web (`.zip` com a pasta `App Site Web`)
+- App Desktop (`.zip` com a pasta `App Desktop` e instalador Windows `.exe`)
+- App Mobile Empresa (`.zip` com a pasta `App Mobile Empresa` e APK Android)
+- App Mobile Cliente (`.zip` com a pasta `App Mobile Cliente` e APK Android)
 
-Push em `main` gera artifacts na aba Actions. Tags `v*`, como `v3.0.0`, publicam os arquivos na aba Releases.
+Push em `main` gera artifacts na aba Actions. Tags `v*`, como `v3.0.4`, publicam os arquivos na aba Releases.
