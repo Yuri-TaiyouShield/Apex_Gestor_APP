@@ -4,7 +4,25 @@ import { Observable, catchError, shareReplay, switchMap, tap, throwError } from 
 
 import { ApiConfigService } from './api-config.service';
 import { ApiReadinessService } from './api-readiness.service';
-import { CheckoutPayment, Cliente, Despesa, FormaPagamento, Identifiable, Produto, RelatorioFinanceiro, TipoDespesa, Usuario } from './models';
+import {
+  AdmCalcRequest,
+  CheckoutPayment,
+  Cliente,
+  Despesa,
+  FinancialAuditEvent,
+  FinancialCalculationResponse,
+  FinancialDocument,
+  FinancialDocumentRequest,
+  FormaPagamento,
+  Identifiable,
+  LaborCalculationRequest,
+  Produto,
+  RelatorioFinanceiro,
+  SignFinancialDocumentRequest,
+  TaxCalculationRequest,
+  TipoDespesa,
+  Usuario
+} from './models';
 
 @Injectable({ providedIn: 'root' })
 export class ApexApiService {
@@ -80,6 +98,48 @@ export class ApexApiService {
     const params = new HttpParams().set('inicio', inicio).set('fim', fim);
     return this.readiness.waitForApi().pipe(
       switchMap(() => this.http.get<RelatorioFinanceiro>(this.config.apiUrl('/api/relatorios/financeiro'), { params }))
+    );
+  }
+
+  laborCalculation(payload: LaborCalculationRequest): Observable<FinancialCalculationResponse> {
+    return this.readiness.waitForApi().pipe(
+      switchMap(() => this.http.post<FinancialCalculationResponse>(this.config.apiUrl('/api/financeiro/calculos/trabalhista'), payload))
+    );
+  }
+
+  taxCalculation(payload: TaxCalculationRequest): Observable<FinancialCalculationResponse> {
+    return this.readiness.waitForApi().pipe(
+      switchMap(() => this.http.post<FinancialCalculationResponse>(this.config.apiUrl('/api/financeiro/calculos/tributario'), payload))
+    );
+  }
+
+  admCalcCalculation(payload: AdmCalcRequest): Observable<FinancialCalculationResponse> {
+    return this.readiness.waitForApi().pipe(
+      switchMap(() => this.http.post<FinancialCalculationResponse>(this.config.apiUrl('/api/financeiro/calculos/admcalc'), payload))
+    );
+  }
+
+  financialDocuments(): Observable<FinancialDocument[]> {
+    return this.readiness.waitForApi().pipe(
+      switchMap(() => this.http.get<FinancialDocument[]>(this.config.apiUrl('/api/financeiro/documentos')))
+    );
+  }
+
+  createFinancialDocument(payload: FinancialDocumentRequest): Observable<FinancialDocument> {
+    return this.readiness.waitForApi().pipe(
+      switchMap(() => this.http.post<FinancialDocument>(this.config.apiUrl('/api/financeiro/documentos'), payload))
+    );
+  }
+
+  signFinancialDocument(id: number, payload: SignFinancialDocumentRequest): Observable<FinancialDocument> {
+    return this.readiness.waitForApi().pipe(
+      switchMap(() => this.http.post<FinancialDocument>(this.config.apiUrl(`/api/financeiro/documentos/${id}/assinaturas`), payload))
+    );
+  }
+
+  financialAudit(): Observable<FinancialAuditEvent[]> {
+    return this.readiness.waitForApi().pipe(
+      switchMap(() => this.http.get<FinancialAuditEvent[]>(this.config.apiUrl('/api/financeiro/auditoria')))
     );
   }
 

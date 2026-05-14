@@ -20,6 +20,7 @@ Sistema hibrido de ERP, PDV e e-commerce multi-nicho para empresas de comercio e
 - [Guia de Seguranca](SECURITY.md)
 - [Guia de Banco de Dados Local](docs/GUIA_BANCO_DADOS_LOCAL.md)
 - [Guia de Escalabilidade do Banco](docs/GUIA_ESCALABILIDADE_BANCO.md)
+- [Modulo Financeiro AdmCalc](docs/MODULO_FINANCEIRO_ADMCALC.md)
 
 ## Ambiente completo com Docker
 
@@ -44,6 +45,12 @@ Licencas demo para desenvolvimento:
 - `APEX-DEMO-TRIO`: libera Desktop + Mobile Empresa + Web Cliente.
 
 Em producao, configure `APEX_LICENSE_CATALOG` no backend no formato `CHAVE|apps|limite_dispositivos|validade_dias`. Exemplo: `CLIENTE-001|desktop+mobile-staff|2|365`.
+
+## Modulo financeiro AdmCalc
+
+O Apex possui a tela `/finance` para calculos trabalhistas, tributarios, indicadores do AdmCalc, auditoria antifraude e workflow de documentos assinados. O backend expoe os endpoints protegidos em `/api/financeiro/**` e registra cada operacao nas tabelas `financial_calculation`, `financial_audit_event` e `financial_digital_document`.
+
+Para bancos ja existentes, aplique tambem `docs/upgrade-admcalc-financeiro.sql`.
 
 ## Desenvolvimento manual
 

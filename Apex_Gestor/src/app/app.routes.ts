@@ -67,6 +67,11 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/entity-list.page').then((m) => m.EntityListPage)
   },
   {
+    path: 'finance',
+    title: 'Financeiro inteligente',
+    loadComponent: () => import('./pages/finance-compliance.page').then((m) => m.FinanceCompliancePage)
+  },
+  {
     path: 'expense-types',
     title: 'Tipos de Despesa',
     data: { entity: 'expenseTypes' },

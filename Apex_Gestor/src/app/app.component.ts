@@ -62,6 +62,7 @@ export class AppComponent implements OnInit {
     { label: 'Funcionários', path: '/users', icon: 'person-circle-outline', audience: 'staff' },
     { label: 'Entrada XML NF', path: '/invoice-entry', icon: 'document-text-outline', audience: 'staff' },
     { label: 'Despesas', path: '/expenses', icon: 'receipt-outline', audience: 'staff' },
+    { label: 'Financeiro Pro', path: '/finance', icon: 'calculator-outline', audience: 'staff' },
     { label: 'Tipos de Despesa', path: '/expense-types', icon: 'pricetags-outline', audience: 'staff' },
     { label: 'Privacidade LGPD', path: '/privacy', icon: 'shield-checkmark-outline', audience: 'both' },
     { label: 'Configurações', path: '/settings', icon: 'settings-outline', audience: 'staff' }
