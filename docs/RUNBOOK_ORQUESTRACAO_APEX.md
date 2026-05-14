@@ -22,6 +22,25 @@ Portas padrao:
 - API Spring Boot: `http://localhost:8080`
 - Web cliente/gestor: `http://localhost:4200`
 
+Licencas demo disponiveis no Compose:
+
+- `APEX-DEMO-ALL`: todos os apps.
+- `APEX-DEMO-DESKTOP`: somente Desktop.
+- `APEX-DEMO-EMPRESA`: somente Mobile Empresa.
+- `APEX-DEMO-CLIENTE`: somente Mobile Cliente.
+- `APEX-DEMO-WEB`: somente Web Cliente.
+- `APEX-DEMO-DUO`: Desktop + Mobile Empresa.
+- `APEX-DEMO-TRIO`: Desktop + Mobile Empresa + Web Cliente.
+
+Para emitir licencas reais, defina `APEX_LICENSE_CATALOG` antes de subir o backend:
+
+```bash
+APEX_LICENSE_CATALOG="CLIENTE-GERAL|all|5|365;CLIENTE-PDV|desktop|1|365;CLIENTE-DUO|desktop+mobile-staff|2|365"
+docker compose up -d --build
+```
+
+Bancos ja existentes precisam receber o upgrade em `docs/upgrade-license-entitlements.sql`.
+
 ## 2. Validar saude da pilha
 
 ```bash
@@ -37,7 +56,7 @@ Resultado esperado para a API:
 {"status":"UP","components":{"database":{"status":"UP"}}}
 ```
 
-O endpoint `/api/produtos` deve responder `401` ou `403` sem token. Isso confirma que a API esta online e protegida:
+O endpoint `/api/produtos` deve responder `402`, `401` ou `403` sem licenca/token. Isso confirma que a API esta online e protegida:
 
 ```bash
 curl -i http://localhost:8080/api/produtos

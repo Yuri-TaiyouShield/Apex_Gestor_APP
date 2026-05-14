@@ -359,14 +359,18 @@ CREATE TABLE IF NOT EXISTS `license_activation` (
   `device_label` varchar(120) DEFAULT NULL,
   `platform` varchar(40) DEFAULT NULL,
   `app_version` varchar(40) DEFAULT NULL,
+  `app_id` varchar(40) NOT NULL DEFAULT 'web-client',
+  `license_plan` varchar(40) NOT NULL DEFAULT 'LEGACY_ALL',
+  `licensed_apps` varchar(160) NOT NULL DEFAULT 'desktop,mobile-staff,mobile-client,web-client',
   `status` varchar(20) NOT NULL,
   `activated_at` datetime NOT NULL,
   `last_validated_at` datetime NOT NULL,
   `valid_until` datetime NOT NULL,
   PRIMARY KEY (`id_license_activation`),
-  UNIQUE KEY `unq_license_device` (`license_key_hash`, `device_hash`),
+  UNIQUE KEY `unq_license_device_app` (`license_key_hash`, `device_hash`, `app_id`),
   KEY `idx_license_key_hash` (`license_key_hash`),
   KEY `idx_license_device_hash` (`device_hash`),
+  KEY `idx_license_app_status` (`license_key_hash`, `app_id`, `status`),
   KEY `idx_license_status` (`license_key_hash`, `status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

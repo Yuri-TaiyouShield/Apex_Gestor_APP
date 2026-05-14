@@ -14,10 +14,11 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "license_activation",
-        uniqueConstraints = @UniqueConstraint(columnNames = {"license_key_hash", "device_hash"}),
+        uniqueConstraints = @UniqueConstraint(name = "unq_license_device_app", columnNames = {"license_key_hash", "device_hash", "app_id"}),
         indexes = {
                 @Index(name = "idx_license_key_hash", columnList = "license_key_hash"),
-                @Index(name = "idx_license_device_hash", columnList = "device_hash")
+                @Index(name = "idx_license_device_hash", columnList = "device_hash"),
+                @Index(name = "idx_license_app_status", columnList = "license_key_hash, app_id, status")
         })
 @Data
 public class LicenseActivation {
@@ -41,6 +42,15 @@ public class LicenseActivation {
 
     @Column(name = "app_version", length = 40)
     private String appVersion;
+
+    @Column(name = "app_id", nullable = false, length = 40)
+    private String appId;
+
+    @Column(name = "license_plan", nullable = false, length = 40)
+    private String licensePlan;
+
+    @Column(name = "licensed_apps", nullable = false, length = 160)
+    private String licensedApps;
 
     @Column(nullable = false, length = 20)
     private String status;

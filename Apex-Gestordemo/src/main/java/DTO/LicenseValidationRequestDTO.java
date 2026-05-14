@@ -7,6 +7,7 @@ public record LicenseValidationRequestDTO(
         @NotBlank String deviceFingerprint,
         String deviceLabel,
         String platform,
-        String appVersion
+        String appVersion,
+        String appId
 ) {
 }

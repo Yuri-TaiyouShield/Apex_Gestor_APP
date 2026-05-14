@@ -18,7 +18,7 @@ import { SessionService } from '../core/session.service';
         <header class="page-header">
           <div>
             <h1>Configurações</h1>
-            <p>Base de API, perfil de acesso e preferências cross-platform.</p>
+            <p>Base de API, perfil de acesso, licença e preferências cross-platform.</p>
           </div>
         </header>
 
@@ -56,13 +56,15 @@ import { SessionService } from '../core/session.service';
           <ion-card class="data-card">
             <ion-card-header>
               <ion-card-title>Licenciamento</ion-card-title>
-              <ion-card-subtitle>Valida a chave no servidor e vincula a ativação ao dispositivo.</ion-card-subtitle>
+              <ion-card-subtitle>Valida a chave no servidor e vincula a ativação ao app e dispositivo.</ion-card-subtitle>
             </ion-card-header>
             <ion-card-content class="stack">
               <ion-item>
                 <ion-input label="Chave da licença" label-placement="stacked" [(ngModel)]="licenseKey"></ion-input>
               </ion-item>
               <div class="license-device">
+                <span>App licenciado</span>
+                <strong>{{ appLabel() }}</strong>
                 <span>Dispositivo</span>
                 <strong>{{ deviceFingerprintShort() }}</strong>
               </div>
@@ -71,6 +73,11 @@ import { SessionService } from '../core/session.service';
                 <ion-note [color]="licenseStatus()?.valid ? 'success' : 'danger'">
                   {{ licenseStatus()?.message }}
                 </ion-note>
+                @if (licenseStatus()?.allowedApps?.length) {
+                  <ion-note color="medium">
+                    Plano: {{ licenseStatus()?.licensePlan }} | Apps liberados: {{ licenseStatus()?.allowedApps?.join(', ') }}
+                  </ion-note>
+                }
               }
             </ion-card-content>
           </ion-card>
@@ -103,6 +110,7 @@ export class SettingsPage {
   licenseKey = '';
   readonly licenseStatus = signal<LicenseValidationResponse | null>(this.license.readCachedStatus());
   readonly deviceFingerprintShort = signal('Carregando...');
+  readonly appLabel = signal('Detectando app...');
 
   constructor() {
     void this.license.readLicenseKey().then((key) => {
@@ -110,6 +118,7 @@ export class SettingsPage {
     });
     void this.license.deviceInfo().then((device) => {
       this.deviceFingerprintShort.set(`${device.deviceLabel} - ${device.deviceFingerprint.slice(0, 12)}`);
+      this.appLabel.set(device.appId);
     });
   }
 

@@ -62,9 +62,12 @@ Observacao para teste local: o backend Spring Boot ja usa Tomcat embutido. Tomca
 Abra a aba `Ports` do Codespaces e exponha a porta da API (`8080` ou `8082`). Para testar:
 
 ```bash
+curl https://SEU-CODESPACE-8080.app.github.dev/actuator/health
 curl https://SEU-CODESPACE-8080.app.github.dev/api/produtos
 curl https://SEU-CODESPACE-8080.app.github.dev/api/relatorios/financeiro
 ```
+
+Sem JWT/licenca, os endpoints `/api/**` devem responder `402`, `401` ou `403`. A validacao funcional ocorre pelo frontend depois de salvar uma chave demo como `APEX-DEMO-ALL` em `Configuracoes`.
 
 Substitua `SEU-CODESPACE-8080.app.github.dev` pela URL real mostrada na aba `Ports`.
 

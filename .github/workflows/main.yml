@@ -149,9 +149,24 @@ jobs:
         shell: bash
         run: |
           status="$(curl -sS -o /tmp/apex-produtos-response.txt -w '%{http_code}' http://localhost:8080/api/produtos || true)"
-          if [ "$status" != "401" ] && [ "$status" != "403" ]; then
-            echo "Expected authenticated API response 401/403, got $status"
+          if [ "$status" != "402" ] && [ "$status" != "401" ] && [ "$status" != "403" ]; then
+            echo "Expected protected API response 402/401/403, got $status"
             cat /tmp/apex-produtos-response.txt || true
+            exit 1
+          fi
+
+          curl -fsS http://localhost:8080/api/licenses/validate \
+            -H 'Content-Type: application/json' \
+            -d '{"licenseKey":"APEX-DEMO-WEB","deviceFingerprint":"ci-web-device","deviceLabel":"CI Web","platform":"web","appVersion":"ci","appId":"web-client"}' \
+            | grep -q '"valid":true'
+
+          status="$(curl -sS -o /tmp/apex-produtos-licensed-response.txt -w '%{http_code}' http://localhost:8080/api/produtos \
+            -H 'X-Apex-License-Key: APEX-DEMO-WEB' \
+            -H 'X-Apex-Device-Fingerprint: ci-web-device' \
+            -H 'X-Apex-App-Id: web-client' || true)"
+          if [ "$status" != "401" ] && [ "$status" != "403" ]; then
+            echo "Expected authenticated API response 401/403 after license check, got $status"
+            cat /tmp/apex-produtos-licensed-response.txt || true
             exit 1
           fi
 

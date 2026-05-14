@@ -140,10 +140,10 @@ flowchart TB
 ### UC-06 - Gerenciar Acesso, LGPD e Licenca
 
 - Atores: Administrador, Cliente, Usuario interno.
-- Entrada: login, senha, aceite de politica, solicitacao LGPD e chave de licenca.
-- Fluxo principal: autenticar via JWT, registrar consentimento, validar licenca, auditar operacoes sensiveis e processar exportacao/exclusao.
+- Entrada: login, senha, aceite de politica, solicitacao LGPD, chave de licenca, app contratado e fingerprint do dispositivo.
+- Fluxo principal: autenticar via JWT, registrar consentimento, validar licenca por pacote de apps, auditar operacoes sensiveis e processar exportacao/exclusao.
 - Regras: BCrypt para senha; refresh token rotativo; rotas protegidas por RBAC; dados sensiveis mascarados em suporte/logs.
-- Endpoints atuais: `/api/auth/**`, `/api/privacy/**`, `/api/licenses/validate`.
+- Endpoints atuais: `/api/auth/**`, `/api/privacy/**`, `/api/licenses/validate`; as demais rotas `/api/**` exigem headers de licenca ativa.
 
 ## 8. Diagramas de Sequencia
 
