@@ -2,10 +2,13 @@ package Model;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import org.hibernate.envers.Audited;
+import org.hibernate.envers.RelationTargetAuditMode;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
+@Audited
 @Table(name = "produtos", indexes = {
     @Index(name = "idx_produtos_status", columnList = "status"),
     @Index(name = "idx_produtos_descricao", columnList = "descricao"),
@@ -39,9 +42,11 @@ public class Produto {
     @Column(nullable = false)
     private int status;
     @ManyToOne
+    @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
     @JoinColumn(name = "fornecedor_id")
     private Fornecedor fornecedor;
     @ManyToOne
+    @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
     @JoinColumn(name = "categoria_id", nullable = false)
     private Categoria categoria;
 }

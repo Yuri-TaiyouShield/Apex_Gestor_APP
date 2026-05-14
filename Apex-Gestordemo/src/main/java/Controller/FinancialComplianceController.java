@@ -48,55 +48,55 @@ public class FinancialComplianceController {
     }
 
     @PostMapping("/calculos/trabalhista")
-    @PreAuthorize("hasAnyRole('ADMIN','ADMINISTRACAO','FINANCEIRO','FINANCAS')")
+    @PreAuthorize("hasAnyRole('ADMIN','ADMINISTRACAO','FINANCEIRO','FINANCAS','GESTOR')")
     public ResponseEntity<FinancialCalculationResponseDTO> calculateLabor(@Valid @RequestBody LaborCalculationRequestDTO request, Authentication authentication) {
         return ResponseEntity.ok(calculationService.calculateLabor(request, authentication.getName()));
     }
 
     @PostMapping("/calculos/tributario")
-    @PreAuthorize("hasAnyRole('ADMIN','ADMINISTRACAO','FINANCEIRO','FINANCAS')")
+    @PreAuthorize("hasAnyRole('ADMIN','ADMINISTRACAO','FINANCEIRO','FINANCAS','GESTOR')")
     public ResponseEntity<FinancialCalculationResponseDTO> calculateTaxes(@RequestBody TaxCalculationRequestDTO request, Authentication authentication) {
         return ResponseEntity.ok(calculationService.calculateTaxes(request, authentication.getName()));
     }
 
     @PostMapping("/calculos/admcalc")
-    @PreAuthorize("hasAnyRole('ADMIN','ADMINISTRACAO','FINANCEIRO','FINANCAS')")
+    @PreAuthorize("hasAnyRole('ADMIN','ADMINISTRACAO','FINANCEIRO','FINANCAS','GESTOR')")
     public ResponseEntity<FinancialCalculationResponseDTO> calculateAdmCalc(@RequestBody AdmCalcRequestDTO request, Authentication authentication) {
         return ResponseEntity.ok(calculationService.calculateAdmCalc(request, authentication.getName()));
     }
 
     @GetMapping("/calculos")
-    @PreAuthorize("hasAnyRole('ADMIN','ADMINISTRACAO','FINANCEIRO','FINANCAS')")
+    @PreAuthorize("hasAnyRole('ADMIN','ADMINISTRACAO','FINANCEIRO','FINANCAS','GESTOR','AUDITOR')")
     public List<FinancialCalculationResponseDTO> listCalculations(@RequestParam(defaultValue = "50") int limit) {
         return calculationService.listRecent(limit);
     }
 
     @PostMapping("/documentos")
-    @PreAuthorize("hasAnyRole('ADMIN','ADMINISTRACAO','FINANCEIRO','FINANCAS')")
+    @PreAuthorize("hasAnyRole('ADMIN','ADMINISTRACAO','FINANCEIRO','FINANCAS','GESTOR')")
     public ResponseEntity<FinancialDocumentDTO> createDocument(@Valid @RequestBody FinancialDocumentRequestDTO request, Authentication authentication) {
         return new ResponseEntity<>(documentWorkflowService.create(request, authentication), HttpStatus.CREATED);
     }
 
     @GetMapping("/documentos")
-    @PreAuthorize("hasAnyRole('ADMIN','ADMINISTRACAO','FINANCEIRO','FINANCAS','CONTADOR','ADVOGADO')")
+    @PreAuthorize("hasAnyRole('ADMIN','ADMINISTRACAO','FINANCEIRO','FINANCAS','GESTOR','AUDITOR','CONTADOR','ADVOGADO')")
     public List<FinancialDocumentDTO> listDocuments(@RequestParam(defaultValue = "50") int limit) {
         return documentWorkflowService.listRecent(limit);
     }
 
     @PostMapping("/documentos/{id}/rascunho-email")
-    @PreAuthorize("hasAnyRole('ADMIN','ADMINISTRACAO','FINANCEIRO','FINANCAS')")
+    @PreAuthorize("hasAnyRole('ADMIN','ADMINISTRACAO','FINANCEIRO','FINANCAS','GESTOR')")
     public ResponseEntity<FinancialDocumentDTO> createEmailDraft(@PathVariable Long id, @Valid @RequestBody EmailDraftRequestDTO request, Authentication authentication) {
         return ResponseEntity.ok(documentWorkflowService.createDraft(id, request, authentication));
     }
 
     @PostMapping("/documentos/{id}/assinaturas")
-    @PreAuthorize("hasAnyRole('ADMIN','ADMINISTRACAO','FINANCEIRO','FINANCAS','CONTADOR','ADVOGADO')")
+    @PreAuthorize("hasAnyRole('ADMIN','ADMINISTRACAO','FINANCEIRO','FINANCAS','GESTOR','CONTADOR','ADVOGADO')")
     public ResponseEntity<FinancialDocumentDTO> signDocument(@PathVariable Long id, @Valid @RequestBody SignFinancialDocumentRequestDTO request, Authentication authentication) {
         return ResponseEntity.ok(documentWorkflowService.sign(id, request, authentication));
     }
 
     @GetMapping("/auditoria")
-    @PreAuthorize("hasAnyRole('ADMIN','ADMINISTRACAO','FINANCEIRO','FINANCAS')")
+    @PreAuthorize("hasAnyRole('ADMIN','ADMINISTRACAO','FINANCEIRO','FINANCAS','GESTOR','AUDITOR')")
     public List<FinancialAuditEventDTO> listAudit(@RequestParam(defaultValue = "100") int limit) {
         return auditTrailService.listRecent(limit);
     }

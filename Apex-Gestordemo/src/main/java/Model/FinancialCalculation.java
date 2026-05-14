@@ -2,10 +2,12 @@ package Model;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import org.hibernate.envers.Audited;
 
 import java.time.LocalDateTime;
 
 @Entity
+@Audited
 @Table(name = "financial_calculation", indexes = {
         @Index(name = "idx_fin_calc_tipo_data", columnList = "tipo_calculo, criado_em"),
         @Index(name = "idx_fin_calc_ator", columnList = "ator_login")

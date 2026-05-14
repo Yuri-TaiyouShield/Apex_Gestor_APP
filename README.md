@@ -1,6 +1,6 @@
-# Apex Gestor 3.0
+# Apex Gestor 4.0
 
-Sistema hibrido de ERP, PDV e e-commerce multi-nicho para empresas de comercio em geral. A arquitetura atual usa Angular/Ionic para web e mobile, Electron para desktop e Spring Boot/MySQL no backend.
+Sistema hibrido de ERP, PDV, e-commerce e compliance financeiro para empresas de comercio em geral. A arquitetura atual usa Angular/Ionic para web e mobile, Electron para desktop e Spring Boot/MySQL no backend, com governanca v4 para monorepo enterprise, Flyway, Envers, RabbitMQ opcional, CI/CD e gates SecDevOps.
 
 ## Plataformas
 
@@ -21,6 +21,9 @@ Sistema hibrido de ERP, PDV e e-commerce multi-nicho para empresas de comercio e
 - [Guia de Banco de Dados Local](docs/GUIA_BANCO_DADOS_LOCAL.md)
 - [Guia de Escalabilidade do Banco](docs/GUIA_ESCALABILIDADE_BANCO.md)
 - [Modulo Financeiro AdmCalc](docs/MODULO_FINANCEIRO_ADMCALC.md)
+- [Arquitetura Enterprise v4](docs/ARQUITETURA_ENTERPRISE_V4.md)
+- [Repository Spring Data JPA v4](docs/REPOSITORY_SPRING_DATA_JPA_V4.md)
+- [DevEx Bootstrap Windows](docs/DEVEX_BOOTSTRAP_WINDOWS.md)
 
 ## Ambiente completo com Docker
 
@@ -33,6 +36,7 @@ Depois abra:
 - Web: `http://localhost:4200`
 - API: `http://localhost:8080/actuator/health`
 - MySQL: `localhost:2705`
+- RabbitMQ Management: `http://localhost:15672`
 
 Licencas demo para desenvolvimento:
 
@@ -48,9 +52,9 @@ Em producao, configure `APEX_LICENSE_CATALOG` no backend no formato `CHAVE|apps|
 
 ## Modulo financeiro AdmCalc
 
-O Apex possui a tela `/finance` para calculos trabalhistas, tributarios, indicadores do AdmCalc, auditoria antifraude e workflow de documentos assinados. O backend expoe os endpoints protegidos em `/api/financeiro/**` e registra cada operacao nas tabelas `financial_calculation`, `financial_audit_event` e `financial_digital_document`.
+O Apex possui a tela `/finance` para calculos trabalhistas, tributarios, indicadores do AdmCalc, auditoria antifraude e workflow de documentos assinados. O backend expoe os endpoints protegidos em `/api/financeiro/**` e registra cada operacao nas tabelas `financial_calculation`, `financial_audit_event`, `financial_digital_document`, `financial_document_outbox` e nas tabelas Envers `_AUD`.
 
-Para bancos ja existentes, aplique tambem `docs/upgrade-admcalc-financeiro.sql`.
+Na v4, alteracoes de schema ficam em Flyway: `Apex-Gestordemo/src/main/resources/db/migration`.
 
 ## Desenvolvimento manual
 
@@ -77,6 +81,7 @@ Validacao backend:
 ```bash
 cd Apex-Gestordemo
 ./mvnw test
+./mvnw -Dtest=PdvVendaEstoqueEnversIntegrationTests test
 ./mvnw -DskipTests package
 ```
 
@@ -89,4 +94,4 @@ O workflow `.github/workflows/main.yml` compila e publica:
 - App Mobile Empresa (`.zip` com a pasta `App Mobile Empresa` e APK Android)
 - App Mobile Cliente (`.zip` com a pasta `App Mobile Cliente` e APK Android)
 
-Push em `main` gera artifacts na aba Actions. Tags `v*`, como `v3.1.0`, publicam os arquivos na aba Releases.
+Push em `main` gera artifacts na aba Actions. Tags `v*`, como `v4.0.0`, publicam os arquivos na aba Releases.

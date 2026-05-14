@@ -7,9 +7,14 @@ import java.util.stream.Collectors;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
+import Service.LicenseService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
+import org.springframework.core.Ordered;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -43,17 +48,39 @@ public class SecurityConfig {
     private boolean requireHttps;
 
     @Bean
-    SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    @Order(1)
+    SecurityFilterChain publicSecurityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(AbstractHttpConfigurer::disable)
+                .securityMatcher("/actuator/health", "/api/auth/**", "/api/privacy/consents", "/api/licenses/**")
+                .csrf(csrf -> csrf.ignoringRequestMatchers("/actuator/health", "/api/auth/**", "/api/privacy/consents", "/api/licenses/**"))
+                .cors(Customizer.withDefaults())
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(authorize -> authorize.anyRequest().permitAll())
+                .httpBasic(AbstractHttpConfigurer::disable)
+                .formLogin(AbstractHttpConfigurer::disable)
+                .headers(headers -> headers
+                        .contentSecurityPolicy(csp -> csp.policyDirectives("default-src 'self'; frame-ancestors 'none'; object-src 'none'; base-uri 'self'"))
+                        .httpStrictTransportSecurity(hsts -> hsts.includeSubDomains(true).preload(true).maxAgeInSeconds(31536000)));
+
+        if (requireHttps) {
+            http.requiresChannel(channel -> channel.anyRequest().requiresSecure());
+        }
+
+        return http.build();
+    }
+
+    @Bean
+    @Order(2)
+    SecurityFilterChain protectedSecurityFilterChain(HttpSecurity http) throws Exception {
+        http
+                .csrf(csrf -> csrf.ignoringRequestMatchers("/api/**"))
                 .cors(Customizer.withDefaults())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/actuator/health", "/api/auth/**", "/api/privacy/consents", "/api/licenses/validate").permitAll()
                         .requestMatchers("/api/privacy/**").authenticated()
-                        .requestMatchers("/api/usuarios/**", "/api/perfis/**", "/api/menus/**").hasAnyRole("ADMIN", "GERENTE")
-                        .requestMatchers("/api/despesas/**", "/api/relatorios/**").hasAnyRole("ADMIN", "GERENTE", "FINANCEIRO", "FINANCAS", "ADMINISTRACAO")
-                        .requestMatchers("/api/financeiro/**").hasAnyRole("ADMIN", "ADMINISTRACAO", "FINANCEIRO", "FINANCAS", "GERENTE", "CONTADOR", "ADVOGADO")
+                        .requestMatchers("/api/usuarios/**", "/api/perfis/**", "/api/menus/**").hasAnyRole("ADMIN", "GERENTE", "GESTOR")
+                        .requestMatchers("/api/despesas/**", "/api/relatorios/**").hasAnyRole("ADMIN", "GERENTE", "GESTOR", "FINANCEIRO", "FINANCAS", "ADMINISTRACAO", "AUDITOR")
+                        .requestMatchers("/api/financeiro/**").hasAnyRole("ADMIN", "ADMINISTRACAO", "FINANCEIRO", "FINANCAS", "GERENTE", "GESTOR", "AUDITOR", "CONTADOR", "ADVOGADO")
                         .requestMatchers("/api/**").authenticated()
                         .anyRequest().denyAll())
                 .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())))
@@ -68,6 +95,17 @@ public class SecurityConfig {
         }
 
         return http.build();
+    }
+
+    @Bean
+    FilterRegistrationBean<LicenseBootstrapFilter> licenseBootstrapFilter(LicenseService licenseService) {
+        ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
+        FilterRegistrationBean<LicenseBootstrapFilter> registration = new FilterRegistrationBean<>(
+                new LicenseBootstrapFilter(licenseService, objectMapper)
+        );
+        registration.setOrder(Ordered.HIGHEST_PRECEDENCE);
+        registration.addUrlPatterns("/api/licenses/validate");
+        return registration;
     }
 
     @Bean

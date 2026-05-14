@@ -2,9 +2,11 @@ package Model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.envers.Audited;
 import java.math.BigDecimal;
 
 @Entity
+@Audited
 @Table(name = "produto_venda")
 @Data
 public class ProdutoVenda {

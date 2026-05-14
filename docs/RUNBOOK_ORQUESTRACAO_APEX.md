@@ -1,6 +1,6 @@
-# Runbook de Orquestracao e Resiliencia Apex Gestor
+# Runbook SRE Apex Gestor v4.0
 
-Este runbook valida a subida sincronizada do ecossistema Apex Gestor: MySQL, API Spring Boot e Web Angular/Ionic. Os apps Mobile e Desktop usam o mesmo cliente Angular e herdam a espera ativa da API antes das chamadas iniciais.
+Este runbook valida a subida sincronizada do ecossistema Apex Gestor: MySQL, RabbitMQ, API Spring Boot, Web Angular/Ionic e artefatos Desktop/Mobile. Os apps Mobile e Desktop usam o mesmo cliente Angular e herdam a espera ativa da API antes das chamadas iniciais.
 
 ## 1. Subir tudo com um unico comando
 
@@ -13,12 +13,15 @@ docker compose up -d --build
 Ordem garantida por healthchecks:
 
 1. `apex-mysql` inicia primeiro e precisa responder ao `mysqladmin ping`.
-2. `apex-backend` so inicia depois do banco saudavel.
-3. `apex-web` so inicia depois do backend responder `UP` em `/actuator/health`.
+2. `apex-rabbitmq` precisa responder ao `rabbitmq-diagnostics ping`.
+3. `apex-backend` so inicia depois do banco e da mensageria saudaveis.
+4. `apex-web` so inicia depois do backend responder `UP` em `/actuator/health`.
 
 Portas padrao:
 
 - Banco MySQL: `localhost:2705`
+- RabbitMQ: `localhost:5672`
+- RabbitMQ Management: `http://localhost:15672`
 - API Spring Boot: `http://localhost:8080`
 - Web cliente/gestor: `http://localhost:4200`
 
@@ -39,12 +42,14 @@ APEX_LICENSE_CATALOG="CLIENTE-GERAL|all|5|365;CLIENTE-PDV|desktop|1|365;CLIENTE-
 docker compose up -d --build
 ```
 
-Bancos ja existentes precisam receber os upgrades em `docs/upgrade-license-entitlements.sql` e `docs/upgrade-admcalc-financeiro.sql`.
+Na v4, o schema passa a ser versionado por Flyway em `Apex-Gestordemo/src/main/resources/db/migration`. Bancos ja existentes sao baselined automaticamente e recebem as migracoes novas; se voce estiver atualizando uma base antiga manualmente, mantenha backup antes de subir a API.
 
 ## 2. Validar saude da pilha
 
 ```bash
 docker compose ps
+docker compose exec apex-mysql mysqladmin ping -h 127.0.0.1 -uroot -p"${DB_PASSWORD:-apex_dev_2026}"
+docker compose exec apex-rabbitmq rabbitmq-diagnostics -q ping
 curl http://localhost:8080/actuator/health
 curl http://localhost:4200/healthz
 curl http://localhost:4200/actuator/health
@@ -62,7 +67,7 @@ O endpoint `/api/produtos` deve responder `402`, `401` ou `403` sem licenca/toke
 curl -i http://localhost:8080/api/produtos
 ```
 
-O modulo financeiro avancado fica em `http://localhost:4200/finance`. Para testar a API diretamente, valide primeiro uma licenca em `/api/licenses/validate`, faca login com um perfil `financeiro` ou `admin`, e chame:
+O modulo financeiro avancado fica em `http://localhost:4200/finance`. Para testar a API diretamente, valide primeiro uma licenca em `/api/licenses/validate`, faca login com um perfil `financeiro`, `gestor`, `auditor` ou `admin`, e chame:
 
 ```bash
 curl -i http://localhost:8080/api/financeiro/calculos/admcalc
@@ -70,7 +75,22 @@ curl -i http://localhost:8080/api/financeiro/calculos/admcalc
 
 Sem token ou role adequada, o esperado e `401` ou `403`.
 
-## 3. Validar que o frontend aguarda o backend
+## 3. Validar Flyway, Envers e outbox de documentos
+
+```bash
+docker compose exec apex-mysql mysql -uroot -p"${DB_PASSWORD:-apex_dev_2026}" apex_db -e "select installed_rank, version, description, success from flyway_schema_history order by installed_rank;"
+docker compose exec apex-mysql mysql -uroot -p"${DB_PASSWORD:-apex_dev_2026}" apex_db -e "show tables like '%_AUD';"
+docker compose exec apex-mysql mysql -uroot -p"${DB_PASSWORD:-apex_dev_2026}" apex_db -e "select count(*) from audit_revision;"
+```
+
+Ao assinar um documento financeiro, o backend grava:
+
+- linha de negocio em `financial_digital_document`;
+- trilha funcional em `financial_audit_event`;
+- evento de entrega em `financial_document_outbox`;
+- revisoes forenses em tabelas `_AUD`, com usuario/IP em `audit_revision`.
+
+## 4. Validar que o frontend aguarda o backend
 
 1. Derrube somente a API:
 
@@ -95,7 +115,7 @@ Para acompanhar:
 docker compose logs -f apex-backend apex-web
 ```
 
-## 4. Simular falhas de resiliencia
+## 5. Simular falhas de resiliencia
 
 Banco indisponivel:
 
@@ -124,14 +144,26 @@ curl -i http://localhost:4200/actuator/health
 
 Resultado esperado: o proxy web falha enquanto a API esta fora, mas o app nao dispara login/dashboard antes da saude voltar.
 
-## 5. Validacoes locais recomendadas
+Mensageria indisponivel:
+
+```bash
+docker compose stop apex-rabbitmq
+docker compose up -d apex-backend
+docker compose ps
+```
+
+Resultado esperado: o backend nao inicia enquanto o RabbitMQ obrigatorio do compose estiver fora. Para desenvolvimento sem RabbitMQ, suba o backend local com `APEX_RABBIT_ENABLED=false`.
+
+## 6. Validacoes locais recomendadas
 
 Backend:
 
 ```bash
 node scripts/audit-spring-data-jpa.cjs
+node scripts/audit-no-secrets.cjs
 cd Apex-Gestordemo
 ./mvnw test
+./mvnw -Dtest=PdvVendaEstoqueEnversIntegrationTests test
 ./mvnw -DskipTests package
 ```
 
@@ -145,6 +177,7 @@ npm run lint
 npm run test -- --watch=false --browsers=ChromeHeadless
 npm run build:web:client:secure
 npm run build:electron:secure:dir
+npm run wait:api
 ```
 
 Compose:
@@ -156,7 +189,7 @@ docker compose ps
 docker compose down -v --remove-orphans
 ```
 
-## 6. Testar executaveis publicados
+## 7. Testar executaveis publicados
 
 Baixe sempre a release mais recente:
 

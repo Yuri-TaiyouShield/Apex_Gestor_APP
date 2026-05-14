@@ -21,6 +21,9 @@ Apex-Gestordemo/demo/
 Apex_BD.pdf
 Apex_BD.sql
 *.sql
+!Apex-Gestordemo/src/main/resources/db/
+!Apex-Gestordemo/src/main/resources/db/migration/
+!Apex-Gestordemo/src/main/resources/db/migration/*.sql
 *.zip
 tools/mysql-workbench-*/
 
