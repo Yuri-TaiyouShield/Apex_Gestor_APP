@@ -57,4 +57,4 @@ O workflow `.github/workflows/main.yml` compila e publica:
 - App Mobile Empresa (`.zip` com a pasta `App Mobile Empresa` e APK Android)
 - App Mobile Cliente (`.zip` com a pasta `App Mobile Cliente` e APK Android)
 
-Push em `main` gera artifacts na aba Actions. Tags `v*`, como `v3.0.4`, publicam os arquivos na aba Releases.
+Push em `main` gera artifacts na aba Actions. Tags `v*`, como `v3.0.5`, publicam os arquivos na aba Releases.

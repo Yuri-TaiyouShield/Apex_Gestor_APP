@@ -48,8 +48,8 @@ Esse push executa a Action e disponibiliza os builds como artifacts na aba Actio
 ## 5. Criar tag para publicar Release
 
 ```bash
-git tag v3.0.4
-git push origin v3.0.4
+git tag v3.0.5
+git push origin v3.0.5
 ```
 
 Use uma tag nova a cada publicacao (`v3.0.5`, `v3.0.6` etc.). A tag aciona a publicacao automatica em GitHub Releases. Ao terminar, acesse:

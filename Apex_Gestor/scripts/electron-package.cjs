@@ -9,6 +9,7 @@ const distSource = path.join(projectRoot, 'dist', 'apex-gestor', 'browser');
 const electronSource = path.join(projectRoot, 'electron');
 const builderCli = path.join(projectRoot, 'node_modules', 'electron-builder', 'cli.js');
 const releaseDir = path.join(projectRoot, 'release');
+const rootPackageJson = JSON.parse(fs.readFileSync(path.join(projectRoot, 'package.json'), 'utf8'));
 
 function assertInsideProject(target) {
   const relative = path.relative(projectRoot, target);
@@ -34,10 +35,10 @@ copyDirectory(electronSource, path.join(appRoot, 'electron'));
 
 const packageJson = {
   name: 'apex-gestor-desktop',
-  version: '1.0.0',
+  version: rootPackageJson.version,
   private: true,
-  author: 'Apex Gestor',
-  description: 'Apex Gestor desktop shell.',
+  author: rootPackageJson.author || 'Apex Gestor',
+  description: rootPackageJson.description || 'Apex Gestor desktop shell.',
   main: 'electron/main.cjs',
   dependencies: {},
   build: {
