@@ -48,11 +48,11 @@ Esse push executa a Action e disponibiliza os builds como artifacts na aba Actio
 ## 5. Criar tag para publicar Release
 
 ```bash
-git tag v3.0.5
-git push origin v3.0.5
+git tag v3.1.0
+git push origin v3.1.0
 ```
 
-Use uma tag nova a cada publicacao (`v3.0.5`, `v3.0.6` etc.). A tag aciona a publicacao automatica em GitHub Releases. Ao terminar, acesse:
+Use uma tag nova a cada publicacao (`v3.1.0`, `v3.1.1` etc.). A tag aciona a publicacao automatica em GitHub Releases. Ao terminar, acesse:
 
 ```text
 https://github.com/Yuri-TaiyouShield/Apex_Gestor_APP/releases

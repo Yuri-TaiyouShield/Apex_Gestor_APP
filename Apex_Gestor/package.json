@@ -1,6 +1,6 @@
 {
   "name": "apex-gestor",
-  "version": "3.0.5",
+  "version": "3.1.0",
   "private": true,
   "author": "Apex Gestor",
   "description": "Apex Gestor ERP, e-commerce, PDV desktop e apps mobile com Angular, Ionic, Capacitor e Electron.",
@@ -17,6 +17,7 @@
     "security:manifest": "node scripts/security-manifest.cjs",
     "build:web:secure": "ng build --configuration production && javascript-obfuscator dist/apex-gestor/browser --output dist/apex-gestor/browser --compact true --string-array true --string-array-threshold 0.2 --target browser --ignore-imports true && node scripts/security-manifest.cjs",
     "build:web:client:secure": "ng build --configuration production,web-client && javascript-obfuscator dist/apex-gestor/browser --output dist/apex-gestor/browser --compact true --string-array true --string-array-threshold 0.2 --target browser --ignore-imports true && node scripts/security-manifest.cjs",
+    "lint": "eslint \"src/**/*.{ts,html}\" \"electron/**/*.cjs\" \"scripts/**/*.cjs\"",
     "test": "ng test",
     "start:electron": "concurrently -k \"ng serve --host 0.0.0.0 --port 4200 --proxy-config proxy.conf.json\" \"wait-on http://localhost:4200 && electron .\"",
     "build:electron": "ng build --configuration production && node scripts/electron-package.cjs",
@@ -52,9 +53,11 @@
     "@ionic/angular-toolkit": "12.3.0",
     "@types/jasmine": "~5.1.0",
     "@types/node": "^22.10.2",
+    "angular-eslint": "^19.8.1",
     "concurrently": "^9.2.1",
     "electron": "42.0.1",
     "electron-builder": "26.8.1",
+    "eslint": "^9.39.4",
     "jasmine-core": "~5.2.0",
     "javascript-obfuscator": "^4.1.1",
     "karma": "~6.4.0",
@@ -63,6 +66,7 @@
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.1.0",
     "typescript": "~5.5.4",
+    "typescript-eslint": "^8.59.3",
     "wait-on": "^9.0.3"
   },
   "overrides": {

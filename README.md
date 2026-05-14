@@ -16,15 +16,28 @@ Sistema hibrido de ERP, PDV e e-commerce multi-nicho para empresas de comercio e
 - [Roadmap de Producao](docs/ROADMAP_PRODUCAO.md)
 - [Guia GitHub Releases](docs/GUIA_GITHUB_RELEASES.md)
 - [Guia de Execucao e Testes pelo GitHub](docs/GUIA_EXECUCAO_TESTES_GITHUB.md)
+- [Runbook de Orquestracao e Resiliencia](docs/RUNBOOK_ORQUESTRACAO_APEX.md)
 - [Guia de Seguranca](SECURITY.md)
 - [Guia de Banco de Dados Local](docs/GUIA_BANCO_DADOS_LOCAL.md)
 - [Guia de Escalabilidade do Banco](docs/GUIA_ESCALABILIDADE_BANCO.md)
 
-## Desenvolvimento local
+## Ambiente completo com Docker
+
+```bash
+docker compose up -d --build
+```
+
+Depois abra:
+
+- Web: `http://localhost:4200`
+- API: `http://localhost:8080/actuator/health`
+- MySQL: `localhost:2705`
+
+## Desenvolvimento manual
 
 ```bash
 cd Apex_Gestor
-npm install
+npm ci --legacy-peer-deps
 npm run start:web
 npm run build:web
 npm run test -- --watch=false
@@ -57,4 +70,4 @@ O workflow `.github/workflows/main.yml` compila e publica:
 - App Mobile Empresa (`.zip` com a pasta `App Mobile Empresa` e APK Android)
 - App Mobile Cliente (`.zip` com a pasta `App Mobile Cliente` e APK Android)
 
-Push em `main` gera artifacts na aba Actions. Tags `v*`, como `v3.0.5`, publicam os arquivos na aba Releases.
+Push em `main` gera artifacts na aba Actions. Tags `v*`, como `v3.1.0`, publicam os arquivos na aba Releases.

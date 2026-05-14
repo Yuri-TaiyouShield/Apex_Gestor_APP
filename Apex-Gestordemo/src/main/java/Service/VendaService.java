@@ -50,7 +50,7 @@ public class VendaService {
                 .map(item -> item.getProduto().getIdProduto())
                 .distinct()
                 .toList();
-        Map<Long, Produto> produtosPorId = produtoRepository.findAllByIdForUpdate(produtoIds).stream()
+        Map<Long, Produto> produtosPorId = produtoRepository.findByIdProdutoIn(produtoIds).stream()
                 .collect(Collectors.toMap(Produto::getIdProduto, Function.identity()));
 
         for (ProdutoVenda item : itens) {
@@ -100,7 +100,7 @@ public class VendaService {
 
     @Transactional
     public Venda cancelarVenda(Long id) {
-        Venda venda = vendaRepository.findWithItensById(id).orElseThrow(() -> new RuntimeException("Venda não encontrada"));
+        Venda venda = vendaRepository.findByIdVenda(id).orElseThrow(() -> new RuntimeException("Venda não encontrada"));
         if (venda.getStatus() == 0) {
             throw new RuntimeException("Venda já cancelada");
         }

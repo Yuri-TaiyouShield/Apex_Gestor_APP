@@ -3,6 +3,7 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { Observable, from, switchMap, tap } from 'rxjs';
 
 import { ApiConfigService } from './api-config.service';
+import { ApiReadinessService } from './api-readiness.service';
 import { AuthResponse, ConsentRequest, LoginRequest, Persona } from './models';
 import { SecureStorageService } from './secure-storage.service';
 import { SessionService } from './session.service';
@@ -15,6 +16,7 @@ const USER_KEY = 'apex.authUser';
 export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly apiConfig = inject(ApiConfigService);
+  private readonly readiness = inject(ApiReadinessService);
   private readonly secureStorage = inject(SecureStorageService);
   private readonly session = inject(SessionService);
 
@@ -23,16 +25,19 @@ export class AuthService {
   readonly isAuthenticated = computed(() => Boolean(this.accessToken()));
 
   login(request: LoginRequest): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(this.apiConfig.apiUrl('/api/auth/login'), request).pipe(
+    return this.readiness.waitForApi().pipe(
+      switchMap(() => this.http.post<AuthResponse>(this.apiConfig.apiUrl('/api/auth/login'), request)),
       tap((response) => this.storeSession(response))
     );
   }
 
   refresh(): Observable<AuthResponse> {
     return from(this.secureStorage.getItem(REFRESH_TOKEN_KEY)).pipe(
-      switchMap((refreshToken) => this.http.post<AuthResponse>(this.apiConfig.apiUrl('/api/auth/refresh'), {
-        refreshToken: refreshToken ?? ''
-      })),
+      switchMap((refreshToken) => this.readiness.waitForApi().pipe(
+        switchMap(() => this.http.post<AuthResponse>(this.apiConfig.apiUrl('/api/auth/refresh'), {
+          refreshToken: refreshToken ?? ''
+        }))
+      )),
       tap((response) => this.storeSession(response))
     );
   }
@@ -52,7 +57,9 @@ export class AuthService {
   }
 
   registerConsent(request: ConsentRequest): Observable<unknown> {
-    return this.http.post(this.apiConfig.apiUrl('/api/privacy/consents'), request);
+    return this.readiness.waitForApi().pipe(
+      switchMap(() => this.http.post(this.apiConfig.apiUrl('/api/privacy/consents'), request))
+    );
   }
 
   personaFromRoles(roles: string[]): Persona {

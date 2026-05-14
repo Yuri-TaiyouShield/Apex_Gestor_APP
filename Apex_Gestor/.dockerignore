@@ -1,0 +1,12 @@
+node_modules/
+.angular/
+dist/
+out-tsc/
+coverage/
+release/
+release-check/
+.electron-package/
+android/.gradle/
+android/app/build/
+android/build/
+*.log

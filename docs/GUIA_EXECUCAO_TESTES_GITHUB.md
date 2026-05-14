@@ -13,7 +13,18 @@ https://github.com/Yuri-TaiyouShield/Apex_Gestor_APP
 2. Clique em `Code > Codespaces > Create codespace on main`.
 3. Aguarde o ambiente abrir.
 
-## 2. Subir o banco MySQL
+## 2. Subir o ambiente completo sincronizado
+
+Para testar a pilha inteira pelo Codespaces:
+
+```bash
+docker compose up -d --build
+docker compose ps
+```
+
+Isso sobe MySQL, API e Web respeitando healthchecks. A tela web fica na porta `4200` e a API na porta `8080`.
+
+## 3. Subir somente o banco MySQL para desenvolvimento manual
 
 No terminal do Codespaces:
 
@@ -30,7 +41,7 @@ O banco sobe com:
 - Usuario: `root`
 - Senha de desenvolvimento: `apex_dev_2026`
 
-## 3. Rodar a API Spring Boot
+## 4. Rodar a API Spring Boot manualmente
 
 No terminal do Codespaces:
 
@@ -57,7 +68,7 @@ curl https://SEU-CODESPACE-8080.app.github.dev/api/relatorios/financeiro
 
 Substitua `SEU-CODESPACE-8080.app.github.dev` pela URL real mostrada na aba `Ports`.
 
-## 4. Rodar o frontend web no Codespaces
+## 5. Rodar o frontend web no Codespaces
 
 Abra outro terminal:
 
@@ -75,7 +86,7 @@ https://SEU-CODESPACE-4200.app.github.dev/
 
 Importante: a porta `8080` e a API. A tela do app web fica na porta `4200`.
 
-## 5. Baixar executaveis na Release
+## 6. Baixar executaveis na Release
 
 Abra:
 
@@ -97,7 +108,7 @@ Cada `.zip` contem uma pasta identificada:
 - `App Mobile Empresa`
 - `App Mobile Cliente`
 
-## 6. Testar cada pacote
+## 7. Testar cada pacote
 
 ### App Desktop
 
@@ -126,7 +137,7 @@ Cada `.zip` contem uma pasta identificada:
 2. Publique a pasta `App Site Web` em um servidor estatico.
 3. Para teste rapido no Codespaces, prefira rodar `npm run start:web` e abrir a porta `4200`.
 
-## 7. Validacao recomendada
+## 8. Validacao recomendada
 
 Antes de criar uma nova tag:
 
