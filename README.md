@@ -23,6 +23,7 @@ Sistema hibrido de ERP, PDV, e-commerce e compliance financeiro para empresas de
 - [Modulo Financeiro AdmCalc](docs/MODULO_FINANCEIRO_ADMCALC.md)
 - [Arquitetura Enterprise v4](docs/ARQUITETURA_ENTERPRISE_V4.md)
 - [Repository Spring Data JPA v4](docs/REPOSITORY_SPRING_DATA_JPA_V4.md)
+- [DevEx Bootstrap Windows](docs/DEVEX_BOOTSTRAP_WINDOWS.md)
 
 ## Ambiente completo com Docker
 
