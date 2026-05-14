@@ -10,6 +10,7 @@ import javax.crypto.spec.SecretKeySpec;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -49,7 +50,8 @@ public class SecurityConfig {
                 .cors(Customizer.withDefaults())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/actuator/health", "/api/auth/**", "/api/privacy/consents", "/api/licenses/validate").permitAll()
+                        .requestMatchers("/actuator/health", "/api/auth/**", "/api/privacy/consents", "/api/licenses/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/licenses/validate").permitAll()
                         .requestMatchers("/api/privacy/**").authenticated()
                         .requestMatchers("/api/usuarios/**", "/api/perfis/**", "/api/menus/**").hasAnyRole("ADMIN", "GERENTE", "GESTOR")
                         .requestMatchers("/api/despesas/**", "/api/relatorios/**").hasAnyRole("ADMIN", "GERENTE", "GESTOR", "FINANCEIRO", "FINANCAS", "ADMINISTRACAO", "AUDITOR")
