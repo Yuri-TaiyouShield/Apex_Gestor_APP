@@ -45,6 +45,10 @@ export class ApiConfigService {
     return `${base}${normalizedPath}`;
   }
 
+  healthUrl(): string {
+    return this.apiUrl('/actuator/health');
+  }
+
   private readInitialBaseUrl(): string {
     return localStorage.getItem(STORAGE_KEY) ?? this.defaultBaseUrl();
   }

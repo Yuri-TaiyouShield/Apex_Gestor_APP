@@ -1,14 +1,16 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable, catchError, shareReplay, tap, throwError } from 'rxjs';
+import { Observable, catchError, shareReplay, switchMap, tap, throwError } from 'rxjs';
 
 import { ApiConfigService } from './api-config.service';
+import { ApiReadinessService } from './api-readiness.service';
 import { CheckoutPayment, Cliente, Despesa, FormaPagamento, Identifiable, Produto, RelatorioFinanceiro, TipoDespesa, Usuario } from './models';
 
 @Injectable({ providedIn: 'root' })
 export class ApexApiService {
   private readonly http = inject(HttpClient);
   private readonly config = inject(ApiConfigService);
+  private readonly readiness = inject(ApiReadinessService);
   private readonly listCache = new Map<string, Observable<unknown>>();
 
   list<T>(endpoint: string): Observable<T[]> {
@@ -17,7 +19,8 @@ export class ApexApiService {
       return cached;
     }
 
-    const request = this.http.get<T[]>(this.config.apiUrl(endpoint)).pipe(
+    const request = this.readiness.waitForApi().pipe(
+      switchMap(() => this.http.get<T[]>(this.config.apiUrl(endpoint))),
       catchError((error) => {
         this.listCache.delete(endpoint);
         return throwError(() => error);
@@ -29,15 +32,24 @@ export class ApexApiService {
   }
 
   create<T>(endpoint: string, payload: Partial<T>): Observable<T> {
-    return this.http.post<T>(this.config.apiUrl(endpoint), payload).pipe(tap(() => this.invalidate(endpoint)));
+    return this.readiness.waitForApi().pipe(
+      switchMap(() => this.http.post<T>(this.config.apiUrl(endpoint), payload)),
+      tap(() => this.invalidate(endpoint))
+    );
   }
 
   update<T>(endpoint: string, id: number | string, payload: Partial<T>): Observable<T> {
-    return this.http.put<T>(this.config.apiUrl(`${endpoint}/${id}`), payload).pipe(tap(() => this.invalidate(endpoint)));
+    return this.readiness.waitForApi().pipe(
+      switchMap(() => this.http.put<T>(this.config.apiUrl(`${endpoint}/${id}`), payload)),
+      tap(() => this.invalidate(endpoint))
+    );
   }
 
   patch<T>(path: string): Observable<T> {
-    return this.http.patch<T>(this.config.apiUrl(path), {}).pipe(tap(() => this.invalidate(path)));
+    return this.readiness.waitForApi().pipe(
+      switchMap(() => this.http.patch<T>(this.config.apiUrl(path), {})),
+      tap(() => this.invalidate(path))
+    );
   }
 
   products(): Observable<Produto[]> {
@@ -66,7 +78,9 @@ export class ApexApiService {
 
   financialReport(inicio: string, fim: string): Observable<RelatorioFinanceiro> {
     const params = new HttpParams().set('inicio', inicio).set('fim', fim);
-    return this.http.get<RelatorioFinanceiro>(this.config.apiUrl('/api/relatorios/financeiro'), { params });
+    return this.readiness.waitForApi().pipe(
+      switchMap(() => this.http.get<RelatorioFinanceiro>(this.config.apiUrl('/api/relatorios/financeiro'), { params }))
+    );
   }
 
   checkoutVenda(payload: {
@@ -91,11 +105,15 @@ export class ApexApiService {
         valorPago: payment.valorPago
       }))
     };
-    return this.http.post<Identifiable>(this.config.apiUrl('/api/vendas'), body);
+    return this.readiness.waitForApi().pipe(
+      switchMap(() => this.http.post<Identifiable>(this.config.apiUrl('/api/vendas'), body))
+    );
   }
 
   invoiceEntry(payload: Identifiable): Observable<Identifiable> {
-    return this.http.post<Identifiable>(this.config.apiUrl('/api/nfs/entrada'), payload);
+    return this.readiness.waitForApi().pipe(
+      switchMap(() => this.http.post<Identifiable>(this.config.apiUrl('/api/nfs/entrada'), payload))
+    );
   }
 
   private invalidate(path: string): void {

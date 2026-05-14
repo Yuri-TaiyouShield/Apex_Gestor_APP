@@ -1,0 +1,6 @@
+target/
+demo/
+.git/
+*.log
+nbproject/
+jshell.history

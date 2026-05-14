@@ -3,6 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable, from, switchMap, tap } from 'rxjs';
 
 import { ApiConfigService } from './api-config.service';
+import { ApiReadinessService } from './api-readiness.service';
 import { LicenseValidationResponse } from './models';
 import { SecureStorageService } from './secure-storage.service';
 
@@ -20,17 +21,20 @@ interface DeviceInfo {
 export class LicenseService {
   private readonly http = inject(HttpClient);
   private readonly apiConfig = inject(ApiConfigService);
+  private readonly readiness = inject(ApiReadinessService);
   private readonly secureStorage = inject(SecureStorageService);
 
   validate(licenseKey: string): Observable<LicenseValidationResponse> {
     return from(this.deviceInfo()).pipe(
-      switchMap((device) => this.http.post<LicenseValidationResponse>(this.apiConfig.apiUrl('/api/licenses/validate'), {
-        licenseKey,
-        deviceFingerprint: device.deviceFingerprint,
-        deviceLabel: device.deviceLabel,
-        platform: device.platform,
-        appVersion: '1.0.0'
-      })),
+      switchMap((device) => this.readiness.waitForApi().pipe(
+        switchMap(() => this.http.post<LicenseValidationResponse>(this.apiConfig.apiUrl('/api/licenses/validate'), {
+          licenseKey,
+          deviceFingerprint: device.deviceFingerprint,
+          deviceLabel: device.deviceLabel,
+          platform: device.platform,
+          appVersion: '3.1.0'
+        }))
+      )),
       tap((response) => {
         localStorage.setItem(LICENSE_STATUS_KEY, JSON.stringify(response));
         if (response.valid) {

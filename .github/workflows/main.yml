@@ -41,6 +41,15 @@ jobs:
           java-version: ${{ env.JAVA_VERSION }}
           cache: maven
 
+      - name: Setup Node.js for repository audits
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Audit Spring Data JPA conventions
+        working-directory: .
+        run: node scripts/audit-spring-data-jpa.cjs
+
       - name: Test backend
         run: |
           chmod +x mvnw
@@ -52,6 +61,8 @@ jobs:
   web-client:
     name: Web Cliente Angular
     runs-on: ubuntu-latest
+    needs:
+      - orchestration
     defaults:
       run:
         working-directory: Apex_Gestor
@@ -71,6 +82,12 @@ jobs:
 
       - name: Runtime dependency audit
         run: npm audit --omit=dev --audit-level=high
+
+      - name: Lint frontend
+        run: npm run lint
+
+      - name: Test frontend
+        run: npm run test -- --watch=false --browsers=ChromeHeadless
 
       - name: Build secure web client
         run: npm run build:web:client:secure
@@ -98,9 +115,55 @@ jobs:
           path: Apex_Gestor/release-web/*.zip
           if-no-files-found: error
 
+  orchestration:
+    name: Docker Compose DB/API/Web Sync
+    runs-on: ubuntu-latest
+    needs:
+      - backend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Validate compose file
+        run: docker compose -f docker-compose.yml config
+
+      - name: Start synchronized stack
+        run: docker compose -f docker-compose.yml up -d --build apex-mysql apex-backend apex-web
+
+      - name: Wait for database, API and web health
+        shell: bash
+        run: |
+          for attempt in {1..72}; do
+            if curl -fsS http://localhost:8080/actuator/health | grep -q '"status":"UP"' \
+              && curl -fsS http://localhost:4200/healthz >/dev/null \
+              && curl -fsS http://localhost:4200/actuator/health | grep -q '"status":"UP"'; then
+              exit 0
+            fi
+            docker compose -f docker-compose.yml ps
+            sleep 5
+          done
+          docker compose -f docker-compose.yml logs --no-color apex-mysql apex-backend apex-web
+          exit 1
+
+      - name: Verify API is reachable through security layer
+        shell: bash
+        run: |
+          status="$(curl -sS -o /tmp/apex-produtos-response.txt -w '%{http_code}' http://localhost:8080/api/produtos || true)"
+          if [ "$status" != "401" ] && [ "$status" != "403" ]; then
+            echo "Expected authenticated API response 401/403, got $status"
+            cat /tmp/apex-produtos-response.txt || true
+            exit 1
+          fi
+
+      - name: Stop synchronized stack
+        if: always()
+        run: docker compose -f docker-compose.yml down -v --remove-orphans
+
   desktop-windows:
     name: Desktop Electron Windows
     runs-on: windows-latest
+    needs:
+      - orchestration
     defaults:
       run:
         working-directory: Apex_Gestor
@@ -152,6 +215,8 @@ jobs:
   mobile-android:
     name: Android APKs Ionic
     runs-on: ubuntu-latest
+    needs:
+      - orchestration
     defaults:
       run:
         working-directory: Apex_Gestor
@@ -250,6 +315,7 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - backend
+      - orchestration
       - web-client
       - desktop-windows
       - mobile-android

@@ -44,7 +44,7 @@ public class FinanceiroService {
         LocalDateTime inicioTime = inicio.atStartOfDay();
         LocalDateTime fimTime = fim.atTime(23, 59, 59);
 
-        List<Venda> vendas = vendaRepository.findByPeriodo(inicioTime, fimTime);
+        List<Venda> vendas = vendaRepository.findByDataVendaBetweenAndStatus(inicioTime, fimTime, 1);
         BigDecimal receita = BigDecimal.ZERO;
         BigDecimal cmv = BigDecimal.ZERO;
 
@@ -55,7 +55,7 @@ public class FinanceiroService {
             }
         }
 
-        List<Despesa> despesas = despesaRepository.findByDataVencimentoBetween(inicio, fim);
+        List<Despesa> despesas = despesaRepository.findByDataVencimentoBetweenAndStatus(inicio, fim, 1);
         BigDecimal totalDespesas = despesas.stream().map(Despesa::getValor).reduce(BigDecimal.ZERO, BigDecimal::add);
 
         BigDecimal lucro = receita.subtract(cmv).subtract(totalDespesas);
