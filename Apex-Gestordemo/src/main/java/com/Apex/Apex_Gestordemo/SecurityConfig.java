@@ -14,6 +14,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.GrantedAuthority;
@@ -47,8 +48,8 @@ public class SecurityConfig {
     @Order(1)
     SecurityFilterChain publicSecurityFilterChain(HttpSecurity http) throws Exception {
         http
-                .securityMatcher("/actuator/health", "/api/auth/**", "/api/privacy/consents", "/api/licenses/**")
-                .csrf(AbstractHttpConfigurer::disable)
+                .securityMatcher("/actuator/health", "/api/auth/**", "/api/privacy/consents")
+                .csrf(csrf -> csrf.ignoringRequestMatchers("/actuator/health", "/api/auth/**", "/api/privacy/consents"))
                 .cors(Customizer.withDefaults())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize.anyRequest().permitAll())
@@ -69,7 +70,7 @@ public class SecurityConfig {
     @Order(2)
     SecurityFilterChain protectedSecurityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(AbstractHttpConfigurer::disable)
+                .csrf(csrf -> csrf.ignoringRequestMatchers("/api/**"))
                 .cors(Customizer.withDefaults())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
@@ -91,6 +92,11 @@ public class SecurityConfig {
         }
 
         return http.build();
+    }
+
+    @Bean
+    WebSecurityCustomizer publicBootstrapEndpoints() {
+        return web -> web.ignoring().requestMatchers("/api/licenses/**");
     }
 
     @Bean
