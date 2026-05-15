@@ -11,7 +11,7 @@ docker compose up -d apex-mysql
 docker compose ps
 ```
 
-O container carrega automaticamente o arquivo `Apex_BD.sql` na primeira inicializacao do volume.
+O schema atual e aplicado pelo Flyway em `Apex-Gestordemo/src/main/resources/db/migration`. O dump historico de referencia foi movido para `docs/database/apex-bd-base.sql`.
 
 Credenciais locais padrao:
 
@@ -48,4 +48,4 @@ docker compose ps
 Test-NetConnection localhost -Port 2705
 ```
 
-Se aparecer erro de banco inexistente, confirme que o schema esta como `apex_db`. O dump do projeto foi padronizado para esse nome.
+Se aparecer erro de banco inexistente, confirme que o schema esta como `apex_db`. O dump historico do projeto fica em `docs/database/apex-bd-base.sql` e deve ser usado apenas como referencia ou carga manual controlada.

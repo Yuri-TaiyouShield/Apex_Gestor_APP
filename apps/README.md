@@ -1,17 +1,19 @@
-# Apex Gestor v4 Monorepo Topology
+# Apps do Apex Gestor
 
-This folder is the enterprise target topology for the Apex Gestor monorepo.
+Esta pasta documenta a topologia alvo do monorepo por plataforma. O codigo executavel ainda fica nos caminhos historicos usados pela CI, para evitar quebra de build durante a transicao.
 
-The current production code remains in the legacy-compatible folders while the
-CI/CD and runbooks migrate consumers safely:
+| Pasta alvo | Codigo ativo hoje | Uso |
+| --- | --- | --- |
+| `apps/backend-api` | `../Apex-Gestordemo` | API Spring Boot. |
+| `apps/web-cliente` | `../Apex_Gestor` | E-commerce Angular/Ionic. |
+| `apps/desktop-pdv` | `../Apex_Gestor/electron` | PDV Electron. |
+| `apps/mobile-cliente` | `../Apex_Gestor` configuracao `mobile-client` | App Android do cliente. |
+| `apps/mobile-gestao` | `../Apex_Gestor` configuracao `mobile-staff` | App Android da empresa. |
 
-- `apps/backend-api` -> `Apex-Gestordemo`
-- `apps/desktop-pdv` -> `Apex_Gestor/electron`
-- `apps/web-cliente` -> `Apex_Gestor`
-- `apps/mobile-cliente` -> `Apex_Gestor` with the `mobile-client` Angular configuration
-- `apps/mobile-gestao` -> `Apex_Gestor` with the `mobile-staff` Angular configuration
-- `packages/shared` -> shared API contracts and generated DTO snapshots
+Quando a migracao fisica acontecer, mova um app por vez e atualize no mesmo commit:
 
-The physical move should happen module by module after v4 CI keeps all builds
-green, because the current Angular, Capacitor and Electron paths are referenced
-by native build tooling.
+1. `package.json` raiz.
+2. `.github/workflows/main.yml`.
+3. `docker-compose.yml`.
+4. Configuracoes Angular, Capacitor e Electron.
+5. Runbooks em `docs/`.

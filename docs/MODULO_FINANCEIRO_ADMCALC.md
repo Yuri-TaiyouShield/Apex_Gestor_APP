@@ -62,10 +62,10 @@ SMTP_STARTTLS=true
 
 ## Banco de dados
 
-Instalacoes novas recebem as tabelas pelo `Apex_BD.sql`. Bancos existentes devem executar:
+Instalacoes novas recebem as tabelas pelas migrations do Flyway em `Apex-Gestordemo/src/main/resources/db/migration`. Bancos existentes que ainda usam o dump legado podem consultar:
 
 ```bash
-docs/upgrade-admcalc-financeiro.sql
+docs/database/migrations-reference/upgrade-admcalc-financeiro.sql
 ```
 
 Tabelas adicionadas:

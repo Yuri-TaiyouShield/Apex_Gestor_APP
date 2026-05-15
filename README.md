@@ -10,6 +10,19 @@ Sistema hibrido de ERP, PDV, e-commerce e compliance financeiro para empresas de
 - Desktop Empresa: Electron para PDV, caixa e administracao pesada.
 - Backend: Spring Boot com JWT, BCrypt, RBAC, LGPD, licenciamento e API REST.
 
+## Mapa rapido do repositorio
+
+- `Apex-Gestordemo/`: backend Spring Boot que a pipeline atual compila.
+- `Apex_Gestor/`: frontend Angular/Ionic e cliente Electron/Capacitor que a pipeline atual compila.
+- `apps/`: topologia alvo do monorepo por plataforma, com READMEs de cada app.
+- `packages/shared/`: contratos e utilitarios compartilhados planejados.
+- `docs/`: documentacao funcional, tecnica, operacional, banco e governanca.
+- `docs/database/`: modelo/dump historico do banco e scripts SQL de referencia.
+- `scripts/`: automacoes locais, auditorias e scripts auxiliares.
+- `.github/workflows/`: CI/CD e publicacao de artefatos no GitHub.
+
+Veja o mapa completo em [Mapa do Repositorio](docs/00_MAPA_DO_REPOSITORIO.md) e a separacao das branches em [Branches e Versoes](docs/branches/README.md).
+
 ## Documentacao
 
 - [Documentacao Apex Gestor 3.0](docs/APEX_GESTOR_3_0_DOCUMENTACAO.md)
@@ -24,6 +37,8 @@ Sistema hibrido de ERP, PDV, e-commerce e compliance financeiro para empresas de
 - [Arquitetura Enterprise v4](docs/ARQUITETURA_ENTERPRISE_V4.md)
 - [Repository Spring Data JPA v4](docs/REPOSITORY_SPRING_DATA_JPA_V4.md)
 - [DevEx Bootstrap Windows](docs/DEVEX_BOOTSTRAP_WINDOWS.md)
+- [Mapa do Repositorio](docs/00_MAPA_DO_REPOSITORIO.md)
+- [Branches e Versoes](docs/branches/README.md)
 
 ## Ambiente completo com Docker
 

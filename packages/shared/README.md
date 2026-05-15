@@ -1,11 +1,9 @@
-# Shared Packages
+# Pacotes Compartilhados
 
-Target v4 location for shared contracts, generated API DTOs and cross-platform
-utility libraries.
+Local alvo para contratos de API, DTOs gerados e bibliotecas utilitarias usadas por web, mobile, desktop e backend.
 
-Initial contract policy:
+Politica inicial:
 
-- Java DTOs remain authoritative in `../../Apex-Gestordemo/src/main/java/DTO`.
-- Angular models remain in `../../Apex_Gestor/src/app/core/models.ts`.
-- Generated OpenAPI/DTO artifacts should be committed here only after the API
-  schema generator is introduced.
+- Os DTOs Java continuam como fonte de verdade em `../../Apex-Gestordemo/src/main/java/DTO`.
+- Os modelos Angular continuam em `../../Apex_Gestor/src/app/core/models.ts`.
+- Artefatos OpenAPI/DTO gerados devem ser commitados aqui apenas depois da introducao do gerador de schema.
