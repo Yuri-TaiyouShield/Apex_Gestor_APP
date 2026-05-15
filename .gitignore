@@ -18,12 +18,13 @@ Apex-Gestordemo/demo/
 **/android/build/
 
 # Local database exports and generated archives
-Apex_BD.pdf
-Apex_BD.sql
-*.sql
+*.local.sql
+*.dump.sql
+*.backup.sql
 !Apex-Gestordemo/src/main/resources/db/
 !Apex-Gestordemo/src/main/resources/db/migration/
 !Apex-Gestordemo/src/main/resources/db/migration/*.sql
+!docs/database/**/*.sql
 *.zip
 tools/mysql-workbench-*/
 

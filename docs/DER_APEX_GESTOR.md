@@ -1,6 +1,6 @@
 # Apex Gestor - DER MySQL Workbench
 
-Gerado em 2026-05-13 a partir do schema real `apex_db` no MySQL 8.4 local, porta `2705`. O arquivo fonte do diagrama fica em [`der-apex-gestor.mmd`](der-apex-gestor.mmd) e pode ser aberto pelo GitHub, Mermaid Live Editor ou usado como referencia ao refazer o reverse engineering no MySQL Workbench.
+Gerado em 2026-05-13 a partir do schema real `apex_db` no MySQL 8.4 local, porta `2705`. O arquivo fonte do diagrama fica em [`database/der-apex-gestor.mmd`](database/der-apex-gestor.mmd) e pode ser aberto pelo GitHub, Mermaid Live Editor ou usado como referencia ao refazer o reverse engineering no MySQL Workbench.
 
 ## Resumo do modelo
 
