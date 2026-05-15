@@ -20,6 +20,7 @@ public class LicenseEnforcementFilter extends OncePerRequestFilter {
     public static final String LICENSE_KEY_HEADER = "X-Apex-License-Key";
     public static final String DEVICE_FINGERPRINT_HEADER = "X-Apex-Device-Fingerprint";
     public static final String APP_ID_HEADER = "X-Apex-App-Id";
+    public static final String TENANT_CODE_HEADER = "X-Apex-Tenant-Code";
 
     private static final Set<String> PUBLIC_API_PREFIXES = Set.of(
             "/api/auth/",
@@ -38,6 +39,7 @@ public class LicenseEnforcementFilter extends OncePerRequestFilter {
         String uri = request.getRequestURI();
         return "OPTIONS".equalsIgnoreCase(request.getMethod())
                 || !uri.startsWith("/api/")
+                || ("GET".equalsIgnoreCase(request.getMethod()) && (uri.startsWith("/api/produtos") || uri.startsWith("/api/categorias")))
                 || PUBLIC_API_PREFIXES.stream().anyMatch(uri::startsWith);
     }
 
@@ -47,7 +49,8 @@ public class LicenseEnforcementFilter extends OncePerRequestFilter {
                 request.getHeader(LICENSE_KEY_HEADER),
                 request.getHeader(DEVICE_FINGERPRINT_HEADER),
                 request.getHeader(APP_ID_HEADER),
-                request.getHeader("X-Client-Platform")
+                request.getHeader("X-Client-Platform"),
+                request.getHeader(TENANT_CODE_HEADER)
         );
 
         if (!license.valid()) {
@@ -69,6 +72,23 @@ public class LicenseEnforcementFilter extends OncePerRequestFilter {
                 + ",\"licensePlan\":\"" + escape(license.licensePlan()) + "\""
                 + ",\"allowedApps\":" + array(license.allowedApps())
                 + ",\"activatedApps\":" + array(license.activatedApps())
+                + ",\"tenantCode\":\"" + escape(license.tenantCode()) + "\""
+                + ",\"tenantName\":\"" + escape(license.tenantName()) + "\""
+                + ",\"subscriptionTier\":\"" + escape(license.subscriptionTier()) + "\""
+                + ",\"features\":" + array(license.features())
+                + ",\"branding\":" + branding(license)
+                + "}";
+    }
+
+    private String branding(LicenseValidationResponseDTO license) {
+        if (license.branding() == null) {
+            return "null";
+        }
+        return "{"
+                + "\"primaryColor\":\"" + escape(license.branding().primaryColor()) + "\""
+                + ",\"secondaryColor\":\"" + escape(license.branding().secondaryColor()) + "\""
+                + ",\"logoUrl\":\"" + escape(license.branding().logoUrl()) + "\""
+                + ",\"storefrontName\":\"" + escape(license.branding().storefrontName()) + "\""
                 + "}";
     }
 

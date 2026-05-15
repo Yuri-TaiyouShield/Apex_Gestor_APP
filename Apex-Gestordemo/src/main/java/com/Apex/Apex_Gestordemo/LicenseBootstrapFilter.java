@@ -9,6 +9,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import org.springframework.http.MediaType;
@@ -64,7 +65,7 @@ public class LicenseBootstrapFilter extends OncePerRequestFilter {
         response.setHeader("Access-Control-Allow-Origin", isAllowedOrigin(origin) ? origin : "*");
         response.setHeader("Vary", "Origin");
         response.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-        response.setHeader("Access-Control-Allow-Headers", "Content-Type, X-Requested-With, X-Client-Platform");
+        response.setHeader("Access-Control-Allow-Headers", "Authorization, Content-Type, X-Requested-With, X-Client-Platform, X-Apex-License-Key, X-Apex-Device-Fingerprint, X-Apex-App-Id, X-Apex-Tenant-Code");
         response.setHeader("Access-Control-Max-Age", "3600");
     }
 
@@ -72,9 +73,20 @@ public class LicenseBootstrapFilter extends OncePerRequestFilter {
         return origin != null
                 && (origin.startsWith("http://localhost:")
                 || origin.startsWith("https://localhost:")
+                || isCodespacesOrigin(origin)
                 || "capacitor://localhost".equals(origin)
                 || "ionic://localhost".equals(origin)
                 || "app://localhost".equals(origin));
+    }
+
+    private boolean isCodespacesOrigin(String origin) {
+        try {
+            URI uri = URI.create(origin);
+            String host = uri.getHost();
+            return "https".equals(uri.getScheme()) && host != null && host.endsWith(".app.github.dev");
+        } catch (IllegalArgumentException exception) {
+            return false;
+        }
     }
 
     private void writeJson(HttpServletResponse response, String json) throws IOException {
@@ -95,6 +107,23 @@ public class LicenseBootstrapFilter extends OncePerRequestFilter {
                 + ",\"licensePlan\":\"" + escape(license.licensePlan()) + "\""
                 + ",\"allowedApps\":" + array(license.allowedApps())
                 + ",\"activatedApps\":" + array(license.activatedApps())
+                + ",\"tenantCode\":\"" + escape(license.tenantCode()) + "\""
+                + ",\"tenantName\":\"" + escape(license.tenantName()) + "\""
+                + ",\"subscriptionTier\":\"" + escape(license.subscriptionTier()) + "\""
+                + ",\"features\":" + array(license.features())
+                + ",\"branding\":" + branding(license)
+                + "}";
+    }
+
+    private String branding(LicenseValidationResponseDTO license) {
+        if (license.branding() == null) {
+            return "null";
+        }
+        return "{"
+                + "\"primaryColor\":\"" + escape(license.branding().primaryColor()) + "\""
+                + ",\"secondaryColor\":\"" + escape(license.branding().secondaryColor()) + "\""
+                + ",\"logoUrl\":\"" + escape(license.branding().logoUrl()) + "\""
+                + ",\"storefrontName\":\"" + escape(license.branding().storefrontName()) + "\""
                 + "}";
     }
 

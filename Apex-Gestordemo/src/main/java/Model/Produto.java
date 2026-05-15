@@ -29,6 +29,16 @@ public class Produto {
     private String codigoBarras;
     @Column(length = 45)
     private String marca;
+    @Column(length = 80)
+    private String modelo;
+    @Column(name = "imagem_url", length = 500)
+    private String imagemUrl;
+    @Column(name = "imagem_mime_type", length = 80)
+    private String imagemMimeType;
+    @Column(name = "imagem_atualizada_em")
+    private LocalDateTime imagemAtualizadaEm;
+    @Column(name = "enriquecimento_catalogo_status", length = 40)
+    private String enriquecimentoCatalogoStatus;
     @Column(name = "unidade_medida", length = 10)
     private String unidadeMedida;
     @Column(name = "data_aquisicao")

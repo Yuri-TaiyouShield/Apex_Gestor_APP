@@ -7,11 +7,14 @@ import DTO.FinancialCalculationResponseDTO;
 import DTO.FinancialDocumentDTO;
 import DTO.FinancialDocumentRequestDTO;
 import DTO.LaborCalculationRequestDTO;
+import DTO.PricingCalculationRequestDTO;
+import DTO.PricingCalculationResponseDTO;
 import DTO.SignFinancialDocumentRequestDTO;
 import DTO.TaxCalculationRequestDTO;
 import Service.FinancialAuditTrailService;
 import Service.FinancialCalculationService;
 import Service.FinancialDocumentWorkflowService;
+import Service.PricingService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +25,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -36,15 +40,18 @@ public class FinancialComplianceController {
     private final FinancialCalculationService calculationService;
     private final FinancialDocumentWorkflowService documentWorkflowService;
     private final FinancialAuditTrailService auditTrailService;
+    private final PricingService pricingService;
 
     public FinancialComplianceController(
             FinancialCalculationService calculationService,
             FinancialDocumentWorkflowService documentWorkflowService,
-            FinancialAuditTrailService auditTrailService
+            FinancialAuditTrailService auditTrailService,
+            PricingService pricingService
     ) {
         this.calculationService = calculationService;
         this.documentWorkflowService = documentWorkflowService;
         this.auditTrailService = auditTrailService;
+        this.pricingService = pricingService;
     }
 
     @PostMapping("/calculos/trabalhista")
@@ -63,6 +70,16 @@ public class FinancialComplianceController {
     @PreAuthorize("hasAnyRole('ADMIN','ADMINISTRACAO','FINANCEIRO','FINANCAS','GESTOR')")
     public ResponseEntity<FinancialCalculationResponseDTO> calculateAdmCalc(@RequestBody AdmCalcRequestDTO request, Authentication authentication) {
         return ResponseEntity.ok(calculationService.calculateAdmCalc(request, authentication.getName()));
+    }
+
+    @PostMapping("/precificacao")
+    @PreAuthorize("hasAnyRole('ADMIN','ADMINISTRACAO','FINANCEIRO','FINANCAS','GESTOR')")
+    public ResponseEntity<PricingCalculationResponseDTO> calculatePricing(
+            @RequestHeader(value = "X-Apex-Tenant-Code", required = false) String tenantCode,
+            @Valid @RequestBody PricingCalculationRequestDTO request,
+            Authentication authentication
+    ) {
+        return ResponseEntity.ok(pricingService.calculate(tenantCode, request, authentication.getName()));
     }
 
     @GetMapping("/calculos")

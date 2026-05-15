@@ -3,6 +3,8 @@ package Service;
 import Model.*;
 import Repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
@@ -22,6 +24,10 @@ public class VendaService {
     private VendaRepository vendaRepository;
     @Autowired
     private ProdutoRepository produtoRepository;
+    @Autowired
+    private ClienteRepository clienteRepository;
+    @Autowired
+    private UsuarioRepository usuarioRepository;
 
     public List<Venda> listarTodos() {
         return vendaRepository.findAll();
@@ -33,6 +39,7 @@ public class VendaService {
 
     @Transactional
     public Venda realizarVenda(Venda venda) {
+        applyAuthenticatedB2cIdentity(venda);
         venda.setDataVenda(LocalDateTime.now());
         venda.setStatus(1);
         BigDecimal valorTotal = BigDecimal.ZERO;
@@ -112,5 +119,23 @@ public class VendaService {
         }
         venda.setStatus(0);
         return vendaRepository.save(venda);
+    }
+
+    private void applyAuthenticatedB2cIdentity(Venda venda) {
+        if (SecurityContextHolder.getContext().getAuthentication() == null) {
+            return;
+        }
+        boolean isB2cCustomer = SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
+                .anyMatch(authority -> "ROLE_CLIENTE_B2C".equals(authority.getAuthority()));
+        if (!isB2cCustomer) {
+            return;
+        }
+        String login = SecurityContextHolder.getContext().getAuthentication().getName();
+        Cliente cliente = clienteRepository.findByUsuarioLogin(login)
+                .orElseThrow(() -> new AccessDeniedException("Cliente B2C nao vinculado ao usuario autenticado."));
+        Usuario usuario = usuarioRepository.findByLogin(login)
+                .orElseThrow(() -> new AccessDeniedException("Usuario B2C nao encontrado."));
+        venda.setCliente(cliente);
+        venda.setUsuario(usuario);
     }
 }

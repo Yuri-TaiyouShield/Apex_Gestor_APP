@@ -33,6 +33,11 @@ public class Cliente {
     private LocalDateTime dataCadastro;
     @Column(nullable = false)
     private int status;
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "usuario_id")
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private Usuario usuario;
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "cliente_endereco", joinColumns = @JoinColumn(name = "cliente_id"), inverseJoinColumns = @JoinColumn(name = "endereco_id"))
     @ToString.Exclude

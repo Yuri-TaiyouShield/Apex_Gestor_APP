@@ -8,6 +8,7 @@ public record LicenseValidationRequestDTO(
         String deviceLabel,
         String platform,
         String appVersion,
-        String appId
+        String appId,
+        String tenantCode
 ) {
 }

@@ -1,0 +1,108 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "java",
+      "name": "Backend API - Spring Boot",
+      "request": "launch",
+      "mainClass": "com.Apex.Apex_Gestordemo.ApexGestordemoApplication",
+      "projectName": "Apex-Gestordemo",
+      "cwd": "${workspaceFolder}/Apex-Gestordemo",
+      "console": "integratedTerminal",
+      "preLaunchTask": "Infra: MySQL + RabbitMQ",
+      "env": {
+        "SERVER_PORT": "8080",
+        "DB_HOST": "localhost",
+        "DB_PORT": "2705",
+        "DB_NAME": "apex_db",
+        "DB_USERNAME": "root",
+        "DB_PASSWORD": "apex_dev_2026",
+        "APEX_TENANT_DEFAULT_CODE": "apex-demo",
+        "APEX_RABBIT_ENABLED": "false",
+        "APEX_EMAIL_ENABLED": "false"
+      },
+      "serverReadyAction": {
+        "action": "openExternally",
+        "pattern": "Tomcat started on port ([0-9]+)",
+        "uriFormat": "http://localhost:%s/actuator/health"
+      }
+    },
+    {
+      "type": "java",
+      "name": "Backend API - Attach 5005",
+      "request": "attach",
+      "hostName": "localhost",
+      "port": 5005
+    },
+    {
+      "type": "pwa-chrome",
+      "name": "Web Cliente - Angular/Ionic",
+      "request": "launch",
+      "url": "http://localhost:4200",
+      "webRoot": "${workspaceFolder}/Apex_Gestor/src",
+      "sourceMaps": true,
+      "preLaunchTask": "Frontend: serve web + wait API"
+    },
+    {
+      "type": "pwa-chrome",
+      "name": "Attach Chrome - Angular 4200",
+      "request": "attach",
+      "port": 9222,
+      "webRoot": "${workspaceFolder}/Apex_Gestor/src",
+      "sourceMaps": true
+    },
+    {
+      "type": "node",
+      "name": "Desktop PDV - Electron",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/Apex_Gestor",
+      "runtimeExecutable": "${workspaceFolder}/Apex_Gestor/node_modules/.bin/electron.cmd",
+      "args": [
+        "."
+      ],
+      "env": {
+        "ELECTRON_START_URL": "http://localhost:4200"
+      },
+      "console": "integratedTerminal",
+      "preLaunchTask": "Frontend: serve web + wait API",
+      "skipFiles": [
+        "<node_internals>/**"
+      ]
+    },
+    {
+      "type": "node",
+      "name": "Launch Current Node File",
+      "request": "launch",
+      "program": "${file}",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "skipFiles": [
+        "<node_internals>/**"
+      ]
+    },
+    {
+      "type": "java",
+      "name": "Launch Current Java File",
+      "request": "launch",
+      "mainClass": "${file}"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Apex Web + API",
+      "configurations": [
+        "Backend API - Spring Boot",
+        "Web Cliente - Angular/Ionic"
+      ],
+      "stopAll": true
+    },
+    {
+      "name": "Apex Desktop + API",
+      "configurations": [
+        "Backend API - Spring Boot",
+        "Desktop PDV - Electron"
+      ],
+      "stopAll": true
+    }
+  ]
+}

@@ -1,0 +1,124 @@
+{
+  "name": "Apex Gestor v4 CDE",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".."
+  },
+  "remoteUser": "vscode",
+  "privileged": true,
+  "features": {
+    "ghcr.io/devcontainers/features/java:1": {
+      "version": "21",
+      "installMaven": true,
+      "mavenVersion": "3.9.9",
+      "installGradle": true,
+      "gradleVersion": "8.14"
+    },
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "22"
+    },
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {
+      "version": "latest",
+      "moby": true,
+      "dockerDashComposeVersion": "v2"
+    },
+    "ghcr.io/devcontainers/features/github-cli:1": {
+      "version": "latest"
+    }
+  },
+  "hostRequirements": {
+    "cpus": 4,
+    "memory": "8gb",
+    "storage": "32gb"
+  },
+  "forwardPorts": [
+    8080,
+    4200,
+    2705,
+    5672,
+    15672
+  ],
+  "portsAttributes": {
+    "8080": {
+      "label": "Apex Backend API",
+      "onAutoForward": "notify",
+      "protocol": "http",
+      "visibility": "public"
+    },
+    "4200": {
+      "label": "Apex Web Angular/Ionic",
+      "onAutoForward": "openBrowser",
+      "protocol": "http",
+      "visibility": "public"
+    },
+    "2705": {
+      "label": "Apex MySQL",
+      "onAutoForward": "silent",
+      "visibility": "private"
+    },
+    "5672": {
+      "label": "Apex RabbitMQ AMQP",
+      "onAutoForward": "silent",
+      "visibility": "private"
+    },
+    "15672": {
+      "label": "Apex RabbitMQ Management",
+      "onAutoForward": "notify",
+      "protocol": "http",
+      "visibility": "private"
+    }
+  },
+  "mounts": [
+    "source=apex-maven-cache,target=/home/vscode/.m2,type=volume",
+    "source=apex-npm-cache,target=/home/vscode/.npm,type=volume",
+    "source=apex-gradle-cache,target=/home/vscode/.gradle,type=volume"
+  ],
+  "containerEnv": {
+    "DB_HOST": "localhost",
+    "DB_PORT": "2705",
+    "DB_NAME": "apex_db",
+    "DB_USERNAME": "root",
+    "DB_PASSWORD": "apex_dev_2026",
+    "API_PORT": "8080",
+    "WEB_PORT": "4200",
+    "APEX_EMAIL_ENABLED": "false",
+    "APEX_RABBIT_ENABLED": "true"
+  },
+  "remoteEnv": {
+    "MAVEN_OPTS": "-Dmaven.repo.local=/home/vscode/.m2/repository",
+    "NPM_CONFIG_CACHE": "/home/vscode/.npm",
+    "GRADLE_USER_HOME": "/home/vscode/.gradle"
+  },
+  "onCreateCommand": "bash .devcontainer/scripts/on-create.sh",
+  "updateContentCommand": "bash .devcontainer/scripts/prebuild.sh",
+  "postCreateCommand": "bash .devcontainer/scripts/post-create.sh",
+  "postAttachCommand": "bash .devcontainer/scripts/print-hybrid-help.sh",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "vscjava.vscode-java-pack",
+        "vmware.vscode-spring-boot",
+        "vscjava.vscode-maven",
+        "angular.ng-template",
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "ms-azuretools.vscode-docker",
+        "redhat.vscode-yaml",
+        "github.vscode-github-actions"
+      ],
+      "settings": {
+        "java.compile.nullAnalysis.mode": "automatic",
+        "java.configuration.updateBuildConfiguration": "interactive",
+        "npm.packageManager": "npm",
+        "typescript.tsdk": "Apex_Gestor/node_modules/typescript/lib",
+        "eslint.workingDirectories": [
+          {
+            "directory": "Apex_Gestor",
+            "changeProcessCWD": true
+          }
+        ],
+        "terminal.integrated.defaultProfile.linux": "bash"
+      }
+    }
+  }
+}

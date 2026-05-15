@@ -13,6 +13,8 @@
     "frontend:build:mobile:staff": "npm --prefix Apex_Gestor run build:mobile:staff",
     "frontend:build:mobile:client": "npm --prefix Apex_Gestor run build:mobile:client",
     "desktop:build": "npm --prefix Apex_Gestor run build:electron:secure:dir",
+    "codespaces:prebuild": "bash .devcontainer/scripts/prebuild.sh",
+    "codespaces:start-hybrid": "bash scripts/start-hybrid-env.sh",
     "quality": "node scripts/audit-spring-data-jpa.cjs && npm run backend:test && npm run frontend:lint && npm run frontend:test"
   },
   "workspaces": [

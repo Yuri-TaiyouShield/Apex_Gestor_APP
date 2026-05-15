@@ -2,6 +2,7 @@ package Service;
 
 import DTO.LicenseValidationRequestDTO;
 import DTO.LicenseValidationResponseDTO;
+import DTO.TenantFeatureContextDTO;
 import Model.LicenseActivation;
 import Repository.LicenseActivationRepository;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,6 +27,7 @@ public class LicenseService {
 
     private final LicenseActivationRepository licenseActivationRepository;
     private final DataProtectionService dataProtectionService;
+    private final TenantFeatureService tenantFeatureService;
 
     @Value("${apex.license.catalog:}")
     private String licenseCatalog;
@@ -41,10 +43,12 @@ public class LicenseService {
 
     public LicenseService(
             LicenseActivationRepository licenseActivationRepository,
-            DataProtectionService dataProtectionService
+            DataProtectionService dataProtectionService,
+            TenantFeatureService tenantFeatureService
     ) {
         this.licenseActivationRepository = licenseActivationRepository;
         this.dataProtectionService = dataProtectionService;
+        this.tenantFeatureService = tenantFeatureService;
     }
 
     @Transactional
@@ -52,9 +56,10 @@ public class LicenseService {
         String normalizedKey = normalizeRequired(request.licenseKey());
         String normalizedDevice = normalizeRequired(request.deviceFingerprint());
         String appId = normalizeAppId(request.appId(), request.platform());
+        String tenantCode = tenantFeatureService.normalizeTenantCode(request.tenantCode());
 
         if (normalizedKey == null || normalizedDevice == null) {
-            return invalid("INVALID_REQUEST", "Chave e identificador do dispositivo sao obrigatorios.", null, appId);
+            return invalid("INVALID_REQUEST", "Chave e identificador do dispositivo sao obrigatorios.", null, appId, null, tenantCode);
         }
 
         String licenseHash = dataProtectionService.hash(normalizedKey);
@@ -62,10 +67,10 @@ public class LicenseService {
         LicensePlan plan = licensePlan(normalizedKey).orElse(null);
 
         if (plan == null) {
-            return invalid(INVALID, "Licenca nao autorizada.", deviceHash, appId);
+            return invalid(INVALID, "Licenca nao autorizada.", deviceHash, appId, null, tenantCode);
         }
         if (!plan.allows(appId)) {
-            return invalid("APP_NOT_ALLOWED", "Esta chave nao libera o app solicitado.", deviceHash, appId, plan);
+            return invalid("APP_NOT_ALLOWED", "Esta chave nao libera o app solicitado.", deviceHash, appId, plan, tenantCode);
         }
 
         LocalDateTime now = LocalDateTime.now();
@@ -77,8 +82,9 @@ public class LicenseService {
         if (isUsable(activation, now)) {
             activation.setLastValidatedAt(now);
             activation.setAppVersion(trim(request.appVersion(), 40));
+            activation.setTenantCode(tenantCode);
             licenseActivationRepository.save(activation);
-            return response(true, ACTIVE, "Licenca valida para este app e dispositivo.", activation, licenseHash, plan, now);
+            return response(true, ACTIVE, "Licenca valida para este app e dispositivo.", activation, licenseHash, plan, now, tenantCode);
         }
 
         long activeDevices = activeActivations.stream()
@@ -89,7 +95,7 @@ public class LicenseService {
                 .anyMatch(item -> deviceHash.equals(item.getDeviceHash()));
 
         if (activation == null && !deviceAlreadyActive && activeDevices >= plan.maxDevices()) {
-            return invalid("LIMIT_REACHED", "Limite de dispositivos atingido para esta licenca.", deviceHash, appId, plan);
+            return invalid("LIMIT_REACHED", "Limite de dispositivos atingido para esta licenca.", deviceHash, appId, plan, tenantCode);
         }
 
         if (activation == null) {
@@ -104,33 +110,40 @@ public class LicenseService {
         activation.setAppVersion(trim(request.appVersion(), 40));
         activation.setAppId(appId);
         activation.setLicensePlan(plan.name());
+        activation.setTenantCode(tenantCode);
         activation.setLicensedApps(String.join(",", plan.allowedApps()));
         activation.setStatus(ACTIVE);
         activation.setLastValidatedAt(now);
         activation.setValidUntil(now.plusDays(plan.validityDays()));
         licenseActivationRepository.save(activation);
 
-        return response(true, ACTIVE, "Licenca ativada com sucesso para este app.", activation, licenseHash, plan, now);
+        return response(true, ACTIVE, "Licenca ativada com sucesso para este app.", activation, licenseHash, plan, now, tenantCode);
     }
 
     @Transactional
     public LicenseValidationResponseDTO checkActivation(String licenseKey, String deviceFingerprint, String appId, String platform) {
+        return checkActivation(licenseKey, deviceFingerprint, appId, platform, null);
+    }
+
+    @Transactional
+    public LicenseValidationResponseDTO checkActivation(String licenseKey, String deviceFingerprint, String appId, String platform, String tenantCode) {
         String normalizedKey = normalizeRequired(licenseKey);
         String normalizedDevice = normalizeRequired(deviceFingerprint);
         String normalizedAppId = normalizeAppId(appId, platform);
+        String normalizedTenantCode = tenantFeatureService.normalizeTenantCode(tenantCode);
 
         if (normalizedKey == null || normalizedDevice == null) {
-            return invalid("LICENSE_REQUIRED", "Informe uma licenca valida para usar este recurso.", null, normalizedAppId);
+            return invalid("LICENSE_REQUIRED", "Informe uma licenca valida para usar este recurso.", null, normalizedAppId, null, normalizedTenantCode);
         }
 
         String licenseHash = dataProtectionService.hash(normalizedKey);
         String deviceHash = dataProtectionService.hash(normalizedDevice);
         LicensePlan plan = licensePlan(normalizedKey).orElse(null);
         if (plan == null) {
-            return invalid(INVALID, "Licenca nao autorizada.", deviceHash, normalizedAppId);
+            return invalid(INVALID, "Licenca nao autorizada.", deviceHash, normalizedAppId, null, normalizedTenantCode);
         }
         if (!plan.allows(normalizedAppId)) {
-            return invalid("APP_NOT_ALLOWED", "Esta chave nao libera o app solicitado.", deviceHash, normalizedAppId, plan);
+            return invalid("APP_NOT_ALLOWED", "Esta chave nao libera o app solicitado.", deviceHash, normalizedAppId, plan, normalizedTenantCode);
         }
 
         LocalDateTime now = LocalDateTime.now();
@@ -139,22 +152,24 @@ public class LicenseService {
                 .orElse(null);
 
         if (!isUsable(activation, now)) {
-            return invalid("LICENSE_INACTIVE", "Licenca inativa, expirada ou nao ativada para este app.", deviceHash, normalizedAppId, plan);
+            return invalid("LICENSE_INACTIVE", "Licenca inativa, expirada ou nao ativada para este app.", deviceHash, normalizedAppId, plan, normalizedTenantCode);
         }
 
         if (activation.getLastValidatedAt().isBefore(now.minusMinutes(5))) {
             activation.setLastValidatedAt(now);
+            activation.setTenantCode(normalizedTenantCode);
             licenseActivationRepository.save(activation);
         }
-        return response(true, ACTIVE, "Licenca ativa.", activation, licenseHash, plan, now);
+        return response(true, ACTIVE, "Licenca ativa.", activation, licenseHash, plan, now, normalizedTenantCode);
     }
 
-    private LicenseValidationResponseDTO response(boolean valid, String status, String message, LicenseActivation activation, String licenseHash, LicensePlan plan, LocalDateTime now) {
+    private LicenseValidationResponseDTO response(boolean valid, String status, String message, LicenseActivation activation, String licenseHash, LicensePlan plan, LocalDateTime now, String tenantCode) {
         long activeDevices = activeActivations(licenseHash, now).stream()
                 .map(LicenseActivation::getDeviceHash)
                 .distinct()
                 .count();
         long remaining = Math.max(0, plan.maxDevices() - activeDevices);
+        TenantFeatureContextDTO tenant = tenantFeatureService.resolve(tenantCode);
         return new LicenseValidationResponseDTO(
                 valid,
                 status,
@@ -165,7 +180,12 @@ public class LicenseService {
                 activation.getAppId(),
                 plan.name(),
                 plan.allowedApps(),
-                activatedApps(licenseHash, now)
+                activatedApps(licenseHash, now),
+                tenant.tenantCode(),
+                tenant.tenantName(),
+                tenant.subscriptionTier(),
+                tenant.features(),
+                tenant.branding()
         );
     }
 
@@ -174,6 +194,11 @@ public class LicenseService {
     }
 
     private LicenseValidationResponseDTO invalid(String status, String message, String deviceHash, String appId, LicensePlan plan) {
+        return invalid(status, message, deviceHash, appId, plan, null);
+    }
+
+    private LicenseValidationResponseDTO invalid(String status, String message, String deviceHash, String appId, LicensePlan plan, String tenantCode) {
+        TenantFeatureContextDTO tenant = tenantFeatureService.resolve(tenantCode);
         return new LicenseValidationResponseDTO(
                 false,
                 status,
@@ -184,7 +209,12 @@ public class LicenseService {
                 appId,
                 plan == null ? null : plan.name(),
                 plan == null ? List.of() : plan.allowedApps(),
-                List.of()
+                List.of(),
+                tenant.tenantCode(),
+                tenant.tenantName(),
+                tenant.subscriptionTier(),
+                tenant.features(),
+                tenant.branding()
         );
     }
 

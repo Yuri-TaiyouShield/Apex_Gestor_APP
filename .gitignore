@@ -24,6 +24,8 @@ Apex_BD.sql
 !Apex-Gestordemo/src/main/resources/db/
 !Apex-Gestordemo/src/main/resources/db/migration/
 !Apex-Gestordemo/src/main/resources/db/migration/*.sql
+!docs/workbench/
+!docs/workbench/*.sql
 *.zip
 tools/mysql-workbench-*/
 
@@ -35,6 +37,11 @@ tools/mysql-workbench-*/
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
+.env
+.env.*
+!.env.example
+!.env.local.example
+.codespaces/
 .DS_Store
 Thumbs.db
 *.log

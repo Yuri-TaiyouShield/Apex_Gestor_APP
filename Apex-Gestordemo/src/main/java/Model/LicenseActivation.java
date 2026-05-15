@@ -49,6 +49,9 @@ public class LicenseActivation {
     @Column(name = "license_plan", nullable = false, length = 40)
     private String licensePlan;
 
+    @Column(name = "tenant_code", nullable = false, length = 60)
+    private String tenantCode = "apex-demo";
+
     @Column(name = "licensed_apps", nullable = false, length = 160)
     private String licensedApps;
 

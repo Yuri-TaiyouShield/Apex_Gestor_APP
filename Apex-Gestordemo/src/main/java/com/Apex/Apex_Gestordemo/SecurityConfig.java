@@ -15,6 +15,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.core.Ordered;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -51,8 +52,8 @@ public class SecurityConfig {
     @Order(1)
     SecurityFilterChain publicSecurityFilterChain(HttpSecurity http) throws Exception {
         http
-                .securityMatcher("/actuator/health", "/api/auth/**", "/api/privacy/consents", "/api/licenses/**")
-                .csrf(csrf -> csrf.ignoringRequestMatchers("/actuator/health", "/api/auth/**", "/api/privacy/consents", "/api/licenses/**"))
+                .securityMatcher("/actuator/health", "/api/auth/**", "/api/privacy/consents", "/api/licenses/**", "/media/catalog/**")
+                .csrf(csrf -> csrf.ignoringRequestMatchers("/actuator/health", "/api/auth/**", "/api/privacy/consents", "/api/licenses/**", "/media/catalog/**"))
                 .cors(Customizer.withDefaults())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize.anyRequest().permitAll())
@@ -77,10 +78,20 @@ public class SecurityConfig {
                 .cors(Customizer.withDefaults())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
+                        .requestMatchers(HttpMethod.GET, "/api/produtos", "/api/produtos/**", "/api/categorias", "/api/categorias/**", "/media/catalog/**").permitAll()
                         .requestMatchers("/api/privacy/**").authenticated()
-                        .requestMatchers("/api/usuarios/**", "/api/perfis/**", "/api/menus/**").hasAnyRole("ADMIN", "GERENTE", "GESTOR")
-                        .requestMatchers("/api/despesas/**", "/api/relatorios/**").hasAnyRole("ADMIN", "GERENTE", "GESTOR", "FINANCEIRO", "FINANCAS", "ADMINISTRACAO", "AUDITOR")
-                        .requestMatchers("/api/financeiro/**").hasAnyRole("ADMIN", "ADMINISTRACAO", "FINANCEIRO", "FINANCAS", "GERENTE", "GESTOR", "AUDITOR", "CONTADOR", "ADVOGADO")
+                        .requestMatchers("/api/usuarios/**", "/api/perfis/**", "/api/menus/**").hasAnyRole("SYSADMIN", "DONO_GERENTE", "ADMIN", "GERENTE", "GESTOR")
+                        .requestMatchers(HttpMethod.POST, "/api/catalogo/enriquecimento/**").hasAnyRole("SYSADMIN", "DONO_GERENTE", "FINANCEIRO", "ADMIN", "GERENTE")
+                        .requestMatchers(HttpMethod.POST, "/api/b2c/cart/merge").hasAnyRole("CLIENTE_B2C", "SYSADMIN", "DONO_GERENTE", "ADMIN", "GERENTE")
+                        .requestMatchers(HttpMethod.POST, "/api/vendas").hasAnyRole("CLIENTE_B2C", "DONO_GERENTE", "VENDEDOR", "CAIXA", "ADMIN", "GERENTE")
+                        .requestMatchers("/api/vendas/**").hasAnyRole("SYSADMIN", "DONO_GERENTE", "FINANCEIRO", "VENDEDOR", "CAIXA", "DESPACHANTE", "ADMIN", "GERENTE")
+                        .requestMatchers("/api/clientes/**").hasAnyRole("DONO_GERENTE", "VENDEDOR", "CAIXA", "ADMIN", "GERENTE")
+                        .requestMatchers(HttpMethod.POST, "/api/produtos/**").hasAnyRole("SYSADMIN", "DONO_GERENTE", "FINANCEIRO", "ADMIN", "GERENTE")
+                        .requestMatchers(HttpMethod.PUT, "/api/produtos/**").hasAnyRole("SYSADMIN", "DONO_GERENTE", "FINANCEIRO", "ADMIN", "GERENTE")
+                        .requestMatchers(HttpMethod.PATCH, "/api/produtos/**").hasAnyRole("SYSADMIN", "DONO_GERENTE", "FINANCEIRO", "ADMIN", "GERENTE")
+                        .requestMatchers("/api/fornecedores/**", "/api/nfs/**").hasAnyRole("DONO_GERENTE", "FINANCEIRO", "ADMIN", "GERENTE")
+                        .requestMatchers("/api/despesas/**", "/api/relatorios/**").hasAnyRole("SYSADMIN", "DONO_GERENTE", "FINANCEIRO", "ADMIN", "GERENTE", "GESTOR", "FINANCAS", "ADMINISTRACAO", "AUDITOR")
+                        .requestMatchers("/api/financeiro/**").hasAnyRole("SYSADMIN", "DONO_GERENTE", "ADMINISTRACAO", "FINANCEIRO", "FINANCAS", "GERENTE", "GESTOR", "AUDITOR", "CONTADOR", "ADVOGADO")
                         .requestMatchers("/api/**").authenticated()
                         .anyRequest().denyAll())
                 .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())))
@@ -126,7 +137,14 @@ public class SecurityConfig {
     @Bean
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(List.of("http://localhost:*", "https://localhost:*", "capacitor://localhost", "ionic://localhost", "app://localhost"));
+        configuration.setAllowedOriginPatterns(List.of(
+                "http://localhost:*",
+                "https://localhost:*",
+                "https://*.app.github.dev",
+                "capacitor://localhost",
+                "ionic://localhost",
+                "app://localhost"
+        ));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of(
                 "Authorization",
@@ -135,7 +153,8 @@ public class SecurityConfig {
                 "X-Client-Platform",
                 "X-Apex-License-Key",
                 "X-Apex-Device-Fingerprint",
-                "X-Apex-App-Id"
+                "X-Apex-App-Id",
+                "X-Apex-Tenant-Code"
         ));
         configuration.setExposedHeaders(List.of("Authorization"));
         configuration.setAllowCredentials(true);

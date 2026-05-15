@@ -13,6 +13,11 @@ public record LicenseValidationResponseDTO(
         String appId,
         String licensePlan,
         List<String> allowedApps,
-        List<String> activatedApps
+        List<String> activatedApps,
+        String tenantCode,
+        String tenantName,
+        String subscriptionTier,
+        List<String> features,
+        TenantBrandingDTO branding
 ) {
 }

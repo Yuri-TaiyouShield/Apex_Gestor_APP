@@ -15,6 +15,8 @@ public class ProdutoService {
 
     @Autowired
     private ProdutoRepository produtoRepository;
+    @Autowired
+    private CatalogEnrichmentService catalogEnrichmentService;
 
     public List<Produto> listarTodos() {
         return produtoRepository.findAll();
@@ -29,7 +31,9 @@ public class ProdutoService {
         if (produto.getCusto() == null) {
             produto.setCusto(BigDecimal.ZERO);
         }
-        return produtoRepository.save(produto);
+        Produto salvo = produtoRepository.save(produto);
+        catalogEnrichmentService.enrichAsync(salvo.getIdProduto());
+        return salvo;
     }
 
     @Transactional

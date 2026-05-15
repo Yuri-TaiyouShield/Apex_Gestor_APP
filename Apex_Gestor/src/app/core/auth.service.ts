@@ -54,6 +54,7 @@ export class AuthService {
     void this.secureStorage.removeItem(REFRESH_TOKEN_KEY);
     this.accessToken.set(null);
     this.user.set(null);
+    this.session.clearAuthContext();
   }
 
   registerConsent(request: ConsentRequest): Observable<unknown> {
@@ -63,13 +64,14 @@ export class AuthService {
   }
 
   personaFromRoles(roles: string[]): Persona {
-    if (roles.includes('ADMIN')) {
+    const normalized = roles.map((role) => this.session.normalizeRole(role));
+    if (normalized.some((role) => ['ROLE_SYSADMIN', 'ROLE_ADMIN'].includes(role))) {
       return 'admin';
     }
-    if (roles.includes('GERENTE')) {
+    if (normalized.some((role) => ['ROLE_DONO_GERENTE', 'ROLE_GERENTE', 'ROLE_GESTOR', 'ROLE_FINANCEIRO', 'ROLE_CAIXA', 'ROLE_DESPACHANTE'].includes(role))) {
       return 'gerente';
     }
-    if (roles.includes('VENDEDOR')) {
+    if (normalized.includes('ROLE_VENDEDOR')) {
       return 'vendedor';
     }
     return 'cliente';
@@ -82,6 +84,7 @@ export class AuthService {
     localStorage.setItem(USER_KEY, JSON.stringify({ ...response, refreshToken: '' }));
     this.accessToken.set(response.accessToken);
     this.user.set(response);
+    this.session.setRoles(response.roles);
     this.session.setPersona(this.personaFromRoles(response.roles));
   }
 

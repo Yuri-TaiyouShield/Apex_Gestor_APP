@@ -6,6 +6,8 @@ import { ApiConfigService } from './api-config.service';
 import { ApiReadinessService } from './api-readiness.service';
 import {
   AdmCalcRequest,
+  B2cCartMergeRequest,
+  B2cCartMergeResponse,
   CheckoutPayment,
   Cliente,
   Despesa,
@@ -16,6 +18,8 @@ import {
   FormaPagamento,
   Identifiable,
   LaborCalculationRequest,
+  PricingCalculationRequest,
+  PricingCalculationResponse,
   Produto,
   RelatorioFinanceiro,
   SignFinancialDocumentRequest,
@@ -116,6 +120,18 @@ export class ApexApiService {
   admCalcCalculation(payload: AdmCalcRequest): Observable<FinancialCalculationResponse> {
     return this.readiness.waitForApi().pipe(
       switchMap(() => this.http.post<FinancialCalculationResponse>(this.config.apiUrl('/api/financeiro/calculos/admcalc'), payload))
+    );
+  }
+
+  pricingCalculation(payload: PricingCalculationRequest): Observable<PricingCalculationResponse> {
+    return this.readiness.waitForApi().pipe(
+      switchMap(() => this.http.post<PricingCalculationResponse>(this.config.apiUrl('/api/financeiro/precificacao'), payload))
+    );
+  }
+
+  mergeB2cCart(payload: B2cCartMergeRequest): Observable<B2cCartMergeResponse> {
+    return this.readiness.waitForApi().pipe(
+      switchMap(() => this.http.post<B2cCartMergeResponse>(this.config.apiUrl('/api/b2c/cart/merge'), payload))
     );
   }
 

@@ -1,0 +1,190 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Infra: MySQL + RabbitMQ",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-Command",
+        "$ErrorActionPreference = 'Stop'; docker compose up -d apex-mysql apex-rabbitmq; $services = @('apex-gestor-mysql','apex-gestor-rabbitmq'); foreach ($service in $services) { Write-Host \"Aguardando $service ficar healthy...\"; $deadline = (Get-Date).AddMinutes(3); do { $status = docker inspect --format='{{.State.Health.Status}}' $service 2>$null; if ($status -eq 'healthy') { Write-Host \"$service healthy\"; break }; if ((Get-Date) -gt $deadline) { throw \"$service nao ficou healthy dentro do tempo limite. Status atual: $status\" }; Start-Sleep -Seconds 3 } while ($true) }"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Docker: compose up full",
+      "type": "shell",
+      "command": "docker compose up -d --build",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Docker: compose down",
+      "type": "shell",
+      "command": "docker compose down",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Backend: test",
+      "type": "shell",
+      "command": ".\\mvnw.cmd -q test",
+      "options": {
+        "cwd": "${workspaceFolder}/Apex-Gestordemo"
+      },
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "Backend: package",
+      "type": "shell",
+      "command": ".\\mvnw.cmd -q -DskipTests package",
+      "options": {
+        "cwd": "${workspaceFolder}/Apex-Gestordemo"
+      },
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "Backend: wait health",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-Command",
+        "$ErrorActionPreference = 'Stop'; $deadline = (Get-Date).AddMinutes(3); Write-Host 'Aguardando API em http://localhost:8080/actuator/health...'; do { try { $health = Invoke-RestMethod -Uri 'http://localhost:8080/actuator/health' -TimeoutSec 3; if ($health.status -eq 'UP') { Write-Host 'API healthy'; break } } catch { }; if ((Get-Date) -gt $deadline) { throw 'API nao ficou healthy em http://localhost:8080/actuator/health dentro do tempo limite.' }; Start-Sleep -Seconds 3 } while ($true)"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Frontend: install",
+      "type": "shell",
+      "command": "npm ci --legacy-peer-deps",
+      "options": {
+        "cwd": "${workspaceFolder}/Apex_Gestor"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Frontend: serve web",
+      "type": "shell",
+      "command": "npm run start:web",
+      "options": {
+        "cwd": "${workspaceFolder}/Apex_Gestor"
+      },
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "angular",
+        "pattern": {
+          "regexp": "^(.*)$",
+          "message": 1
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": ".*",
+          "endsPattern": "(Application bundle generation complete|Compiled successfully|Local: http://localhost:4200|localhost:4200)"
+        }
+      }
+    },
+    {
+      "label": "Frontend: serve web + wait API",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "Frontend: serve web",
+        "Backend: wait health"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Frontend: lint",
+      "type": "shell",
+      "command": "npm run lint",
+      "options": {
+        "cwd": "${workspaceFolder}/Apex_Gestor"
+      },
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "Frontend: test",
+      "type": "shell",
+      "command": "npm run test -- --watch=false --browsers=ChromeHeadless",
+      "options": {
+        "cwd": "${workspaceFolder}/Apex_Gestor"
+      },
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "Frontend: build web",
+      "type": "shell",
+      "command": "npm run build:web",
+      "options": {
+        "cwd": "${workspaceFolder}/Apex_Gestor"
+      },
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "Frontend: build web cliente",
+      "type": "shell",
+      "command": "npm run build:web:client",
+      "options": {
+        "cwd": "${workspaceFolder}/Apex_Gestor"
+      },
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "Mobile: build empresa",
+      "type": "shell",
+      "command": "npm run build:mobile:staff",
+      "options": {
+        "cwd": "${workspaceFolder}/Apex_Gestor"
+      },
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "Mobile: build cliente",
+      "type": "shell",
+      "command": "npm run build:mobile:client",
+      "options": {
+        "cwd": "${workspaceFolder}/Apex_Gestor"
+      },
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "Mobile: capacitor sync",
+      "type": "shell",
+      "command": "npx capacitor sync android",
+      "options": {
+        "cwd": "${workspaceFolder}/Apex_Gestor"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "All: quick validation",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "Backend: test",
+        "Frontend: lint",
+        "Frontend: build web"
+      ],
+      "problemMatcher": []
+    }
+  ]
+}

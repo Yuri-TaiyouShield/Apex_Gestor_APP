@@ -12,13 +12,13 @@
           <div class="brand-mark">A</div>
           <div>
             <strong>{{ title() }}</strong>
-            <span>{{ platformLabel() }} | {{ session.roleLabel() }}</span>
+            <span>{{ platformLabel() }} | {{ session.roleLabel() }} | {{ tenantFeatures.context().subscriptionTier }}</span>
           </div>
         </section>
 
         <ion-list lines="none">
           @for (item of visibleNavItems(); track item.path) {
-            <ion-menu-toggle auto-hide="true">
+            <ion-menu-toggle [autoHide]="false">
               <ion-item
                 button
                 detail="false"

@@ -6,14 +6,9 @@ import { filter, map, startWith } from 'rxjs';
 import { IonicModule, MenuController } from '@ionic/angular';
 
 import { DEFAULT_HOME_ROUTE } from './core/app-variant';
+import { APEX_NAV_ITEMS } from './core/feature-menu.config';
 import { SessionService } from './core/session.service';
-
-interface NavItem {
-  label: string;
-  path: string;
-  icon: string;
-  audience: 'cliente' | 'staff' | 'both';
-}
+import { TenantFeatureService } from './core/tenant-feature.service';
 
 @Component({
   selector: 'app-root',
@@ -26,6 +21,7 @@ export class AppComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly menu = inject(MenuController);
   readonly session = inject(SessionService);
+  readonly tenantFeatures = inject(TenantFeatureService);
 
   private readonly currentUrl = toSignal(
     this.router.events.pipe(
@@ -49,31 +45,24 @@ export class AppComponent implements OnInit {
     return 'Web';
   });
 
-  readonly title = computed(() => (this.isCommerce() ? 'Apex Store' : 'Apex Gestor'));
-
-  readonly navItems: NavItem[] = [
-    { label: 'Loja Online', path: '/store', icon: 'storefront-outline', audience: 'both' },
-    { label: 'Carrinho', path: '/cart', icon: 'cart-outline', audience: 'cliente' },
-    { label: 'Dashboard', path: '/', icon: 'bar-chart-outline', audience: 'staff' },
-    { label: 'PDV / Caixa', path: '/pos', icon: 'cash-outline', audience: 'staff' },
-    { label: 'Produtos', path: '/products', icon: 'cube-outline', audience: 'staff' },
-    { label: 'Clientes CRM', path: '/clients', icon: 'people-outline', audience: 'staff' },
-    { label: 'Fornecedores', path: '/suppliers', icon: 'business-outline', audience: 'staff' },
-    { label: 'Funcionários', path: '/users', icon: 'person-circle-outline', audience: 'staff' },
-    { label: 'Entrada XML NF', path: '/invoice-entry', icon: 'document-text-outline', audience: 'staff' },
-    { label: 'Despesas', path: '/expenses', icon: 'receipt-outline', audience: 'staff' },
-    { label: 'Financeiro Pro', path: '/finance', icon: 'calculator-outline', audience: 'staff' },
-    { label: 'Tipos de Despesa', path: '/expense-types', icon: 'pricetags-outline', audience: 'staff' },
-    { label: 'Privacidade LGPD', path: '/privacy', icon: 'shield-checkmark-outline', audience: 'both' },
-    { label: 'Configurações', path: '/settings', icon: 'settings-outline', audience: 'staff' }
-  ];
+  readonly title = computed(() => {
+    if (this.isCommerce() && this.tenantFeatures.isWhiteLabelB2C()) {
+      return this.tenantFeatures.context().branding?.storefrontName ?? this.tenantFeatures.context().tenantName;
+    }
+    return this.isCommerce() ? 'Apex Store' : 'Apex Gestor';
+  });
 
   readonly visibleNavItems = computed(() => {
     const persona = this.session.persona();
-    return this.navItems.filter((item) => item.audience === 'both' || item.audience === persona || persona !== 'cliente');
+    return APEX_NAV_ITEMS.filter((item) => {
+      const audienceAllowed = item.audience === 'both' || item.audience === persona || persona !== 'cliente';
+      const roleAllowed = this.session.hasAnyRole(item.allowedRoles);
+      return audienceAllowed && roleAllowed && this.tenantFeatures.hasAll(item.requiredFeatures);
+    });
   });
 
   ngOnInit(): void {
+    this.tenantFeatures.refreshFromCache();
     if (DEFAULT_HOME_ROUTE !== '/' && this.router.url === '/') {
       this.router.navigateByUrl(DEFAULT_HOME_ROUTE, { replaceUrl: true });
     }

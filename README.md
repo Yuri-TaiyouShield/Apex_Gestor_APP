@@ -22,8 +22,11 @@ Sistema hibrido de ERP, PDV, e-commerce e compliance financeiro para empresas de
 - [Guia de Escalabilidade do Banco](docs/GUIA_ESCALABILIDADE_BANCO.md)
 - [Modulo Financeiro AdmCalc](docs/MODULO_FINANCEIRO_ADMCALC.md)
 - [Arquitetura Enterprise v4](docs/ARQUITETURA_ENTERPRISE_V4.md)
+- [SaaS Multi-Tier e Feature Toggling](docs/SAAS_MULTI_TIER_FEATURE_FLAGS.md)
 - [Repository Spring Data JPA v4](docs/REPOSITORY_SPRING_DATA_JPA_V4.md)
 - [DevEx Bootstrap Windows](docs/DEVEX_BOOTSTRAP_WINDOWS.md)
+- [Codespaces, Prebuilds e Execucao Hibrida](docs/CODESPACES_HYBRID_RUNBOOK.md)
+- [Apex Gestor v5 Enterprise](docs/APEX_GESTOR_V5_ENTERPRISE.md)
 
 ## Ambiente completo com Docker
 

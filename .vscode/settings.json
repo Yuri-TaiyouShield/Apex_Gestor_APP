@@ -1,3 +1,28 @@
 {
-    "java.compile.nullAnalysis.mode": "automatic"
+  "java.compile.nullAnalysis.mode": "automatic",
+  "java.jdt.ls.vmargs": "-XX:+UseParallelGC -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90 -Dsun.zip.disableMemoryMapping=true -Xmx4G -Xms100m -Xlog:disable",
+  "java.configuration.updateBuildConfiguration": "interactive",
+  "java.import.maven.enabled": true,
+  "java.import.gradle.enabled": true,
+  "maven.terminal.useJavaHome": true,
+  "npm.packageManager": "npm",
+  "typescript.tsdk": "Apex_Gestor/node_modules/typescript/lib",
+  "eslint.workingDirectories": [
+    {
+      "directory": "Apex_Gestor",
+      "changeProcessCWD": true
+    }
+  ],
+  "terminal.integrated.defaultProfile.windows": "PowerShell",
+  "files.exclude": {
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/target": true
+  },
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/target": true,
+    "**/Apex_Gestor/android/.gradle": true
+  }
 }

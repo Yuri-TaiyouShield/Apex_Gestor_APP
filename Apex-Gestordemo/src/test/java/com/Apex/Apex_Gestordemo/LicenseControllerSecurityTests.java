@@ -43,7 +43,8 @@ class LicenseControllerSecurityTests {
                           "deviceLabel": "CI Web",
                           "platform": "web",
                           "appVersion": "ci",
-                          "appId": "web-client"
+                          "appId": "web-client",
+                          "tenantCode": "apex-demo"
                         }
                         """))
                 .build();
@@ -53,5 +54,6 @@ class LicenseControllerSecurityTests {
         assertThat(response.statusCode()).isEqualTo(200);
         assertThat(response.body()).contains("\"valid\":true");
         assertThat(response.body()).contains("\"appId\":\"web-client\"");
+        assertThat(response.body()).contains("\"tenantCode\":\"apex-demo\"");
     }
 }

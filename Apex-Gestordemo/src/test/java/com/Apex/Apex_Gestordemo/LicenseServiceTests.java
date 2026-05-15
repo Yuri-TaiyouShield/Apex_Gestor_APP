@@ -75,6 +75,6 @@ class LicenseServiceTests {
     }
 
     private LicenseValidationRequestDTO request(String key, String device, String appId) {
-        return new LicenseValidationRequestDTO(key, device, "Dispositivo de teste", appId, "3.1.0", appId);
+        return new LicenseValidationRequestDTO(key, device, "Dispositivo de teste", appId, "3.1.0", appId, "apex-demo");
     }
 }

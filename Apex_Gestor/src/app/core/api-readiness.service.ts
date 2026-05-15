@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable, catchError, filter, map, of, switchMap, take, timer } from 'rxjs';
+import { Observable, catchError, filter, map, of, switchMap, take, throwError, timeout, timer } from 'rxjs';
 
 import { ApiConfigService } from './api-config.service';
 
@@ -13,7 +13,7 @@ export class ApiReadinessService {
   private readonly http = inject(HttpClient);
   private readonly config = inject(ApiConfigService);
 
-  waitForApi(): Observable<void> {
+  waitForApi(timeoutMs = 15000): Observable<void> {
     return timer(0, 1500).pipe(
       switchMap(() => this.http.get<HealthResponse>(this.config.healthUrl()).pipe(
         map((response) => response.status === 'UP'),
@@ -21,7 +21,11 @@ export class ApiReadinessService {
       )),
       filter(Boolean),
       take(1),
-      map(() => undefined)
+      map(() => undefined),
+      timeout({
+        first: timeoutMs,
+        with: () => throwError(() => new Error('API_UNAVAILABLE'))
+      })
     );
   }
 }

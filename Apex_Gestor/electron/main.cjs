@@ -6,6 +6,58 @@ const { pathToFileURL } = require('node:url');
 
 const isDev = !app.isPackaged;
 
+function loadLocalEnv() {
+  const candidates = [
+    path.join(process.cwd(), '.env.local'),
+    path.join(app.getAppPath(), '.env.local')
+  ];
+
+  for (const envPath of candidates) {
+    if (!fs.existsSync(envPath)) {
+      continue;
+    }
+    const lines = fs.readFileSync(envPath, 'utf8').split(/\r?\n/);
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith('#') || !trimmed.includes('=')) {
+        continue;
+      }
+      const [key, ...valueParts] = trimmed.split('=');
+      if (!process.env[key]) {
+        process.env[key] = valueParts.join('=').replace(/^['"]|['"]$/g, '');
+      }
+    }
+  }
+}
+
+function readArgValue(name) {
+  const direct = process.argv.find((value) => value.startsWith(`${name}=`));
+  if (direct) {
+    return direct.slice(name.length + 1);
+  }
+  const index = process.argv.indexOf(name);
+  if (index >= 0 && process.argv[index + 1]) {
+    return process.argv[index + 1];
+  }
+  return undefined;
+}
+
+function normalizeBaseUrl(value) {
+  return String(value || 'http://localhost:8080').trim().replace(/\/$/, '');
+}
+
+function configuredApiBaseUrl() {
+  return normalizeBaseUrl(
+    readArgValue('--api-url')
+      || process.env.APEX_API_BASE_URL
+      || process.env.ELECTRON_API_URL
+      || process.env.API_BASE_URL
+  );
+}
+
+loadLocalEnv();
+process.env.APEX_API_BASE_URL = configuredApiBaseUrl();
+
 protocol.registerSchemesAsPrivileged([
   {
     scheme: 'app',
@@ -122,7 +174,7 @@ function desktopDeviceInfo() {
   return {
     platform: process.platform,
     isDesktop: true,
-    defaultApiUrl: 'http://localhost:8080',
+    defaultApiUrl: configuredApiBaseUrl(),
     deviceFingerprint: crypto.createHash('sha256').update(source).digest('hex'),
     deviceLabel: `Apex Desktop ${process.platform} ${process.arch}`
   };
