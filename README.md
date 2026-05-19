@@ -14,7 +14,7 @@ Sistema hibrido de ERP, PDV, e-commerce e compliance financeiro para empresas de
 
 - `Apex-Gestordemo/`: backend Spring Boot que a pipeline atual compila.
 - `Apex_Gestor/`: frontend Angular/Ionic e cliente Electron/Capacitor que a pipeline atual compila.
-- `apps/`: topologia alvo do monorepo por plataforma, com READMEs de cada app.
+- `apps/`: topologia alvo do monorepo por plataforma, com READMEs de cada app e prototipos de interface.
 - `packages/shared/`: contratos e utilitarios compartilhados planejados.
 - `docs/`: documentacao funcional, tecnica, operacional, banco e governanca.
 - `docs/database/`: modelo/dump historico do banco e scripts SQL de referencia.
@@ -37,8 +37,16 @@ Veja o mapa completo em [Mapa do Repositorio](docs/00_MAPA_DO_REPOSITORIO.md) e 
 - [Arquitetura Enterprise v4](docs/ARQUITETURA_ENTERPRISE_V4.md)
 - [Repository Spring Data JPA v4](docs/REPOSITORY_SPRING_DATA_JPA_V4.md)
 - [DevEx Bootstrap Windows](docs/DEVEX_BOOTSTRAP_WINDOWS.md)
+- [UX/UI Gestor Apex Bootstrap](docs/UX_UI_GESTOR_APEX_BOOTSTRAP.md)
 - [Mapa do Repositorio](docs/00_MAPA_DO_REPOSITORIO.md)
 - [Branches e Versoes](docs/branches/README.md)
+
+Documentacao padronizada do prototipo Gestor Apex Bootstrap:
+
+- [Design System](docs/modulos/gestor-apex-bootstrap/DESIGN_SYSTEM.md)
+- [PDV Modo Focado](docs/modulos/gestor-apex-bootstrap/PDV_MODO_FOCADO.md)
+- [Dashboard e Estoque](docs/modulos/gestor-apex-bootstrap/DASHBOARD_ESTOQUE.md)
+- [Alertas e Erros](docs/modulos/gestor-apex-bootstrap/ALERTAS_ERROS.md)
 
 ## Ambiente completo com Docker
 
