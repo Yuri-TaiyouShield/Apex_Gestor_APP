@@ -38,12 +38,33 @@ O **Apex Gestor** é uma solução de software robusta, pensada para atender às
 
 ## 🚀 Tecnologias Utilizadas
 
-- **Frontend:** `HTML`, `CSS`, `Bootstrap`
+- **Frontend:** `Electron`, `HTML`, `CSS`, `JavaScript`
 - **Backend:** `Java (Servlets & JSP)`
 - **Banco de Dados:** `PostgreSQL`
 - **Servidor de Aplicação:** `Apache Tomcat`
 - **Controle de Versão:** `Git & GitHub`
 - **Gerenciador de Dependências:** `Maven`
+
+---
+
+## 🖥️ Branch UI Electron Desktop
+
+Esta branch (`codex/ui/electron-desktop-admcalc`) foi provisionada a partir de `codex/legacy/pre-v3-apex-gestor-2` para isolar a camada Desktop em Electron.
+
+- App: `apps/electron-desktop`
+- Menu lateral: interativo e retrátil para PDV desktop.
+- Tema: alternância entre Light Mode e Dark Mode.
+- Segurança: `contextIsolation`, `sandbox` e `nodeIntegration: false`.
+- AdmCalc: tela financeira funcional com cálculo local e integração REST em `${APEX_API_URL}/api/admcalc/calcular`.
+- Backend: endpoint `AdmCalcController` adicionado ao Spring Boot legado.
+
+Executar:
+
+```bash
+cd apps/electron-desktop
+npm install
+npm run start
+```
 
 ---
 
