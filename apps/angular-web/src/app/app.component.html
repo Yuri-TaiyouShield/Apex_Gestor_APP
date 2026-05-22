@@ -1,0 +1,142 @@
+<div class="app-shell" [class.sidebar-collapsed]="sidebarCollapsed()">
+  <aside class="sidebar" aria-label="Menu principal">
+    <div class="brand">
+      <span class="brand-mark">A</span>
+      <div class="brand-copy">
+        <strong>Apex Gestor</strong>
+        <small>Angular Web</small>
+      </div>
+    </div>
+
+    <button type="button" class="nav-item" [class.active]="activeView() === 'dashboard'" (click)="setView('dashboard')">
+      <span>◧</span>
+      <strong>Dashboard</strong>
+    </button>
+    <button type="button" class="nav-item" [class.active]="activeView() === 'estoque'" (click)="setView('estoque')">
+      <span>▦</span>
+      <strong>Estoque</strong>
+    </button>
+    <button type="button" class="nav-item" [class.active]="activeView() === 'admcalc'" (click)="setView('admcalc')">
+      <span>∑</span>
+      <strong>AdmCalc</strong>
+    </button>
+
+    <div class="sidebar-status">
+      <span class="status-dot"></span>
+      <span>AdmCalc integrado</span>
+    </div>
+  </aside>
+
+  <main class="main-panel">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Gestão web responsiva</p>
+        <h1>{{ title() }}</h1>
+      </div>
+      <div class="toolbar">
+        <button type="button" class="btn ghost" (click)="toggleSidebar()">
+          {{ sidebarCollapsed() ? 'Expandir menu' : 'Recolher menu' }}
+        </button>
+        <button type="button" class="btn ghost" (click)="toggleTheme()">
+          {{ theme() === 'dark' ? 'Light Mode' : 'Dark Mode' }}
+        </button>
+        <button type="button" class="btn primary" (click)="sync()">Sincronizar API</button>
+      </div>
+    </header>
+
+    <section class="toast" aria-live="polite">{{ toast() }}</section>
+
+    <section *ngIf="activeView() === 'dashboard'" class="view-grid">
+      <article class="metric-card">
+        <span>Vendas do dia</span>
+        <strong>R$ 48.920,00</strong>
+        <small>+18% sobre a média da semana</small>
+      </article>
+      <article class="metric-card">
+        <span>Margem operacional</span>
+        <strong>31,4%</strong>
+        <small>Dentro da meta financeira</small>
+      </article>
+      <article class="metric-card warning">
+        <span>Produtos críticos</span>
+        <strong>16</strong>
+        <small>Cimento, fios e disjuntores exigem compra</small>
+      </article>
+      <article class="panel wide">
+        <h2>Operação web</h2>
+        <p>Dashboard preparado para leitura gerencial em desktop e notebooks, com cards enxutos, contraste alto e ações claras.</p>
+        <button type="button" class="btn primary" (click)="setView('admcalc')">Abrir AdmCalc financeiro</button>
+      </article>
+    </section>
+
+    <section *ngIf="activeView() === 'estoque'" class="panel">
+      <div class="section-heading">
+        <h2>Estoque inteligente</h2>
+        <button type="button" class="btn secondary" (click)="toast.set('Pedido de compra criado em rascunho.')">Gerar compra</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Produto</th>
+              <th>Categoria</th>
+              <th>Saldo</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Cimento CP II 50kg</td><td>Obra pesada</td><td>22</td><td><span class="badge warning">Baixo</span></td></tr>
+            <tr><td>Tinta acrílica 18L</td><td>Acabamento</td><td>48</td><td><span class="badge ok">Saudável</span></td></tr>
+            <tr><td>Disjuntor bipolar 32A</td><td>Elétrica</td><td>7</td><td><span class="badge danger">Crítico</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section *ngIf="activeView() === 'admcalc'" class="admcalc-layout">
+      <form class="panel form-grid" (ngSubmit)="calcularAdmCalc()">
+        <div class="section-heading full">
+          <div>
+            <h2>AdmCalc financeiro</h2>
+            <p>Cálculos trabalhistas, adicionais, benefícios e Fator R com fallback local e integração REST.</p>
+          </div>
+          <button type="submit" class="btn primary" [disabled]="loading()">
+            {{ loading() ? 'Calculando...' : 'Calcular AdmCalc' }}
+          </button>
+        </div>
+
+        <label>Salário mensal <input type="number" name="salarioMensal" [(ngModel)]="form.salarioMensal"></label>
+        <label>Jornada mensal <input type="number" name="jornadaMensal" [(ngModel)]="form.jornadaMensal"></label>
+        <label>Percentual HE <input type="number" step="0.01" name="percentualHoraExtra" [(ngModel)]="form.percentualHoraExtra"></label>
+        <label>Horas extras <input type="number" name="horasExtras" [(ngModel)]="form.horasExtras"></label>
+        <label>Horas noturnas <input type="number" name="horasNoturnasRelogio" [(ngModel)]="form.horasNoturnasRelogio"></label>
+        <label>Insalubridade <input type="number" step="0.01" name="percentualInsalubridade" [(ngModel)]="form.percentualInsalubridade"></label>
+        <label>Custo VT <input type="number" name="custoPassagens" [(ngModel)]="form.custoPassagens"></label>
+        <label>Filhos elegíveis <input type="number" name="filhosElegiveis" [(ngModel)]="form.filhosElegiveis"></label>
+        <label>Receita bruta <input type="number" name="receitaBruta" [(ngModel)]="form.receitaBruta"></label>
+        <label>Folha salários <input type="number" name="folhaSalarios" [(ngModel)]="form.folhaSalarios"></label>
+        <label class="check-row"><input type="checkbox" name="adicionalPericulosidade" [(ngModel)]="form.adicionalPericulosidade"> Aplicar periculosidade</label>
+      </form>
+
+      <aside class="panel result-card">
+        <h2>Resultado</h2>
+        <ng-container *ngIf="resultado() as r; else emptyResult">
+          <dl>
+            <div><dt>Salário-hora</dt><dd>{{ r.salarioHora | currency:'BRL' }}</dd></div>
+            <div><dt>Hora extra</dt><dd>{{ r.valorHorasExtras | currency:'BRL' }}</dd></div>
+            <div><dt>Periculosidade</dt><dd>{{ r.adicionalPericulosidade | currency:'BRL' }}</dd></div>
+            <div><dt>VT</dt><dd>{{ r.descontoValeTransporte | currency:'BRL' }}</dd></div>
+            <div><dt>13º proporcional</dt><dd>{{ r.decimoTerceiroProporcional | currency:'BRL' }}</dd></div>
+            <div><dt>Férias + 1/3</dt><dd>{{ r.feriasComTerco | currency:'BRL' }}</dd></div>
+            <div><dt>Fator R</dt><dd>{{ r.fatorR | percent:'1.2-2' }}</dd></div>
+          </dl>
+          <p class="recommendation">{{ r.recomendacao }}</p>
+          <button type="button" class="btn secondary" (click)="exportarResumo()">Exportar resumo</button>
+        </ng-container>
+        <ng-template #emptyResult>
+          <p class="empty-state">Preencha os dados e clique em Calcular AdmCalc para gerar os indicadores.</p>
+        </ng-template>
+      </aside>
+    </section>
+  </main>
+</div>

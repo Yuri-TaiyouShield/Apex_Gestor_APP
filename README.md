@@ -38,12 +38,32 @@ O **Apex Gestor** é uma solução de software robusta, pensada para atender às
 
 ## 🚀 Tecnologias Utilizadas
 
-- **Frontend:** `HTML`, `CSS`, `Bootstrap`
+- **Frontend:** `Angular Web`, `HTML`, `CSS`
 - **Backend:** `Java (Servlets & JSP)`
 - **Banco de Dados:** `PostgreSQL`
 - **Servidor de Aplicação:** `Apache Tomcat`
 - **Controle de Versão:** `Git & GitHub`
 - **Gerenciador de Dependências:** `Maven`
+
+---
+
+## 🌐 Branch UI Angular Web
+
+Esta branch (`codex/ui/angular-web-admcalc`) foi provisionada a partir de `codex/legacy/pre-v3-apex-gestor-2` para isolar a camada Web em Angular.
+
+- App: `apps/angular-web`
+- Menu lateral: interativo e retrátil.
+- Tema: alternância entre Light Mode e Dark Mode.
+- AdmCalc: tela financeira funcional com cálculo local e integração REST em `/api/admcalc/calcular`.
+- Backend: endpoint `AdmCalcController` adicionado ao Spring Boot legado.
+
+Executar:
+
+```bash
+cd apps/angular-web
+npm install
+npm run start
+```
 
 ---
 
