@@ -8,29 +8,40 @@
       </div>
     </div>
 
-    <button type="button" class="nav-item" [class.active]="activeView() === 'dashboard'" (click)="setView('dashboard')">
+    <button type="button" class="nav-item root" [class.active]="activeView() === 'dashboard'" (click)="setView('dashboard')">
       <span>◧</span>
       <strong>Dashboard</strong>
     </button>
-    <button type="button" class="nav-item" [class.active]="activeView() === 'estoque'" (click)="setView('estoque')">
-      <span>▦</span>
-      <strong>Estoque</strong>
-    </button>
-    <button type="button" class="nav-item" [class.active]="activeView() === 'admcalc'" (click)="setView('admcalc')">
-      <span>∑</span>
-      <strong>AdmCalc</strong>
-    </button>
+
+    <section *ngFor="let group of navGroups" class="nav-group">
+      <button type="button" class="nav-item group-toggle" (click)="toggleGroup(group.id)" [attr.aria-expanded]="expandedGroups()[group.id]">
+        <span>{{ group.icon }}</span>
+        <strong>{{ group.label }}</strong>
+        <em>{{ expandedGroups()[group.id] ? '−' : '+' }}</em>
+      </button>
+      <div class="nested-menu" *ngIf="expandedGroups()[group.id] && !sidebarCollapsed()">
+        <button
+          *ngFor="let featureKey of group.features"
+          type="button"
+          class="nested-item"
+          [class.active]="activeView() === featureKey"
+          (click)="setView(featureKey)">
+          <span>{{ featureByKey(featureKey)?.icon }}</span>
+          <strong>{{ featureByKey(featureKey)?.label }}</strong>
+        </button>
+      </div>
+    </section>
 
     <div class="sidebar-status">
       <span class="status-dot"></span>
-      <span>AdmCalc integrado</span>
+      <span>{{ features.length }} classes mapeadas</span>
     </div>
   </aside>
 
   <main class="main-panel">
     <header class="topbar">
       <div>
-        <p class="eyebrow">Gestão web responsiva</p>
+        <p class="eyebrow">Paridade entre domínio e interface</p>
         <h1>{{ title() }}</h1>
       </div>
       <div class="toolbar">
@@ -40,63 +51,121 @@
         <button type="button" class="btn ghost" (click)="toggleTheme()">
           {{ theme() === 'dark' ? 'Light Mode' : 'Dark Mode' }}
         </button>
-        <button type="button" class="btn primary" (click)="sync()">Sincronizar API</button>
+        <button type="button" class="btn primary" (click)="sync()" [disabled]="loading()">Sincronizar API</button>
       </div>
     </header>
 
     <section class="toast" aria-live="polite">{{ toast() }}</section>
 
-    <section *ngIf="activeView() === 'dashboard'" class="view-grid">
-      <article class="metric-card">
-        <span>Vendas do dia</span>
-        <strong>R$ 48.920,00</strong>
-        <small>+18% sobre a média da semana</small>
-      </article>
-      <article class="metric-card">
-        <span>Margem operacional</span>
-        <strong>31,4%</strong>
-        <small>Dentro da meta financeira</small>
-      </article>
-      <article class="metric-card warning">
-        <span>Produtos críticos</span>
-        <strong>16</strong>
-        <small>Cimento, fios e disjuntores exigem compra</small>
-      </article>
-      <article class="panel wide">
-        <h2>Operação web</h2>
-        <p>Dashboard preparado para leitura gerencial em desktop e notebooks, com cards enxutos, contraste alto e ações claras.</p>
-        <button type="button" class="btn primary" (click)="setView('admcalc')">Abrir AdmCalc financeiro</button>
-      </article>
+    <section *ngIf="activeView() === 'dashboard'" class="dashboard-stack">
+      <div class="view-grid">
+        <article class="metric-card">
+          <span>Classes cobertas</span>
+          <strong>{{ features.length }}</strong>
+          <small>Inclui chaves compostas e DTO financeiro</small>
+        </article>
+        <article class="metric-card">
+          <span>Grupos de navegação</span>
+          <strong>{{ navGroups.length }}</strong>
+          <small>Com subcategorias operacionais aninhadas</small>
+        </article>
+        <article class="metric-card warning">
+          <span>Módulo financeiro</span>
+          <strong>Agregado</strong>
+          <small>Despesas, pagamentos, balanço e AdmCalc</small>
+        </article>
+      </div>
+
+      <section class="group-grid">
+        <article *ngFor="let group of navGroups" class="panel group-card">
+          <div>
+            <span class="group-icon">{{ group.icon }}</span>
+            <h2>{{ group.label }}</h2>
+            <p>{{ group.summary }}</p>
+          </div>
+          <div class="chip-row">
+            <button *ngFor="let featureKey of group.features" type="button" class="chip" (click)="setView(featureKey)">
+              {{ featureByKey(featureKey)?.label }}
+            </button>
+          </div>
+        </article>
+      </section>
     </section>
 
-    <section *ngIf="activeView() === 'estoque'" class="panel">
-      <div class="section-heading">
-        <h2>Estoque inteligente</h2>
-        <button type="button" class="btn secondary" (click)="toast.set('Pedido de compra criado em rascunho.')">Gerar compra</button>
-      </div>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Produto</th>
-              <th>Categoria</th>
-              <th>Saldo</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr><td>Cimento CP II 50kg</td><td>Obra pesada</td><td>22</td><td><span class="badge warning">Baixo</span></td></tr>
-            <tr><td>Tinta acrílica 18L</td><td>Acabamento</td><td>48</td><td><span class="badge ok">Saudável</span></td></tr>
-            <tr><td>Disjuntor bipolar 32A</td><td>Elétrica</td><td>7</td><td><span class="badge danger">Crítico</span></td></tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
+    <ng-container *ngIf="activeFeature() as feature">
+      <section *ngIf="feature.key !== 'admcalc'" class="domain-layout">
+        <article class="panel domain-hero">
+          <div>
+            <span class="domain-icon">{{ feature.icon }}</span>
+            <p class="eyebrow">{{ feature.className }}</p>
+            <h2>{{ feature.label }}</h2>
+            <p>{{ feature.description }}</p>
+          </div>
+          <div class="endpoint-card">
+            <span>Endpoint</span>
+            <code>{{ feature.endpoint }}</code>
+            <strong>{{ featureSyncLabel(feature) }}</strong>
+          </div>
+        </article>
+
+        <article class="panel">
+          <div class="section-heading">
+            <div>
+              <h2>Operações disponíveis</h2>
+              <p>Todos os botões executam uma ação de UI e registram o próximo passo do fluxo.</p>
+            </div>
+            <button type="button" class="btn primary" (click)="syncFeature(feature)" [disabled]="loading()">Sincronizar {{ feature.label }}</button>
+          </div>
+          <div class="action-grid">
+            <button *ngFor="let operation of feature.operations" type="button" class="action-button" (click)="runFeatureAction(feature, operation)">
+              {{ operation }}
+            </button>
+          </div>
+        </article>
+
+        <article class="panel">
+          <h2>Campos do modelo</h2>
+          <div class="field-grid">
+            <span *ngFor="let field of feature.fields">{{ field }}</span>
+          </div>
+        </article>
+
+        <article class="panel">
+          <div class="section-heading">
+            <div>
+              <h2>Prévia operacional</h2>
+              <p>Dados de referência para validação visual quando a API ainda não estiver disponível.</p>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <tbody>
+                <tr *ngFor="let row of feature.sampleRows">
+                  <td *ngFor="let cell of row | keyvalue">
+                    <span>{{ cell.key }}</span>
+                    <strong>{{ cell.value }}</strong>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </article>
+
+        <aside class="panel action-log">
+          <h2>Registro de fluxo</h2>
+          <p>{{ actionLog() }}</p>
+          <button type="button" class="btn secondary" (click)="runFeatureAction(feature, 'Validar permissões e auditoria')">
+            Validar permissões e auditoria
+          </button>
+        </aside>
+      </section>
+    </ng-container>
 
     <section *ngIf="activeView() === 'admcalc'" class="admcalc-layout">
       <form class="panel form-grid" (ngSubmit)="calcularAdmCalc()">
         <div class="section-heading full">
           <div>
+            <p class="eyebrow">AdmCalcController.java</p>
             <h2>AdmCalc financeiro</h2>
             <p>Cálculos trabalhistas, adicionais, benefícios e Fator R com fallback local e integração REST.</p>
           </div>
