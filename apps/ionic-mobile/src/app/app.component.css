@@ -1,0 +1,344 @@
+.mobile-shell {
+  display: grid;
+  grid-template-columns: 244px minmax(0, 1fr);
+  width: 100%;
+  max-width: 100vw;
+  min-height: 100vh;
+  overflow-x: hidden;
+  background: var(--apex-bg);
+  color: var(--apex-text);
+  transition: grid-template-columns .2s ease;
+}
+
+.mobile-shell.collapsed {
+  grid-template-columns: 76px minmax(0, 1fr);
+}
+
+.side-menu {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  padding: calc(env(safe-area-inset-top) + 18px) 12px 18px;
+  border-right: 1px solid var(--apex-border);
+  background: var(--apex-surface);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.brand span {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  border-radius: 12px;
+  background: var(--apex-primary);
+  color: #fff;
+  font-weight: 900;
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 0 12px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--apex-muted);
+  font: inherit;
+  font-weight: 800;
+}
+
+.menu-item.active,
+.menu-item:hover {
+  background: var(--apex-primary-soft);
+  color: var(--apex-primary);
+}
+
+.collapsed .brand strong,
+.collapsed .menu-item strong {
+  display: none;
+}
+
+.mobile-main {
+  min-width: 0;
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+.mobile-topbar {
+  position: sticky;
+  z-index: 10;
+  top: 0;
+  display: grid;
+  grid-template-columns: 82px minmax(0, 1fr) 82px;
+  align-items: center;
+  gap: 10px;
+  min-height: 66px;
+  padding: calc(env(safe-area-inset-top) + 10px) 14px 10px;
+  border-bottom: 1px solid var(--apex-border);
+  background: var(--apex-surface);
+}
+
+.mobile-topbar div {
+  min-width: 0;
+  display: grid;
+  text-align: center;
+}
+
+.mobile-topbar small,
+.mobile-card p,
+.status-pill {
+  color: var(--apex-muted);
+}
+
+.content {
+  padding: 16px;
+}
+
+.status-pill,
+.mobile-card {
+  border: 1px solid var(--apex-border);
+  border-radius: 14px;
+  background: var(--apex-surface);
+  box-shadow: var(--apex-shadow);
+}
+
+.status-pill {
+  margin-bottom: 14px;
+  padding: 12px 14px;
+}
+
+.mobile-grid,
+.admcalc {
+  display: grid;
+  gap: 14px;
+}
+
+.mobile-card {
+  padding: 16px;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.card-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.card-heading > div {
+  min-width: 0;
+}
+
+h2,
+p {
+  margin-top: 0;
+}
+
+h2 {
+  margin-bottom: 4px;
+  color: var(--apex-text);
+  font-size: 1.12rem;
+}
+
+.metric {
+  display: block;
+  margin: 8px 0;
+  color: var(--apex-text);
+  font-size: 2rem;
+  line-height: 1.1;
+}
+
+.badge {
+  align-self: start;
+  flex-shrink: 0;
+  padding: 6px 9px;
+  border-radius: 999px;
+  font-size: .78rem;
+  font-weight: 900;
+}
+
+.badge.ok {
+  background: rgba(17, 107, 77, .12);
+  color: var(--apex-success);
+}
+
+.badge.warn {
+  background: rgba(161, 92, 7, .14);
+  color: var(--apex-warning);
+}
+
+.btn {
+  min-height: 44px;
+  min-width: 0;
+  padding: 0 14px;
+  border: 1px solid var(--apex-border);
+  border-radius: 12px;
+  background: var(--apex-surface);
+  color: var(--apex-primary);
+  font: inherit;
+  font-weight: 900;
+}
+
+.btn.primary {
+  border-color: var(--apex-primary);
+  background: var(--apex-primary);
+  color: #fff;
+}
+
+.btn.secondary,
+.btn.ghost {
+  background: var(--apex-surface);
+  color: var(--apex-primary);
+}
+
+.btn.full {
+  width: 100%;
+  margin-top: 8px;
+}
+
+.btn.large {
+  min-height: 52px;
+}
+
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: .6;
+}
+
+.btn:focus-visible,
+.menu-item:focus-visible,
+input:focus-visible {
+  outline: 3px solid var(--apex-focus);
+  outline-offset: 2px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+label {
+  display: grid;
+  gap: 6px;
+  color: var(--apex-muted);
+  font-weight: 800;
+}
+
+input {
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--apex-border);
+  border-radius: 12px;
+  background: var(--apex-input);
+  color: var(--apex-text);
+  font: inherit;
+}
+
+.toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.toggle-row input {
+  min-height: auto;
+  width: 20px;
+  height: 20px;
+}
+
+.result-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--apex-border);
+}
+
+.result-row span {
+  color: var(--apex-muted);
+}
+
+.result-row strong {
+  color: var(--apex-text);
+}
+
+.recommendation {
+  margin: 12px 0 0;
+  padding: 12px;
+  border-radius: 12px;
+  background: var(--apex-primary-soft);
+}
+
+@media (max-width: 720px) {
+  .mobile-shell,
+  .mobile-shell.collapsed {
+    display: block;
+    width: 100vw;
+    max-width: 100vw;
+  }
+
+  .side-menu {
+    position: sticky;
+    z-index: 20;
+    top: 0;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    width: 100%;
+    max-width: 100vw;
+    border-right: 0;
+    border-bottom: 1px solid var(--apex-border);
+  }
+
+  .mobile-main,
+  .content,
+  .mobile-topbar,
+  .mobile-card,
+  .status-pill {
+    width: 100%;
+    max-width: 100vw;
+  }
+
+  .mobile-topbar {
+    display: flex;
+    justify-content: space-between;
+    padding-inline: 10px;
+  }
+
+  .mobile-topbar > .btn {
+    flex: 0 0 74px;
+    padding-inline: 8px;
+  }
+
+  .mobile-topbar > div {
+    flex: 1 1 auto;
+  }
+
+  .content {
+    padding-inline: 14px;
+  }
+
+  .card-heading {
+    flex-wrap: wrap;
+  }
+
+  .brand,
+  .menu-item {
+    justify-content: center;
+  }
+
+  .brand strong,
+  .menu-item strong {
+    display: none;
+  }
+}

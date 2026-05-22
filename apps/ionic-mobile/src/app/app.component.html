@@ -1,0 +1,108 @@
+<ion-app>
+  <div class="mobile-shell" [class.collapsed]="collapsed()">
+    <aside class="side-menu" aria-label="Menu mobile">
+      <div class="brand">
+        <span>A</span>
+        <strong>Apex Mobile</strong>
+      </div>
+      <button type="button" class="menu-item" [class.active]="activeView() === 'home'" (click)="setView('home')">
+        <span>◧</span><strong>Resumo</strong>
+      </button>
+      <button type="button" class="menu-item" [class.active]="activeView() === 'admcalc'" (click)="setView('admcalc')">
+        <span>∑</span><strong>AdmCalc</strong>
+      </button>
+      <button type="button" class="menu-item" [class.active]="activeView() === 'tarefas'" (click)="setView('tarefas')">
+        <span>✓</span><strong>Tarefas</strong>
+      </button>
+    </aside>
+
+    <main class="mobile-main">
+      <header class="mobile-topbar">
+        <button class="btn ghost" type="button" aria-label="Recolher menu" (click)="toggleCollapsed()">
+          {{ collapsed() ? 'Abrir' : 'Menu' }}
+        </button>
+        <div>
+          <strong>Apex Gestor</strong>
+          <small>Ionic Mobile</small>
+        </div>
+        <button class="btn ghost" type="button" aria-label="Alternar tema" (click)="toggleTheme()">
+          {{ theme() === 'dark' ? 'Claro' : 'Escuro' }}
+        </button>
+      </header>
+
+      <section class="content">
+        <div class="status-pill" aria-live="polite">{{ message() }}</div>
+
+        <section *ngIf="activeView() === 'home'" class="mobile-grid">
+          <article class="mobile-card">
+            <div class="card-heading">
+              <div>
+                <h2>Vendas rápidas</h2>
+                <p>Equipe em movimento</p>
+              </div>
+              <span class="badge ok">Online</span>
+            </div>
+            <strong class="metric">R$ 12.840,00</strong>
+            <p>Indicador otimizado para leitura no celular.</p>
+            <button class="btn primary full" type="button" (click)="setView('admcalc')">Abrir AdmCalc</button>
+          </article>
+
+          <article class="mobile-card">
+            <div class="card-heading">
+              <div>
+                <h2>Estoque crítico</h2>
+                <p>16 itens exigem ação</p>
+              </div>
+              <span class="badge warn">Atenção</span>
+            </div>
+            <p>Cimento, cabos e disjuntores precisam de reposição.</p>
+            <button class="btn secondary full" type="button" (click)="message.set('Rascunho de compra gerado.')">Gerar compra</button>
+          </article>
+        </section>
+
+        <section *ngIf="activeView() === 'admcalc'" class="admcalc">
+          <article class="mobile-card">
+            <div class="card-heading">
+              <div>
+                <h2>AdmCalc financeiro</h2>
+                <p>Cálculo trabalhista e tributário no mobile.</p>
+              </div>
+            </div>
+
+            <div class="form-grid">
+              <label>Salário mensal <input type="number" [(ngModel)]="form.salarioMensal"></label>
+              <label>Jornada mensal <input type="number" [(ngModel)]="form.jornadaMensal"></label>
+              <label>Horas extras <input type="number" [(ngModel)]="form.horasExtras"></label>
+              <label>Percentual HE <input type="number" step="0.01" [(ngModel)]="form.percentualHoraExtra"></label>
+              <label>Receita bruta <input type="number" [(ngModel)]="form.receitaBruta"></label>
+              <label>Folha salários <input type="number" [(ngModel)]="form.folhaSalarios"></label>
+              <label class="toggle-row"><input type="checkbox" [(ngModel)]="form.adicionalPericulosidade"> Periculosidade</label>
+            </div>
+
+            <button class="btn primary full large" type="button" (click)="calcular()" [disabled]="loading()">
+              {{ loading() ? 'Calculando...' : 'Calcular AdmCalc' }}
+            </button>
+          </article>
+
+          <article *ngIf="resultado() as r" class="mobile-card result">
+            <h2>Resultado</h2>
+            <div class="result-row"><span>Salário-hora</span><strong>{{ r.salarioHora | currency:'BRL' }}</strong></div>
+            <div class="result-row"><span>Horas extras</span><strong>{{ r.valorHorasExtras | currency:'BRL' }}</strong></div>
+            <div class="result-row"><span>13º proporcional</span><strong>{{ r.decimoTerceiroProporcional | currency:'BRL' }}</strong></div>
+            <div class="result-row"><span>Fator R</span><strong>{{ r.fatorR | percent:'1.2-2' }}</strong></div>
+            <p class="recommendation">{{ r.recomendacao }}</p>
+          </article>
+        </section>
+
+        <section *ngIf="activeView() === 'tarefas'" class="mobile-grid">
+          <article class="mobile-card">
+            <h2>Fila da equipe</h2>
+            <p>Ações rápidas para funcionário em loja, estoque ou entrega.</p>
+            <button class="btn primary full" type="button" (click)="message.set('Conferência de estoque iniciada.')">Conferir estoque</button>
+            <button class="btn secondary full" type="button" (click)="message.set('Relatório enviado para o gerente.')">Enviar relatório</button>
+          </article>
+        </section>
+      </section>
+    </main>
+  </div>
+</ion-app>

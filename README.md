@@ -38,12 +38,32 @@ O **Apex Gestor** é uma solução de software robusta, pensada para atender às
 
 ## 🚀 Tecnologias Utilizadas
 
-- **Frontend:** `HTML`, `CSS`, `Bootstrap`
+- **Frontend:** `Ionic Angular`, `HTML`, `CSS`
 - **Backend:** `Java (Servlets & JSP)`
 - **Banco de Dados:** `PostgreSQL`
 - **Servidor de Aplicação:** `Apache Tomcat`
 - **Controle de Versão:** `Git & GitHub`
 - **Gerenciador de Dependências:** `Maven`
+
+---
+
+## 📱 Branch UI Ionic Mobile
+
+Esta branch (`codex/ui/ionic-mobile-admcalc`) foi provisionada a partir de `codex/legacy/pre-v3-apex-gestor-2` para isolar a camada Mobile em Ionic.
+
+- App: `apps/ionic-mobile`
+- Menu lateral: interativo, retrátil e responsivo para toque.
+- Tema: alternância entre Light Mode e Dark Mode.
+- AdmCalc: fluxo mobile funcional com cálculo local e integração REST em `/api/admcalc/calcular`.
+- Backend: endpoint `AdmCalcController` adicionado ao Spring Boot legado.
+
+Executar:
+
+```bash
+cd apps/ionic-mobile
+npm install
+npm run start
+```
 
 ---
 
