@@ -59,6 +59,7 @@ body {
   padding: 24px 16px;
   border-right: 1px solid var(--border);
   background: var(--surface);
+  overflow-y: auto;
 }
 
 .brand {
@@ -85,6 +86,8 @@ body {
 
 .collapsed .brand div,
 .collapsed .nav-item strong,
+.collapsed .nav-item em,
+.collapsed .nested-menu,
 .collapsed .device-card strong,
 .collapsed .device-card small {
   display: none;
@@ -105,17 +108,70 @@ body {
   cursor: pointer;
 }
 
+.nav-item span,
+.nested-item span,
+.domain-icon {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  flex: 0 0 auto;
+  border-radius: 9px;
+  background: var(--primary-soft);
+  color: var(--primary);
+  font-size: .72rem;
+  font-weight: 900;
+}
+
+.nav-item em {
+  margin-left: auto;
+  font-style: normal;
+  font-weight: 900;
+}
+
 .nav-item:hover,
 .nav-item.active {
   background: var(--primary-soft);
   color: var(--primary);
 }
 
+.nav-group {
+  margin-bottom: 8px;
+}
+
+.nested-menu {
+  display: none;
+  gap: 6px;
+  margin: 0 0 10px 18px;
+  padding-left: 12px;
+  border-left: 1px solid var(--border);
+}
+
+.nav-group.open .nested-menu {
+  display: grid;
+}
+
+.nested-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  text-align: left;
+}
+
+.nested-item:hover,
+.nested-item.active {
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
 .device-card {
-  position: absolute;
-  right: 16px;
-  bottom: 20px;
-  left: 16px;
+  margin-top: 18px;
   display: grid;
   gap: 4px;
   padding: 14px;
@@ -205,6 +261,8 @@ h1 {
 
 .btn:focus-visible,
 .nav-item:focus-visible,
+.nested-item:focus-visible,
+.action-button:focus-visible,
 .product-button:focus-visible,
 input:focus-visible {
   outline: 3px solid var(--focus);
@@ -234,7 +292,8 @@ input:focus-visible {
 }
 
 .pdv-grid,
-.admcalc-layout {
+.admcalc-layout,
+.domain-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 390px;
   gap: 18px;
@@ -242,6 +301,79 @@ input:focus-visible {
 
 .panel {
   padding: 22px;
+}
+
+.domain-layout {
+  grid-template-columns: minmax(0, 1fr) 340px;
+}
+
+.domain-hero {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 360px);
+  gap: 18px;
+}
+
+.domain-icon {
+  width: 48px;
+  height: 48px;
+}
+
+.endpoint-card {
+  display: grid;
+  gap: 8px;
+  align-self: stretch;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--input);
+}
+
+.endpoint-card span,
+.endpoint-card strong {
+  color: var(--muted);
+}
+
+code {
+  overflow-wrap: anywhere;
+  color: var(--primary);
+  font-weight: 900;
+}
+
+.action-grid,
+.field-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.action-button {
+  min-height: 42px;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--input);
+  color: var(--text);
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.action-button:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.field-grid span {
+  padding: 8px 10px;
+  border-radius: 999px;
+  background: var(--primary-soft);
+  color: var(--primary);
+  font-weight: 900;
+}
+
+.action-log {
+  align-self: start;
+  grid-row: span 2;
 }
 
 .product-grid {

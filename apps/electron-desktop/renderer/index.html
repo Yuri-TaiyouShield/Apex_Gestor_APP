@@ -17,9 +17,8 @@
             <small>Electron Desktop</small>
           </div>
         </div>
-        <button class="nav-item active" type="button" data-view="pdv"><span>▣</span><strong>PDV</strong></button>
-        <button class="nav-item" type="button" data-view="admcalc"><span>∑</span><strong>AdmCalc</strong></button>
-        <button class="nav-item" type="button" data-view="relatorios"><span>◫</span><strong>Relatórios</strong></button>
+        <button class="nav-item active" type="button" data-view="pdv"><span>PD</span><strong>PDV rápido</strong></button>
+        <div id="domainMenu" class="domain-menu" aria-label="Menu hierárquico de domínios"></div>
         <div class="device-card">
           <span class="status-dot"></span>
           <strong>Desktop seguro</strong>
@@ -63,6 +62,43 @@
               <button class="btn primary large" type="button" id="finishSale">Finalizar venda</button>
             </aside>
           </div>
+        </section>
+
+        <section class="view" id="domainView">
+          <section class="domain-layout">
+            <article class="panel domain-hero">
+              <div>
+                <span class="domain-icon" id="domainIcon">FI</span>
+                <p class="eyebrow" id="domainClass">Classe.java</p>
+                <h2 id="domainTitle">Domínio operacional</h2>
+                <p id="domainSummary">Selecione um item no menu para carregar as operações.</p>
+              </div>
+              <div class="endpoint-card">
+                <span>Endpoint</span>
+                <code id="domainEndpoint">/api</code>
+                <strong id="domainSyncState">Ainda não sincronizado</strong>
+              </div>
+            </article>
+
+            <article class="panel">
+              <div class="section-heading">
+                <h2>Operações da classe</h2>
+                <button class="btn primary" type="button" id="domainSync">Sincronizar API</button>
+              </div>
+              <div class="action-grid" id="domainActions"></div>
+            </article>
+
+            <article class="panel">
+              <h2>Campos críticos</h2>
+              <div class="field-grid" id="domainFields"></div>
+            </article>
+
+            <aside class="panel action-log">
+              <h2>Fluxo atual</h2>
+              <p id="domainActionLog">Selecione uma operação para iniciar o fluxo.</p>
+              <button class="btn secondary" type="button" id="domainAudit">Validar permissões e auditoria</button>
+            </aside>
+          </section>
         </section>
 
         <section class="view" id="admcalcView">
