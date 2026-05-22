@@ -8,11 +8,8 @@
       <button type="button" class="menu-item" [class.active]="activeView() === 'home'" (click)="setView('home')">
         <span>◧</span><strong>Resumo</strong>
       </button>
-      <button type="button" class="menu-item" [class.active]="activeView() === 'admcalc'" (click)="setView('admcalc')">
-        <span>∑</span><strong>AdmCalc</strong>
-      </button>
-      <button type="button" class="menu-item" [class.active]="activeView() === 'tarefas'" (click)="setView('tarefas')">
-        <span>✓</span><strong>Tarefas</strong>
+      <button *ngFor="let group of groups" type="button" class="menu-item" [class.active]="activeGroup() === group.id" (click)="setGroup(group.id)">
+        <span>{{ group.icon }}</span><strong>{{ group.label }}</strong>
       </button>
     </aside>
 
@@ -22,7 +19,7 @@
           {{ collapsed() ? 'Abrir' : 'Menu' }}
         </button>
         <div>
-          <strong>Apex Gestor</strong>
+          <strong>{{ activeFeature()?.label ?? 'Apex Gestor' }}</strong>
           <small>Ionic Mobile</small>
         </div>
         <button class="btn ghost" type="button" aria-label="Alternar tema" (click)="toggleTheme()">
@@ -33,32 +30,85 @@
       <section class="content">
         <div class="status-pill" aria-live="polite">{{ message() }}</div>
 
+        <section class="nested-strip" aria-label="Subcategorias">
+          <button
+            *ngFor="let feature of groupFeatures(activeGroup())"
+            type="button"
+            class="nested-chip"
+            [class.active]="activeView() === feature.key"
+            (click)="setView(feature.key)">
+            <span>{{ feature.icon }}</span>
+            {{ feature.label }}
+          </button>
+        </section>
+
         <section *ngIf="activeView() === 'home'" class="mobile-grid">
           <article class="mobile-card">
             <div class="card-heading">
               <div>
-                <h2>Vendas rápidas</h2>
-                <p>Equipe em movimento</p>
+                <h2>Paridade funcional</h2>
+                <p>{{ features.length }} classes cobertas em {{ groups.length }} grupos.</p>
               </div>
               <span class="badge ok">Online</span>
             </div>
-            <strong class="metric">R$ 12.840,00</strong>
-            <p>Indicador otimizado para leitura no celular.</p>
-            <button class="btn primary full" type="button" (click)="setView('admcalc')">Abrir AdmCalc</button>
+            <strong class="metric">100%</strong>
+            <p>Menu universal com subcategorias para Comercial, Estoque/Fiscal, Finanças e Administração.</p>
+            <button class="btn primary full" type="button" (click)="setGroup('financas')">Abrir Finanças</button>
           </article>
 
-          <article class="mobile-card">
+          <article class="mobile-card" *ngFor="let group of groups">
             <div class="card-heading">
               <div>
-                <h2>Estoque crítico</h2>
-                <p>16 itens exigem ação</p>
+                <h2>{{ group.label }}</h2>
+                <p>{{ groupFeatures(group.id).length }} funcionalidades</p>
               </div>
-              <span class="badge warn">Atenção</span>
+              <span class="badge">{{ group.icon }}</span>
             </div>
-            <p>Cimento, cabos e disjuntores precisam de reposição.</p>
-            <button class="btn secondary full" type="button" (click)="message.set('Rascunho de compra gerado.')">Gerar compra</button>
+            <button class="btn secondary full" type="button" (click)="setGroup(group.id)">Ver subcategorias</button>
           </article>
         </section>
+
+        <ng-container *ngIf="activeFeature() as feature">
+          <section *ngIf="feature.key !== 'admcalc'" class="mobile-grid">
+            <article class="mobile-card">
+              <div class="card-heading">
+                <div>
+                  <h2>{{ feature.label }}</h2>
+                  <p>{{ feature.className }}</p>
+                </div>
+                <span class="badge ok">{{ feature.icon }}</span>
+              </div>
+              <p>{{ feature.summary }}</p>
+              <code>{{ feature.endpoint }}</code>
+              <button class="btn primary full" type="button" (click)="syncFeature(feature)" [disabled]="loading()">
+                {{ loading() ? 'Sincronizando...' : 'Sincronizar API' }}
+              </button>
+              <p class="sync-state">{{ syncState()[feature.key] || 'Ainda não sincronizado' }}</p>
+            </article>
+
+            <article class="mobile-card">
+              <h2>Operações</h2>
+              <div class="operation-list">
+                <button *ngFor="let operation of feature.operations" class="btn secondary full" type="button" (click)="runOperation(feature, operation)">
+                  {{ operation }}
+                </button>
+              </div>
+            </article>
+
+            <article class="mobile-card">
+              <h2>Campos críticos</h2>
+              <div class="field-list">
+                <span *ngFor="let field of feature.fields">{{ field }}</span>
+              </div>
+            </article>
+
+            <article class="mobile-card">
+              <h2>Fluxo atual</h2>
+              <p>{{ actionState() }}</p>
+              <button class="btn primary full" type="button" (click)="runOperation(feature, 'Validar permissões e auditoria')">Validar permissões</button>
+            </article>
+          </section>
+        </ng-container>
 
         <section *ngIf="activeView() === 'admcalc'" class="admcalc">
           <article class="mobile-card">
@@ -91,15 +141,6 @@
             <div class="result-row"><span>13º proporcional</span><strong>{{ r.decimoTerceiroProporcional | currency:'BRL' }}</strong></div>
             <div class="result-row"><span>Fator R</span><strong>{{ r.fatorR | percent:'1.2-2' }}</strong></div>
             <p class="recommendation">{{ r.recomendacao }}</p>
-          </article>
-        </section>
-
-        <section *ngIf="activeView() === 'tarefas'" class="mobile-grid">
-          <article class="mobile-card">
-            <h2>Fila da equipe</h2>
-            <p>Ações rápidas para funcionário em loja, estoque ou entrega.</p>
-            <button class="btn primary full" type="button" (click)="message.set('Conferência de estoque iniciada.')">Conferir estoque</button>
-            <button class="btn secondary full" type="button" (click)="message.set('Relatório enviado para o gerente.')">Enviar relatório</button>
           </article>
         </section>
       </section>
