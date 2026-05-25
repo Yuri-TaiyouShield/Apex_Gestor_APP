@@ -51,7 +51,7 @@ public class FinanceiroService {
             }
         }
 
-        List<Despesa> despesas = despesaRepository.findByDataVencimentoBetween(inicio, fim);
+        List<Despesa> despesas = despesaRepository.findByDataVencimentoBetweenAndStatus(inicio, fim, 1);
         BigDecimal totalDespesas = despesas.stream().map(Despesa::getValor).reduce(BigDecimal.ZERO, BigDecimal::add);
 
         BigDecimal lucro = receita.subtract(cmv).subtract(totalDespesas);
