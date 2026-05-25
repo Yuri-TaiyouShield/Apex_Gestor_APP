@@ -11,8 +11,11 @@ import java.util.Optional;
 @Repository
 public interface VendaRepository extends JpaRepository<Venda, Long> {
 
-    @EntityGraph(attributePaths = {"itens"})`r`n    List<Venda> findByDataVendaBetweenAndStatus(LocalDateTime inicio, LocalDateTime fim, int status);
+    @EntityGraph(attributePaths = {"itens"})
+    List<Venda> findByDataVendaBetweenAndStatus(LocalDateTime inicio, LocalDateTime fim, int status);
 
-    @EntityGraph(attributePaths = {"itens", "itens.produto"})`r`n    Optional<Venda> findByIdVenda(Long id);
+    @EntityGraph(attributePaths = {"itens", "itens.produto"})
+    Optional<Venda> findByIdVenda(Long id);
 }
+
 
