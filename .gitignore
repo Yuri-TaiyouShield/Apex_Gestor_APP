@@ -1,7 +1,38 @@
-node_modules/
-dist/
-coverage/
-.angular/
-.env
+# Apex Gestor - generated/runtime files
+
+# Java / Maven
+**/target/
+**/.mvn/wrapper/maven-wrapper.jar
+
+# Node / Angular / Ionic / Electron
+**/node_modules/
+**/dist/
+**/release/
+**/release-check/
+**/.angular/
+**/.cache/
+
+# Native/mobile build outputs
+**/android/app/build/
+**/android/.gradle/
+**/android/build/
+
+# Local IDE/runtime files
+.idea/
+.vscode/*.log
+run-logs/
+runtime-logs/
+tools/mysql-workbench-*/
 *.log
-Apex-Gestordemo/target/
+*.pid
+
+# Local environment and private delivery documents
+.env
+.env.*
+!.env.example
+private-docs/
+docs-private/
+
+# OS files
+Thumbs.db
+Desktop.ini
