@@ -44,7 +44,7 @@ public class FinanceiroService {
         LocalDateTime inicioTime = inicio.atStartOfDay();
         LocalDateTime fimTime = fim.atTime(23, 59, 59);
 
-        List<Venda> vendas = vendaRepository.findByPeriodo(inicioTime, fimTime);
+        List<Venda> vendas = vendaRepository.findByDataVendaBetweenAndStatus(inicioTime, fimTime, 1);
         BigDecimal receita = BigDecimal.ZERO;
         BigDecimal cmv = BigDecimal.ZERO;
 
@@ -62,3 +62,4 @@ public class FinanceiroService {
         return new RelatorioFinanceiroDTO(receita, cmv, totalDespesas, lucro, lucro);
     }
 }
+

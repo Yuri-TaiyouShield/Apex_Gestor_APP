@@ -100,7 +100,7 @@ public class VendaService {
 
     @Transactional
     public Venda cancelarVenda(Long id) {
-        Venda venda = vendaRepository.findWithItensById(id).orElseThrow(() -> new RuntimeException("Venda não encontrada"));
+        Venda venda = vendaRepository.findByIdVenda(id).orElseThrow(() -> new RuntimeException("Venda não encontrada"));
         if (venda.getStatus() == 0) {
             throw new RuntimeException("Venda já cancelada");
         }
@@ -113,3 +113,4 @@ public class VendaService {
         return vendaRepository.save(venda);
     }
 }
+
