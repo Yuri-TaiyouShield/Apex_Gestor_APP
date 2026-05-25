@@ -1,27 +1,15 @@
 package com.Apex.Apex_Gestordemo;
 
-import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
-import javax.crypto.SecretKey;
-import javax.crypto.spec.SecretKeySpec;
-
-import Service.LicenseService;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.annotation.Order;
-import org.springframework.core.Ordered;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
@@ -31,136 +19,85 @@ import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-
-import com.nimbusds.jose.jwk.source.ImmutableSecret;
 
 @Configuration
 @EnableMethodSecurity
 public class SecurityConfig {
 
-    @Value("${apex.security.jwt.secret}")
-    private String jwtSecret;
+    @Value("${apex.security.require-auth:false}")
+    private boolean requireAuthentication;
 
-    @Value("${apex.security.require-https:false}")
-    private boolean requireHttps;
+    @Value("${apex.security.cors.allowed-origins:http://localhost:4200,http://localhost:8100,http://localhost:5173,app://localhost,ionic://localhost}")
+    private String allowedOrigins;
 
     @Bean
     @Order(1)
     SecurityFilterChain publicSecurityFilterChain(HttpSecurity http) throws Exception {
         http
-                .securityMatcher("/actuator/health", "/api/auth/**", "/api/privacy/consents", "/api/licenses/**")
-                .csrf(csrf -> csrf.ignoringRequestMatchers("/actuator/health", "/api/auth/**", "/api/privacy/consents", "/api/licenses/**"))
                 .cors(Customizer.withDefaults())
+                .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(authorize -> authorize.anyRequest().permitAll())
-                .httpBasic(AbstractHttpConfigurer::disable)
-                .formLogin(AbstractHttpConfigurer::disable)
                 .headers(headers -> headers
-                        .contentSecurityPolicy(csp -> csp.policyDirectives("default-src 'self'; frame-ancestors 'none'; object-src 'none'; base-uri 'self'"))
-                        .httpStrictTransportSecurity(hsts -> hsts.includeSubDomains(true).preload(true).maxAgeInSeconds(31536000)));
+                        .contentSecurityPolicy(csp -> csp.policyDirectives(
+                                "default-src 'self'; frame-ancestors 'none'; object-src 'none'; base-uri 'self'"))
+                        .frameOptions(frame -> frame.deny())
+                        .referrerPolicy(referrer -> referrer
+                                .policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.NO_REFERRER))
+                        .httpStrictTransportSecurity(hsts -> hsts
+                                .includeSubDomains(true)
+                                .preload(true)
+                                .maxAgeInSeconds(31536000)));
 
-        if (requireHttps) {
-            http.requiresChannel(channel -> channel.anyRequest().requiresSecure());
+        if (requireAuthentication) {
+            http
+                    .authorizeHttpRequests(auth -> auth
+                            .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                            .requestMatchers("/actuator/health/**", "/actuator/info").permitAll()
+                            .requestMatchers("/api/despesas/**", "/api/relatorios/**", "/api/admcalc/**")
+                            .hasAnyRole("FINANCEIRO", "GESTOR", "ADMIN")
+                            .requestMatchers("/api/usuarios/**", "/api/perfis/**", "/api/menus/**")
+                            .hasAnyRole("GESTOR", "ADMIN")
+                            .requestMatchers(HttpMethod.POST, "/api/vendas/**")
+                            .hasAnyRole("VENDEDOR", "CAIXA", "GESTOR", "ADMIN")
+                            .requestMatchers(HttpMethod.PATCH, "/api/vendas/**")
+                            .hasAnyRole("CAIXA", "GESTOR", "ADMIN")
+                            .anyRequest().authenticated())
+                    .httpBasic(Customizer.withDefaults());
+        } else {
+            http.authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
         }
 
         return http.build();
     }
 
     @Bean
-    @Order(2)
-    SecurityFilterChain protectedSecurityFilterChain(HttpSecurity http) throws Exception {
-        http
-                .csrf(csrf -> csrf.ignoringRequestMatchers("/api/**"))
-                .cors(Customizer.withDefaults())
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/api/privacy/**").authenticated()
-                        .requestMatchers("/api/usuarios/**", "/api/perfis/**", "/api/menus/**").hasAnyRole("ADMIN", "GERENTE", "GESTOR")
-                        .requestMatchers("/api/despesas/**", "/api/relatorios/**").hasAnyRole("ADMIN", "GERENTE", "GESTOR", "FINANCEIRO", "FINANCAS", "ADMINISTRACAO", "AUDITOR")
-                        .requestMatchers("/api/financeiro/**").hasAnyRole("ADMIN", "ADMINISTRACAO", "FINANCEIRO", "FINANCAS", "GERENTE", "GESTOR", "AUDITOR", "CONTADOR", "ADVOGADO")
-                        .requestMatchers("/api/**").authenticated()
-                        .anyRequest().denyAll())
-                .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())))
-                .httpBasic(AbstractHttpConfigurer::disable)
-                .formLogin(AbstractHttpConfigurer::disable)
-                .headers(headers -> headers
-                        .contentSecurityPolicy(csp -> csp.policyDirectives("default-src 'self'; frame-ancestors 'none'; object-src 'none'; base-uri 'self'"))
-                        .httpStrictTransportSecurity(hsts -> hsts.includeSubDomains(true).preload(true).maxAgeInSeconds(31536000)));
-
-        if (requireHttps) {
-            http.requiresChannel(channel -> channel.anyRequest().requiresSecure());
-        }
-
-        return http.build();
-    }
-
-    @Bean
-    FilterRegistrationBean<LicenseBootstrapFilter> licenseBootstrapFilter(LicenseService licenseService) {
-        ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
-        FilterRegistrationBean<LicenseBootstrapFilter> registration = new FilterRegistrationBean<>(
-                new LicenseBootstrapFilter(licenseService, objectMapper)
-        );
-        registration.setOrder(Ordered.HIGHEST_PRECEDENCE);
-        registration.addUrlPatterns("/api/licenses/validate");
-        return registration;
-    }
-
-    @Bean
-    PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder(12);
-    }
-
-    @Bean
-    JwtEncoder jwtEncoder() {
-        return new NimbusJwtEncoder(new ImmutableSecret<>(jwtSecret.getBytes(StandardCharsets.UTF_8)));
-    }
-
-    @Bean
-    JwtDecoder jwtDecoder() {
-        return NimbusJwtDecoder.withSecretKey(jwtSecretKey()).macAlgorithm(MacAlgorithm.HS256).build();
-    }
-
-    @Bean
-    CorsConfigurationSource corsConfigurationSource() {
+    public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(List.of("http://localhost:*", "https://localhost:*", "capacitor://localhost", "ionic://localhost", "app://localhost"));
+        configuration.setAllowedOrigins(parseAllowedOrigins());
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of(
-                "Authorization",
-                "Content-Type",
-                "X-Requested-With",
-                "X-Client-Platform",
-                "X-Apex-License-Key",
-                "X-Apex-Device-Fingerprint",
-                "X-Apex-App-Id"
-        ));
-        configuration.setExposedHeaders(List.of("Authorization"));
-        configuration.setAllowCredentials(true);
+        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-Requested-With", "X-Trace-Id"));
+        configuration.setExposedHeaders(List.of("X-Trace-Id"));
+        configuration.setMaxAge(3600L);
+        configuration.setAllowCredentials(false);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
     }
 
-    private JwtAuthenticationConverter jwtAuthenticationConverter() {
-        JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
-        converter.setJwtGrantedAuthoritiesConverter(jwt -> {
-            List<String> roles = jwt.getClaimAsStringList("roles");
-            if (roles == null) {
-                return List.<GrantedAuthority>of();
-            }
-            return roles.stream()
-                    .map(role -> role.startsWith("ROLE_") ? role : "ROLE_" + role)
-                    .map(SimpleGrantedAuthority::new)
-                    .collect(Collectors.toList());
-        });
-        return converter;
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
     }
 
-    private SecretKey jwtSecretKey() {
-        return new SecretKeySpec(jwtSecret.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
+    private List<String> parseAllowedOrigins() {
+        return Arrays.stream(allowedOrigins.split(","))
+                .map(String::trim)
+                .filter(origin -> !origin.isBlank())
+                .toList();
     }
 }
