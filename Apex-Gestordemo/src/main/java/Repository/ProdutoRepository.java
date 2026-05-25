@@ -13,3 +13,4 @@ public interface ProdutoRepository extends JpaRepository<Produto, Long> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     List<Produto> findByIdProdutoIn(List<Long> ids);
 }
+

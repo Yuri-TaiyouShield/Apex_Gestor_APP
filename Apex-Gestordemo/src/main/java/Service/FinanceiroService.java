@@ -62,3 +62,4 @@ public class FinanceiroService {
         return new RelatorioFinanceiroDTO(receita, cmv, totalDespesas, lucro, lucro);
     }
 }
+

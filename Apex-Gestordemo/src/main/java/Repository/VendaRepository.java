@@ -17,3 +17,4 @@ public interface VendaRepository extends JpaRepository<Venda, Long> {
     @EntityGraph(attributePaths = {"itens", "itens.produto"})
     Optional<Venda> findByIdVenda(Long id);
 }
+
