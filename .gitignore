@@ -1,36 +1,38 @@
-# Node, Angular, Ionic and Electron
+# Apex Gestor - generated/runtime files
+
+# Java / Maven
+**/target/
+**/.mvn/wrapper/maven-wrapper.jar
+
+# Node / Angular / Ionic / Electron
 **/node_modules/
-**/.angular/cache/
 **/dist/
-**/out-tsc/
-**/coverage/
 **/release/
 **/release-check/
-**/.electron-package/
-
-# Java and Maven
-**/target/
-Apex-Gestordemo/demo/
+**/.angular/
+**/.cache/
 
 # Native/mobile build outputs
-**/android/.gradle/
 **/android/app/build/
+**/android/.gradle/
 **/android/build/
 
-# Local database exports and generated archives
-Apex_BD.pdf
-Apex_BD.sql
-*.sql
-*.zip
-
-# Local editor and OS files
+# Local IDE/runtime files
 .idea/
-**/nbproject/
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
-.DS_Store
-Thumbs.db
+.vscode/*.log
+run-logs/
+runtime-logs/
+tools/mysql-workbench-*/
 *.log
+*.pid
+
+# Local environment and private delivery documents
+.env
+.env.*
+!.env.example
+private-docs/
+docs-private/
+
+# OS files
+Thumbs.db
+Desktop.ini
