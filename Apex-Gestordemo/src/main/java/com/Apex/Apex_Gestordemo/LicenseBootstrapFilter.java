@@ -72,6 +72,8 @@ public class LicenseBootstrapFilter extends OncePerRequestFilter {
         return origin != null
                 && (origin.startsWith("http://localhost:")
                 || origin.startsWith("https://localhost:")
+                || origin.endsWith(".trycloudflare.com")
+                || origin.endsWith(".github.io")
                 || "capacitor://localhost".equals(origin)
                 || "ionic://localhost".equals(origin)
                 || "app://localhost".equals(origin));

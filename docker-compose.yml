@@ -15,6 +15,7 @@ services:
       - --default-time-zone=-03:00
     volumes:
       - apex_mysql_data:/var/lib/mysql
+      - ./Apex-Gestordemo/src/main/resources/db/migration:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$${MYSQL_ROOT_PASSWORD} --silent"]
       interval: 10s
@@ -64,7 +65,7 @@ services:
       JWT_SECRET: ${JWT_SECRET:-dev-only-change-this-secret-with-at-least-32-bytes}
       PRIVACY_HASH_PEPPER: ${PRIVACY_HASH_PEPPER:-dev-only-change-this-privacy-pepper}
       APEX_LICENSE_KEYS: ${APEX_LICENSE_KEYS:-APEX-DEMO-2026}
-      APEX_LICENSE_CATALOG: "${APEX_LICENSE_CATALOG:-APEX-DEMO-ALL|all|3|30;APEX-DEMO-DESKTOP|desktop|1|30;APEX-DEMO-EMPRESA|mobile-staff|1|30;APEX-DEMO-CLIENTE|mobile-client|1|30;APEX-DEMO-WEB|web-client|1|30;APEX-DEMO-DUO|desktop+mobile-staff|2|30;APEX-DEMO-TRIO|desktop+mobile-staff+web-client|3|30}"
+      APEX_LICENSE_CATALOG: "${APEX_LICENSE_CATALOG:-APEX-DEMO-ALL|all|25|30;APEX-DEMO-DESKTOP|desktop|1|30;APEX-DEMO-EMPRESA|mobile-staff|1|30;APEX-DEMO-CLIENTE|mobile-client|1|30;APEX-DEMO-WEB|web-client|1|30;APEX-DEMO-DUO|desktop+mobile-staff|2|30;APEX-DEMO-TRIO|desktop+mobile-staff+web-client|3|30}"
       APEX_EMAIL_ENABLED: ${APEX_EMAIL_ENABLED:-false}
       APEX_EMAIL_FROM: ${APEX_EMAIL_FROM:-noreply@apexgestor.local}
       APEX_RABBIT_ENABLED: ${APEX_RABBIT_ENABLED:-true}

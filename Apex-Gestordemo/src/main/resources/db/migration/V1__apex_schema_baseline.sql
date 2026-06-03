@@ -466,23 +466,23 @@ CREATE TABLE IF NOT EXISTS `entrega` (
 
 -- InserÃ§Ã£o de dados (apÃ³s criaÃ§Ã£o de todas as tabelas para respeitar FK)
 INSERT INTO `categoria` (`id_categoria`, `descricao`, `status`) VALUES
-(1, 'Lingeries e Fantasias', 1),
-(2, 'Ã“leos e Aromas', 1),
-(3, 'CosmÃ©ticos Sensuais', 1),
-(4, 'Presentes RomÃ¢nticos', 1),
-(5, 'Jogos e Kits', 1);
+(1, 'Materiais básicos', 1),
+(2, 'Ferramentas elétricas', 1),
+(3, 'Tintas e acabamento', 1),
+(4, 'Hidráulica', 1),
+(5, 'Elétrica e iluminação', 1);
 
 INSERT INTO `endereco` (`id_endereco`, `estado`, `cidade`, `cep`, `bairro`, `logradouro`, `uf`, `numero`, `complemento`) VALUES
-(1, 'Distrito Federal', 'BrasÃ­lia', '70630-010', 'Asa Norte', 'SQN 211 Bloco F', 'DF', '102', 'Apto 203'),
-(2, 'GoiÃ¡s', 'AnÃ¡polis', '75020-110', 'JundiaÃ­', 'Rua das Flores', 'GO', '58', 'PrÃ³ximo Ã  praÃ§a central'),
-(3, 'SÃ£o Paulo', 'Campinas', '13050-200', 'CambuÃ­', 'Av. Moraes Sales', 'SP', '920', 'Loja 01'),
-(4, 'Rio de Janeiro', 'NiterÃ³i', '24210-500', 'IcaraÃ­', 'Rua Coronel Moreira CÃ©sar', 'RJ', '300', 'Sobreloja');
+(1, 'Distrito Federal', 'Brasília', '70630-010', 'Asa Norte', 'SQN 211 Bloco F', 'DF', '102', 'Apto 203'),
+(2, 'Goiás', 'Anápolis', '75020-110', 'Jundiaí', 'Rua das Flores', 'GO', '58', 'Próximo à praça central'),
+(3, 'São Paulo', 'Campinas', '13050-200', 'Cambuí', 'Av. Moraes Sales', 'SP', '920', 'Loja 01'),
+(4, 'Rio de Janeiro', 'Niterói', '24210-500', 'Icaraí', 'Rua Coronel Moreira César', 'RJ', '300', 'Sobreloja');
 
 INSERT INTO `fornecedor` (`id_fornecedor`, `status`, `razao_social`, `nome_fantasia`, `cnpj`, `inscricao_estadual`, `data_cadastro`, `telefone`, `endereco_id`) VALUES
-(1, 2, 'EssÃªncia Natural LTDA', 'EssÃªncia Natural', '12.345.678/0001-99', '123456789', '2025-11-08 03:00:00', '(61) 99988-7777', 1),
-(2, 1, 'Sensual Aromas EIRELI', 'Sensual Aromas', '98.765.432/0001-22', '987654321', '2025-11-09 00:54:38', '(62) 98888-6666', 2),
-(3, 1, 'Delicatta Moda Ãntima', 'Delicatta Lingeries', '23.456.789/0001-55', '223344556', '2025-11-09 00:54:38', '(11) 97777-5555', 3),
-(4, 1, 'Amor & Cia CosmÃ©ticos', 'Amor & Cia', '34.567.890/0001-77', '667788990', '2025-11-09 00:54:38', '(21) 96666-4444', 4);
+(1, 1, 'Cimento Forte Distribuidora LTDA', 'Cimento Forte', '12.345.678/0001-99', '123456789', '2025-11-08 03:00:00', '(61) 99988-7777', 1),
+(2, 1, 'Ferragens Central EIRELI', 'Ferragens Central', '98.765.432/0001-22', '987654321', '2025-11-09 00:54:38', '(62) 98888-6666', 2),
+(3, 1, 'Tintas Premium Brasil LTDA', 'Tintas Premium', '23.456.789/0001-55', '223344556', '2025-11-09 00:54:38', '(11) 97777-5555', 3),
+(4, 1, 'HidroLuz Materiais Técnicos', 'HidroLuz', '34.567.890/0001-77', '667788990', '2025-11-09 00:54:38', '(21) 96666-4444', 4);
 
 INSERT INTO `perfil` (`id_perfil`, `nome`, `status`) VALUES
 (1, 'admin', 1),
@@ -549,7 +549,7 @@ INSERT INTO `menu` (`id_menu`, `nome`, `link`, `icone`, `exibir`) VALUES
 
 INSERT INTO `cliente` (`id_cliente`, `nome_razao`, `telefone`, `tipo_documento`, `cpf_cnpj`, `data_cadastro`, `status`) VALUES
 (1, 'Lucas Andrade', '(61)99991-2345', 1, '12345678901', '2025-11-08 21:54:38', 1),
-(2, 'PatrÃ­cia Souza', '(61)98888-7777', 1, '98765432100', '2025-11-08 21:54:38', 1),
+(2, 'Patrícia Souza', '(61)98888-7777', 1, '98765432100', '2025-11-08 21:54:38', 1),
 (3, 'Fernanda Dias', '(61)99988-5566', 1, '45678912300', '2025-11-08 21:54:38', 1),
 (4, 'Gustavo Pereira', '(61)98877-9988', 1, '32165498700', '2025-11-08 21:54:38', 1),
 (5, 'teste', '1234567899', 1, '12345678910', '2025-11-08 23:40:56', 2);
@@ -561,10 +561,10 @@ INSERT INTO `cliente_endereco` (`cliente_id`, `endereco_id`) VALUES
 (4, 4);
 
 INSERT INTO `formas_pagamento` (`id_forma_pagamento`, `descricao`, `nome`, `status`, `tipo_pagamento`) VALUES
-(1, 'Pagamento Ã  vista em dinheiro', 'Dinheiro', 1, 1),
-(2, 'CartÃ£o de crÃ©dito atÃ© 3x sem juros', 'CartÃ£o de CrÃ©dito', 1, 2),
-(3, 'CartÃ£o de dÃ©bito', 'CartÃ£o de DÃ©bito', 1, 3),
-(4, 'Pix instantÃ¢neo', 'Pix', 1, 4);
+(1, 'Pagamento à vista em dinheiro', 'Dinheiro', 1, 1),
+(2, 'Cartão de crédito até 3x sem juros', 'Cartão de Crédito', 1, 2),
+(3, 'Cartão de débito', 'Cartão de Débito', 1, 3),
+(4, 'Pix instantâneo', 'Pix', 1, 4);
 
 INSERT INTO `tipo_despesa` (`id_tipo_despesa`, `nome`, `status`) VALUES
 (1, 'Aluguel', 1),
@@ -624,14 +624,14 @@ INSERT INTO `menu_perfil` (`menu_id`, `perfil_id`) VALUES
 (45, 1);
 
 INSERT INTO `produtos` (`id_produto`, `descricao`, `custo`, `fornecedor_id`, `codigo_barras`, `marca`, `unidade_medida`, `data_aquisicao`, `quantidade_estoque`, `estoque_minimo`, `valor_venda`, `status`, `categoria_id`) VALUES
-(1, 'Ã“leo de Massagem com Aroma de Baunilha', 12.50, 2, '7891234560012', 'EssÃªncia Natural', 'UN', '2025-11-07 03:00:00', 30, 5, 29.90, 1, 2),
-(2, 'Gel BeijÃ¡vel de Morango 50ml', 8.90, 2, '7891234560029', 'Sensual Aromas', 'UN', '2025-11-09 00:54:38', 50, 10, 19.90, 1, 3),
-(3, 'Conjunto de Lingerie Vermelha Renda', 35.00, 3, '7891234560036', 'Delicatta', 'UN', '2025-11-09 00:54:38', 20, 4, 79.90, 1, 1),
-(4, 'Jogo RomÃ¢ntico â€œNoite Perfeitaâ€', 42.00, 4, '7891234560043', 'Amor & Cia', 'UN', '2025-11-09 00:54:38', 10, 2, 99.90, 1, 5),
-(5, 'Perfume AfrodisÃ­aco Unissex 100ml', 25.00, 2, '7891234560050', 'Sensual Aromas', 'UN', '2025-11-09 00:54:38', 15, 3, 59.90, 1, 3),
-(6, 'Kit Banho RomÃ¢ntico (Sabonete + Ã“leo + Vela)', 30.00, 1, '7891234560067', 'EssÃªncia Natural', 'KIT', '2025-11-09 00:54:38', 12, 2, 74.90, 1, 4),
-(7, 'Lubrificante Natural Neutro 60ml', 10.00, 2, '7891234560074', 'Sensual Aromas', 'UN', '2025-11-09 00:54:38', 25, 5, 22.90, 1, 3),
-(8, 'Fantasia de Enfermeira Premium', 40.00, 3, '7891234560081', 'Delicatta', 'UN', '2025-11-09 00:54:38', 8, 2, 94.90, 1, 1);
+(1, 'Cimento CP II 50kg', 31.90, 1, '7891234560012', 'Votoran', 'SC', '2025-11-07 03:00:00', 128, 25, 42.90, 1, 1),
+(2, 'Furadeira de Impacto 650W', 245.00, 2, '7891234560029', 'Bosch', 'UN', '2025-11-09 00:54:38', 18, 4, 329.90, 1, 2),
+(3, 'Tinta Acrílica Premium 18L', 210.00, 3, '7891234560036', 'Coral', 'GL', '2025-11-09 00:54:38', 22, 5, 289.00, 1, 3),
+(4, 'Tubo PVC Soldável 25mm 6m', 13.50, 4, '7891234560043', 'Tigre', 'UN', '2025-11-09 00:54:38', 96, 20, 24.90, 1, 4),
+(5, 'Disjuntor DIN Bipolar 32A', 28.00, 4, '7891234560050', 'Steck', 'UN', '2025-11-09 00:54:38', 40, 8, 49.90, 1, 5),
+(6, 'Argamassa ACIII 20kg', 18.60, 1, '7891234560067', 'Quartzolit', 'SC', '2025-11-09 00:54:38', 75, 15, 32.90, 1, 1),
+(7, 'Serra Mármore 1400W', 299.00, 2, '7891234560074', 'Makita', 'UN', '2025-11-09 00:54:38', 9, 2, 429.90, 1, 2),
+(8, 'Lâmpada LED Bulbo 12W', 7.80, 4, '7891234560081', 'Philips', 'UN', '2025-11-09 00:54:38', 160, 30, 14.90, 1, 5);
 
 INSERT INTO `produto_venda` (`produto_id`, `venda_id`, `quantidade`, `preco_unitario`) VALUES
 (1, 1, 2, 29.90),

@@ -5,7 +5,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { filter, map, startWith } from 'rxjs';
 import { IonicModule, MenuController } from '@ionic/angular';
 
-import { DEFAULT_HOME_ROUTE } from './core/app-variant';
+import { APP_VARIANT, DEFAULT_HOME_ROUTE } from './core/app-variant';
 import { SessionService } from './core/session.service';
 
 interface NavItem {
@@ -39,14 +39,21 @@ export class AppComponent implements OnInit {
   readonly isCommerce = computed(() => ['/store', '/cart', '/checkout'].some((path) => this.currentUrl().startsWith(path)));
 
   readonly platformLabel = computed(() => {
+    if (APP_VARIANT === 'client') {
+      return 'Mobile Cliente';
+    }
+    if (APP_VARIANT === 'web-client') {
+      return 'Site Web';
+    }
+
     const protocol = globalThis.location?.protocol ?? 'http:';
     if (protocol === 'app:') {
       return 'Desktop';
     }
     if (protocol === 'capacitor:' || protocol === 'ionic:') {
-      return 'Mobile';
+      return 'Mobile Empresa';
     }
-    return 'Web';
+    return 'Mobile Empresa';
   });
 
   readonly title = computed(() => (this.isCommerce() ? 'Apex Store' : 'Apex Gestor'));
@@ -74,7 +81,8 @@ export class AppComponent implements OnInit {
   });
 
   ngOnInit(): void {
-    if (DEFAULT_HOME_ROUTE !== '/' && this.router.url === '/') {
+    const browserPath = globalThis.location?.pathname ?? this.router.url;
+    if (DEFAULT_HOME_ROUTE !== '/' && (browserPath === '/' || browserPath === '')) {
       this.router.navigateByUrl(DEFAULT_HOME_ROUTE, { replaceUrl: true });
     }
   }

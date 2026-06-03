@@ -20,28 +20,30 @@ import { SessionService } from '../core/session.service';
           <h1>Acesso seguro Apex</h1>
           <p>JWT com expiração curta, refresh token rotativo e aceite LGPD auditável.</p>
 
-          <ion-item>
-            <ion-input label="Login" label-placement="stacked" [(ngModel)]="login"></ion-input>
-          </ion-item>
-          <ion-item>
-            <ion-input type="password" label="Senha" label-placement="stacked" [(ngModel)]="senha"></ion-input>
-          </ion-item>
-          <ion-item>
-            <ion-input label="Código 2FA" label-placement="stacked" [(ngModel)]="totpCode" placeholder="Opcional nesta fase"></ion-input>
-          </ion-item>
-          <ion-item>
-            <ion-checkbox [(ngModel)]="acceptedPrivacyTerms">
-              Li e aceito a política de privacidade v1.0
-            </ion-checkbox>
-          </ion-item>
+          <label class="field">
+            <span>Login</span>
+            <input type="text" autocomplete="username" [(ngModel)]="login">
+          </label>
+          <label class="field">
+            <span>Senha</span>
+            <input type="password" autocomplete="current-password" [(ngModel)]="senha">
+          </label>
+          <label class="field">
+            <span>Código 2FA</span>
+            <input type="text" inputmode="numeric" placeholder="Opcional nesta fase" [(ngModel)]="totpCode">
+          </label>
+          <label class="check-field">
+            <input type="checkbox" [(ngModel)]="acceptedPrivacyTerms">
+            <span>Li e aceito a política de privacidade v1.0</span>
+          </label>
 
           @if (message()) {
             <ion-note [color]="messageColor()">{{ message() }}</ion-note>
           }
 
-          <ion-button expand="block" size="large" (click)="enter()" [disabled]="!login || !senha || !acceptedPrivacyTerms">
+          <button class="primary-action" type="button" (click)="enter()" [disabled]="!login || !senha || !acceptedPrivacyTerms">
             Entrar com segurança
-          </ion-button>
+          </button>
 
           <ion-accordion-group>
             <ion-accordion value="demo">
@@ -55,7 +57,7 @@ import { SessionService } from '../core/session.service';
                   <ion-segment-button value="gerente">Gerente</ion-segment-button>
                   <ion-segment-button value="admin">Admin</ion-segment-button>
                 </ion-segment>
-                <ion-button expand="block" fill="outline" (click)="enterDemo()">Entrar em modo demo</ion-button>
+                <button class="secondary-action" type="button" (click)="enterDemo()">Entrar em modo demo</button>
               </div>
             </ion-accordion>
           </ion-accordion-group>
@@ -107,6 +109,83 @@ import { SessionService } from '../core/session.service';
     ion-note {
       display: block;
       margin: 12px 0;
+    }
+
+    .field,
+    .check-field {
+      display: grid;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+
+    .field span,
+    .check-field span {
+      color: #334155;
+      font-size: 0.9rem;
+      font-weight: 700;
+    }
+
+    .field input {
+      background: #f8fafc;
+      border: 1px solid var(--apex-border);
+      border-radius: 8px;
+      color: #0f172a;
+      font: inherit;
+      min-height: 46px;
+      padding: 10px 12px;
+      width: 100%;
+    }
+
+    .field input:focus {
+      border-color: #0f766e;
+      box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.16);
+      outline: none;
+    }
+
+    .check-field {
+      align-items: center;
+      grid-template-columns: 22px 1fr;
+      margin-top: 4px;
+    }
+
+    .check-field input {
+      accent-color: #0f766e;
+      height: 18px;
+      width: 18px;
+    }
+
+    .primary-action,
+    .secondary-action {
+      border-radius: 8px;
+      cursor: pointer;
+      font: inherit;
+      font-weight: 800;
+      min-height: 48px;
+      text-transform: uppercase;
+      width: 100%;
+    }
+
+    .primary-action {
+      background: #0f4c5c;
+      border: 1px solid #0f4c5c;
+      color: #fff;
+      letter-spacing: 0;
+      margin-top: 12px;
+    }
+
+    .primary-action:hover:not(:disabled) {
+      background: #0b3f4c;
+    }
+
+    .primary-action:disabled {
+      cursor: not-allowed;
+      opacity: 0.55;
+    }
+
+    .secondary-action {
+      background: transparent;
+      border: 1px solid #0f4c5c;
+      color: #0f4c5c;
     }
 
     .demo-panel {
