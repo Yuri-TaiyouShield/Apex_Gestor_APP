@@ -1,0 +1,28 @@
+services:
+  - type: web
+    runtime: docker
+    name: apex-gestor-api
+    plan: free
+    region: ohio
+    branch: main
+    dockerfilePath: ./Apex-Gestordemo/Dockerfile
+    dockerContext: ./Apex-Gestordemo
+    healthCheckPath: /actuator/health
+    autoDeployTrigger: commit
+    envVars:
+      - key: PORT
+        value: 8080
+      - key: SPRING_PROFILES_ACTIVE
+        value: default
+      - key: JPA_DDL_AUTO
+        value: update
+      - key: APEX_SECURITY_REQUIRE_AUTH
+        value: false
+      - key: APEX_CORS_ALLOWED_ORIGINS
+        value: https://yuri-taiyoushield.github.io
+      - key: DB_URL
+        sync: false
+      - key: DB_USERNAME
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
