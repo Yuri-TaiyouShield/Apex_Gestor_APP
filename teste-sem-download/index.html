@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Apex Gestor - Teste sem download</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #102033;
+      --muted: #526173;
+      --surface: #f4f7fb;
+      --card: #ffffff;
+      --line: #d7e0ea;
+      --primary: #0b4b55;
+      --primary-strong: #07373f;
+      --accent: #0f766e;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Inter, Arial, sans-serif;
+      color: var(--ink);
+      background:
+        linear-gradient(135deg, rgba(11, 75, 85, .08), transparent 38%),
+        var(--surface);
+    }
+
+    main {
+      width: min(1120px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 40px 0;
+    }
+
+    .hero {
+      display: grid;
+      gap: 12px;
+      margin-bottom: 26px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(2rem, 4vw, 3.25rem);
+      line-height: 1.05;
+      letter-spacing: 0;
+    }
+
+    p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 1rem;
+      line-height: 1.6;
+      max-width: 760px;
+    }
+
+    .notice {
+      border: 1px solid rgba(15, 118, 110, .28);
+      background: rgba(15, 118, 110, .08);
+      border-radius: 8px;
+      padding: 14px 16px;
+      margin: 20px 0 28px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .card {
+      display: grid;
+      gap: 12px;
+      min-height: 220px;
+      padding: 22px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--card);
+      box-shadow: 0 18px 42px rgba(16, 32, 51, .08);
+    }
+
+    .card h2 {
+      margin: 0;
+      font-size: 1.2rem;
+      letter-spacing: 0;
+    }
+
+    .card p {
+      font-size: .96rem;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-self: end;
+      margin-top: 8px;
+    }
+
+    a.button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 44px;
+      padding: 10px 14px;
+      border-radius: 6px;
+      text-decoration: none;
+      font-weight: 700;
+      color: #ffffff;
+      background: var(--primary);
+    }
+
+    a.button:hover,
+    a.button:focus-visible {
+      background: var(--primary-strong);
+      outline: 3px solid rgba(245, 158, 11, .35);
+      outline-offset: 2px;
+    }
+
+    a.button.secondary {
+      color: var(--primary);
+      background: #e8f2f3;
+    }
+
+    a.button.secondary:hover,
+    a.button.secondary:focus-visible {
+      background: #d8e9eb;
+    }
+
+    footer {
+      margin-top: 28px;
+      color: var(--muted);
+      font-size: .92rem;
+    }
+
+    @media (max-width: 760px) {
+      main {
+        width: min(100% - 20px, 1120px);
+        padding: 24px 0;
+      }
+
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="hero" aria-labelledby="title">
+      <h1 id="title">Teste o Apex Gestor sem baixar nada</h1>
+      <p>Esta área foi preparada para avaliação em navegador. Ela permite abrir a versão web principal, simular o app mobile, simular a visão desktop/PDV e acessar as versões por branch.</p>
+    </section>
+
+    <div class="notice">
+      <p><strong>Para a professora:</strong> basta clicar em um dos botões abaixo. Nenhum instalador, APK, extensão ou ferramenta local é necessário para esta avaliação visual e funcional em modo web.</p>
+    </div>
+
+    <section class="grid" aria-label="Opções de teste">
+      <article class="card">
+        <h2>Site Web / E-commerce</h2>
+        <p>Abre a versão principal publicada no GitHub Pages, ideal para validar navegação, telas, responsividade e fluxo demonstrativo.</p>
+        <div class="actions">
+          <a class="button" href="../">Abrir Web</a>
+          <a class="button secondary" href="../branches/main/">Testar main</a>
+        </div>
+      </article>
+
+      <article class="card">
+        <h2>App Mobile Cliente</h2>
+        <p>Simula uma tela de celular dentro do navegador para avaliar a experiência do cliente sem instalar APK.</p>
+        <div class="actions">
+          <a class="button" href="./mobile-cliente.html">Abrir Mobile Cliente</a>
+        </div>
+      </article>
+
+      <article class="card">
+        <h2>App Mobile Empresa</h2>
+        <p>Simula a versão de gestão em dispositivo móvel, útil para testar menus, métricas rápidas e operação interna em tela estreita.</p>
+        <div class="actions">
+          <a class="button" href="./mobile-empresa.html">Abrir Mobile Empresa</a>
+        </div>
+      </article>
+
+      <article class="card">
+        <h2>App Desktop / PDV</h2>
+        <p>Simula a área de trabalho do PDV no navegador. A versão instalável continua disponível em Releases, mas não é necessária para esta avaliação.</p>
+        <div class="actions">
+          <a class="button" href="./desktop-pdv.html">Abrir Desktop/PDV</a>
+        </div>
+      </article>
+
+      <article class="card">
+        <h2>Versões por Branch</h2>
+        <p>Lista todas as branches publicadas, com link direto para testar cada versão histórica ou experimental.</p>
+        <div class="actions">
+          <a class="button" href="../branches/">Abrir Índice</a>
+          <a class="button secondary" href="../branches/branch-status.json">Status JSON</a>
+        </div>
+      </article>
+
+      <article class="card">
+        <h2>Executáveis</h2>
+        <p>Área opcional para quando alguém quiser testar instaladores e pacotes nativos. Para a professora, os links acima já bastam.</p>
+        <div class="actions">
+          <a class="button secondary" href="https://github.com/Yuri-TaiyouShield/Apex_Gestor_APP/releases/latest">Ver Releases</a>
+        </div>
+      </article>
+    </section>
+
+    <footer>
+      <span>Apex Gestor - ambiente público de demonstração em navegador.</span>
+    </footer>
+  </main>
+</body>
+</html>
