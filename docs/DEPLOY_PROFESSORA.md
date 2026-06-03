@@ -5,6 +5,7 @@ Este documento centraliza os links e o fluxo profissional para demonstrar o Apex
 ## Links publicos
 
 - Web publicada no GitHub Pages: https://yuri-taiyoushield.github.io/Apex_Gestor_APP/
+- Testes por branch no GitHub Pages: https://yuri-taiyoushield.github.io/Apex_Gestor_APP/branches/
 - Releases com Desktop, Mobile Empresa, Mobile Cliente e Web zip: https://github.com/Yuri-TaiyouShield/Apex_Gestor_APP/releases/latest
 - Repositorio: https://github.com/Yuri-TaiyouShield/Apex_Gestor_APP
 
@@ -45,6 +46,9 @@ Envie estes links primeiro:
 ```text
 Apex Gestor Web:
 https://yuri-taiyoushield.github.io/Apex_Gestor_APP/
+
+Testes por branch:
+https://yuri-taiyoushield.github.io/Apex_Gestor_APP/branches/
 
 Downloads das versoes Desktop, Mobile e Web:
 https://github.com/Yuri-TaiyouShield/Apex_Gestor_APP/releases/latest
