@@ -29,11 +29,12 @@ import { SessionService } from '../core/session.service';
               <ion-card-subtitle>Web usa proxy /api; Electron e Capacitor usam URL absoluta.</ion-card-subtitle>
             </ion-card-header>
             <ion-card-content class="stack">
-              <ion-item>
-                <ion-input label="URL base da API" label-placement="stacked" [(ngModel)]="apiBaseUrl"></ion-input>
-              </ion-item>
-              <ion-button expand="block" (click)="saveApiUrl()">Salvar URL</ion-button>
-              <ion-button expand="block" fill="outline" (click)="resetApiUrl()">Restaurar padrão</ion-button>
+              <label class="field">
+                <span>URL base da API</span>
+                <input type="url" [(ngModel)]="apiBaseUrl">
+              </label>
+              <button class="primary-action" type="button" (click)="saveApiUrl()">Salvar URL</button>
+              <button class="secondary-action" type="button" (click)="resetApiUrl()">Restaurar padrão</button>
             </ion-card-content>
           </ion-card>
 
@@ -43,13 +44,16 @@ import { SessionService } from '../core/session.service';
               <ion-card-subtitle>Simula RBAC até o login real ser conectado.</ion-card-subtitle>
             </ion-card-header>
             <ion-card-content class="stack">
-              <ion-segment [(ngModel)]="persona">
-                <ion-segment-button value="cliente">Cliente</ion-segment-button>
-                <ion-segment-button value="vendedor">Vendedor</ion-segment-button>
-                <ion-segment-button value="gerente">Gerente</ion-segment-button>
-                <ion-segment-button value="admin">Admin</ion-segment-button>
-              </ion-segment>
-              <ion-button expand="block" (click)="savePersona()">Aplicar perfil</ion-button>
+              <label class="field">
+                <span>Perfil</span>
+                <select [(ngModel)]="persona">
+                  <option value="cliente">Cliente</option>
+                  <option value="vendedor">Vendedor</option>
+                  <option value="gerente">Gerente</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </label>
+              <button class="primary-action" type="button" (click)="savePersona()">Aplicar perfil</button>
             </ion-card-content>
           </ion-card>
 
@@ -59,16 +63,17 @@ import { SessionService } from '../core/session.service';
               <ion-card-subtitle>Valida a chave no servidor e vincula a ativação ao app e dispositivo.</ion-card-subtitle>
             </ion-card-header>
             <ion-card-content class="stack">
-              <ion-item>
-                <ion-input label="Chave da licença" label-placement="stacked" [(ngModel)]="licenseKey"></ion-input>
-              </ion-item>
+              <label class="field">
+                <span>Chave da licença</span>
+                <input type="text" autocomplete="off" [(ngModel)]="licenseKey">
+              </label>
               <div class="license-device">
                 <span>App licenciado</span>
                 <strong>{{ appLabel() }}</strong>
                 <span>Dispositivo</span>
                 <strong>{{ deviceFingerprintShort() }}</strong>
               </div>
-              <ion-button expand="block" (click)="validateLicense()">Validar licença</ion-button>
+              <button class="primary-action" type="button" (click)="validateLicense()">Validar licença</button>
               @if (licenseStatus()) {
                 <ion-note [color]="licenseStatus()?.valid ? 'success' : 'danger'">
                   {{ licenseStatus()?.message }}
@@ -98,6 +103,62 @@ import { SessionService } from '../core/session.service';
     .license-device span {
       color: #64748b;
       font-size: 0.82rem;
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+    }
+
+    .field span {
+      color: #334155;
+      font-size: 0.9rem;
+      font-weight: 700;
+    }
+
+    .field input,
+    .field select {
+      background: #f8fafc;
+      border: 1px solid var(--apex-border);
+      border-radius: 8px;
+      color: #0f172a;
+      font: inherit;
+      min-height: 44px;
+      padding: 9px 12px;
+      width: 100%;
+    }
+
+    .field input:focus,
+    .field select:focus {
+      border-color: #0f766e;
+      box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.16);
+      outline: none;
+    }
+
+    .primary-action,
+    .secondary-action {
+      border-radius: 8px;
+      cursor: pointer;
+      font: inherit;
+      font-weight: 800;
+      min-height: 44px;
+      width: 100%;
+    }
+
+    .primary-action {
+      background: #0f4c5c;
+      border: 1px solid #0f4c5c;
+      color: #fff;
+    }
+
+    .primary-action:hover {
+      background: #0b3f4c;
+    }
+
+    .secondary-action {
+      background: transparent;
+      border: 1px solid #0f4c5c;
+      color: #0f4c5c;
     }
   `]
 })
