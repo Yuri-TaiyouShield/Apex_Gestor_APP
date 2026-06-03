@@ -17,7 +17,6 @@ For further reference, please consider the following sections:
 * [Spring Security](https://docs.spring.io/spring-boot/3.5.6/reference/web/spring-security.html)
 * [Spring Boot DevTools](https://docs.spring.io/spring-boot/3.5.6/reference/using/devtools.html)
 * [JDBC API](https://docs.spring.io/spring-boot/3.5.6/reference/data/sql.html)
-* [PDF Document Reader](https://docs.spring.io/spring-ai/reference/api/etl-pipeline.html#_pdf_page)
 * [Config Server](https://docs.spring.io/spring-cloud-config/reference/server.html)
 
 ### Guides
