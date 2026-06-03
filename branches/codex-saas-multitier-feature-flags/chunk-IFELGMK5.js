@@ -1,0 +1,1 @@
+function u(n){return Number(n??0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}function o(n){return n?new Intl.DateTimeFormat("pt-BR").format(new Date(String(n))):"-"}function i(n,t){return t.split(".").reduce((e,r)=>{if(e&&typeof e=="object"&&r in e)return e[r]},n)}export{u as a,o as b,i as c};

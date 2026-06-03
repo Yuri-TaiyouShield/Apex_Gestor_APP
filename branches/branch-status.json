@@ -1,0 +1,312 @@
+[
+  {
+    "branch": "codex/add-workbench-der-docs",
+    "slug": "codex-add-workbench-der-docs",
+    "status": "web-publicado",
+    "frontend": true,
+    "backend": true,
+    "compose": true,
+    "url": "https://yuri-taiyoushield.github.io/Apex_Gestor_APP/branches/codex-add-workbench-der-docs/",
+    "details": "Build web publicado no GitHub Pages"
+  },
+  {
+    "branch": "codex/apex-gestor-3",
+    "slug": "codex-apex-gestor-3",
+    "status": "web-publicado",
+    "frontend": true,
+    "backend": true,
+    "compose": true,
+    "url": "https://yuri-taiyoushield.github.io/Apex_Gestor_APP/branches/codex-apex-gestor-3/",
+    "details": "Build web publicado no GitHub Pages"
+  },
+  {
+    "branch": "codex/archive/orchestration-healthchecks",
+    "slug": "codex-archive-orchestration-healthchecks",
+    "status": "web-publicado",
+    "frontend": true,
+    "backend": true,
+    "compose": true,
+    "url": "https://yuri-taiyoushield.github.io/Apex_Gestor_APP/branches/codex-archive-orchestration-healthchecks/",
+    "details": "Build web publicado no GitHub Pages"
+  },
+  {
+    "branch": "codex/bootstrap-ui-design-system",
+    "slug": "codex-bootstrap-ui-design-system",
+    "status": "web-publicado",
+    "frontend": true,
+    "backend": true,
+    "compose": true,
+    "url": "https://yuri-taiyoushield.github.io/Apex_Gestor_APP/branches/codex-bootstrap-ui-design-system/",
+    "details": "Build web publicado no GitHub Pages"
+  },
+  {
+    "branch": "codex/configurable-server-port",
+    "slug": "codex-configurable-server-port",
+    "status": "web-publicado",
+    "frontend": true,
+    "backend": true,
+    "compose": true,
+    "url": "https://yuri-taiyoushield.github.io/Apex_Gestor_APP/branches/codex-configurable-server-port/",
+    "details": "Build web publicado no GitHub Pages"
+  },
+  {
+    "branch": "codex/db-scalability",
+    "slug": "codex-db-scalability",
+    "status": "web-publicado",
+    "frontend": true,
+    "backend": true,
+    "compose": true,
+    "url": "https://yuri-taiyoushield.github.io/Apex_Gestor_APP/branches/codex-db-scalability/",
+    "details": "Build web publicado no GitHub Pages"
+  },
+  {
+    "branch": "codex/enterprise-main-hardening",
+    "slug": "codex-enterprise-main-hardening",
+    "status": "web-publicado",
+    "frontend": true,
+    "backend": true,
+    "compose": true,
+    "url": "https://yuri-taiyoushield.github.io/Apex_Gestor_APP/branches/codex-enterprise-main-hardening/",
+    "details": "Build web publicado no GitHub Pages"
+  },
+  {
+    "branch": "codex/finish-release-hardening",
+    "slug": "codex-finish-release-hardening",
+    "status": "web-publicado",
+    "frontend": true,
+    "backend": true,
+    "compose": true,
+    "url": "https://yuri-taiyoushield.github.io/Apex_Gestor_APP/branches/codex-finish-release-hardening/",
+    "details": "Build web publicado no GitHub Pages"
+  },
+  {
+    "branch": "codex/fix-ci-db-release",
+    "slug": "codex-fix-ci-db-release",
+    "status": "web-publicado",
+    "frontend": true,
+    "backend": true,
+    "compose": true,
+    "url": "https://yuri-taiyoushield.github.io/Apex_Gestor_APP/branches/codex-fix-ci-db-release/",
+    "details": "Build web publicado no GitHub Pages com npm install fallback"
+  },
+  {
+    "branch": "codex/fix-desktop-release-version",
+    "slug": "codex-fix-desktop-release-version",
+    "status": "web-publicado",
+    "frontend": true,
+    "backend": true,
+    "compose": true,
+    "url": "https://yuri-taiyoushield.github.io/Apex_Gestor_APP/branches/codex-fix-desktop-release-version/",
+    "details": "Build web publicado no GitHub Pages"
+  },
+  {
+    "branch": "codex/fix-lock-and-android-license",
+    "slug": "codex-fix-lock-and-android-license",
+    "status": "web-publicado",
+    "frontend": true,
+    "backend": true,
+    "compose": true,
+    "url": "https://yuri-taiyoushield.github.io/Apex_Gestor_APP/branches/codex-fix-lock-and-android-license/",
+    "details": "Build web publicado no GitHub Pages"
+  },
+  {
+    "branch": "codex/force-actions-node24",
+    "slug": "codex-force-actions-node24",
+    "status": "web-publicado",
+    "frontend": true,
+    "backend": true,
+    "compose": true,
+    "url": "https://yuri-taiyoushield.github.io/Apex_Gestor_APP/branches/codex-force-actions-node24/",
+    "details": "Build web publicado no GitHub Pages"
+  },
+  {
+    "branch": "codex/legacy/pre-v3-apex-gestor-2",
+    "slug": "codex-legacy-pre-v3-apex-gestor-2",
+    "status": "status-sem-frontend",
+    "frontend": false,
+    "backend": true,
+    "compose": true,
+    "url": "https://yuri-taiyoushield.github.io/Apex_Gestor_APP/branches/codex-legacy-pre-v3-apex-gestor-2/",
+    "details": "Sem frontend nesta branch"
+  },
+  {
+    "branch": "codex/orchestration-healthchecks",
+    "slug": "codex-orchestration-healthchecks",
+    "status": "web-publicado",
+    "frontend": true,
+    "backend": true,
+    "compose": true,
+    "url": "https://yuri-taiyoushield.github.io/Apex_Gestor_APP/branches/codex-orchestration-healthchecks/",
+    "details": "Build web publicado no GitHub Pages"
+  },
+  {
+    "branch": "codex/organize-main-repository",
+    "slug": "codex-organize-main-repository",
+    "status": "web-publicado",
+    "frontend": true,
+    "backend": true,
+    "compose": true,
+    "url": "https://yuri-taiyoushield.github.io/Apex_Gestor_APP/branches/codex-organize-main-repository/",
+    "details": "Build web publicado no GitHub Pages"
+  },
+  {
+    "branch": "codex/release-platform-folders",
+    "slug": "codex-release-platform-folders",
+    "status": "web-publicado",
+    "frontend": true,
+    "backend": true,
+    "compose": true,
+    "url": "https://yuri-taiyoushield.github.io/Apex_Gestor_APP/branches/codex-release-platform-folders/",
+    "details": "Build web publicado no GitHub Pages"
+  },
+  {
+    "branch": "codex/release/v3.0-multiplataforma",
+    "slug": "codex-release-v3-0-multiplataforma",
+    "status": "web-publicado",
+    "frontend": true,
+    "backend": true,
+    "compose": true,
+    "url": "https://yuri-taiyoushield.github.io/Apex_Gestor_APP/branches/codex-release-v3-0-multiplataforma/",
+    "details": "Build web publicado no GitHub Pages"
+  },
+  {
+    "branch": "codex/release/v3.1-orquestracao-resiliente",
+    "slug": "codex-release-v3-1-orquestracao-resiliente",
+    "status": "web-publicado",
+    "frontend": true,
+    "backend": true,
+    "compose": true,
+    "url": "https://yuri-taiyoushield.github.io/Apex_Gestor_APP/branches/codex-release-v3-1-orquestracao-resiliente/",
+    "details": "Build web publicado no GitHub Pages"
+  },
+  {
+    "branch": "codex/release/v3.2-licenciamento-apps",
+    "slug": "codex-release-v3-2-licenciamento-apps",
+    "status": "web-publicado",
+    "frontend": true,
+    "backend": true,
+    "compose": true,
+    "url": "https://yuri-taiyoushield.github.io/Apex_Gestor_APP/branches/codex-release-v3-2-licenciamento-apps/",
+    "details": "Build web publicado no GitHub Pages"
+  },
+  {
+    "branch": "codex/release/v3.3-admcalc-financeiro",
+    "slug": "codex-release-v3-3-admcalc-financeiro",
+    "status": "web-publicado",
+    "frontend": true,
+    "backend": true,
+    "compose": true,
+    "url": "https://yuri-taiyoushield.github.io/Apex_Gestor_APP/branches/codex-release-v3-3-admcalc-financeiro/",
+    "details": "Build web publicado no GitHub Pages"
+  },
+  {
+    "branch": "codex/release/v4.0-enterprise-base",
+    "slug": "codex-release-v4-0-enterprise-base",
+    "status": "web-publicado",
+    "frontend": true,
+    "backend": true,
+    "compose": true,
+    "url": "https://yuri-taiyoushield.github.io/Apex_Gestor_APP/branches/codex-release-v4-0-enterprise-base/",
+    "details": "Build web publicado no GitHub Pages"
+  },
+  {
+    "branch": "codex/release/v4.0-enterprise-foundation",
+    "slug": "codex-release-v4-0-enterprise-foundation",
+    "status": "web-publicado",
+    "frontend": true,
+    "backend": true,
+    "compose": true,
+    "url": "https://yuri-taiyoushield.github.io/Apex_Gestor_APP/branches/codex-release-v4-0-enterprise-foundation/",
+    "details": "Build web publicado no GitHub Pages"
+  },
+  {
+    "branch": "codex/release/v5.0-enterprise-b2c-rbac-catalog",
+    "slug": "codex-release-v5-0-enterprise-b2c-rbac-catalog",
+    "status": "web-publicado",
+    "frontend": true,
+    "backend": true,
+    "compose": true,
+    "url": "https://yuri-taiyoushield.github.io/Apex_Gestor_APP/branches/codex-release-v5-0-enterprise-b2c-rbac-catalog/",
+    "details": "Build web publicado no GitHub Pages"
+  },
+  {
+    "branch": "codex/remove-pages-workflows",
+    "slug": "codex-remove-pages-workflows",
+    "status": "web-publicado",
+    "frontend": true,
+    "backend": true,
+    "compose": true,
+    "url": "https://yuri-taiyoushield.github.io/Apex_Gestor_APP/branches/codex-remove-pages-workflows/",
+    "details": "Build web publicado no GitHub Pages"
+  },
+  {
+    "branch": "codex/saas-multitier-feature-flags",
+    "slug": "codex-saas-multitier-feature-flags",
+    "status": "web-publicado",
+    "frontend": true,
+    "backend": true,
+    "compose": true,
+    "url": "https://yuri-taiyoushield.github.io/Apex_Gestor_APP/branches/codex-saas-multitier-feature-flags/",
+    "details": "Build web publicado no GitHub Pages"
+  },
+  {
+    "branch": "codex/ui/angular-web-admcalc",
+    "slug": "codex-ui-angular-web-admcalc",
+    "status": "status-sem-frontend",
+    "frontend": false,
+    "backend": true,
+    "compose": true,
+    "url": "https://yuri-taiyoushield.github.io/Apex_Gestor_APP/branches/codex-ui-angular-web-admcalc/",
+    "details": "Sem frontend nesta branch"
+  },
+  {
+    "branch": "codex/ui/electron-desktop-admcalc",
+    "slug": "codex-ui-electron-desktop-admcalc",
+    "status": "status-sem-frontend",
+    "frontend": false,
+    "backend": true,
+    "compose": true,
+    "url": "https://yuri-taiyoushield.github.io/Apex_Gestor_APP/branches/codex-ui-electron-desktop-admcalc/",
+    "details": "Sem frontend nesta branch"
+  },
+  {
+    "branch": "codex/ui/ionic-mobile-admcalc",
+    "slug": "codex-ui-ionic-mobile-admcalc",
+    "status": "status-sem-frontend",
+    "frontend": false,
+    "backend": true,
+    "compose": true,
+    "url": "https://yuri-taiyoushield.github.io/Apex_Gestor_APP/branches/codex-ui-ionic-mobile-admcalc/",
+    "details": "Sem frontend nesta branch"
+  },
+  {
+    "branch": "codex/update-actions-node24-shas",
+    "slug": "codex-update-actions-node24-shas",
+    "status": "web-publicado",
+    "frontend": true,
+    "backend": true,
+    "compose": true,
+    "url": "https://yuri-taiyoushield.github.io/Apex_Gestor_APP/branches/codex-update-actions-node24-shas/",
+    "details": "Build web publicado no GitHub Pages"
+  },
+  {
+    "branch": "codex/v4-enterprise-foundation",
+    "slug": "codex-v4-enterprise-foundation",
+    "status": "web-publicado",
+    "frontend": true,
+    "backend": true,
+    "compose": true,
+    "url": "https://yuri-taiyoushield.github.io/Apex_Gestor_APP/branches/codex-v4-enterprise-foundation/",
+    "details": "Build web publicado no GitHub Pages"
+  },
+  {
+    "branch": "main",
+    "slug": "main",
+    "status": "web-publicado",
+    "frontend": true,
+    "backend": true,
+    "compose": true,
+    "url": "https://yuri-taiyoushield.github.io/Apex_Gestor_APP/branches/main/",
+    "details": "Build web publicado no GitHub Pages"
+  }
+]
