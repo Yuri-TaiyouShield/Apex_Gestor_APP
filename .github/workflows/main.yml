@@ -191,6 +191,16 @@ jobs:
           touch dist/apex-gestor/browser/.nojekyll
           cp dist/apex-gestor/browser/index.html dist/apex-gestor/browser/404.html
 
+      - name: Preserve branch test pages
+        shell: bash
+        run: |
+          mkdir -p /tmp/apex-existing-pages
+          git fetch origin gh-pages:refs/remotes/origin/gh-pages || true
+          git --work-tree=/tmp/apex-existing-pages checkout origin/gh-pages -- branches 2>/dev/null || true
+          if [ -d /tmp/apex-existing-pages/branches ]; then
+            cp -R /tmp/apex-existing-pages/branches dist/apex-gestor/browser/
+          fi
+
       - name: Push static site to gh-pages
         shell: bash
         env:
