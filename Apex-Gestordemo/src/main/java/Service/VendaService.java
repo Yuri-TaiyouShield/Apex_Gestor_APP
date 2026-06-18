@@ -1,11 +1,20 @@
 package Service;
 
+import DTO.RecebimentoVendaRequestDTO;
+import DTO.VendaDevolucaoRequestDTO;
 import Model.*;
 import Repository.*;
+import jakarta.servlet.http.HttpServletRequest;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
+import java.util.Set;
+import java.text.Normalizer;
+import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,163 +22,486 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class VendaService {
 
-    @Autowired
-    private VendaRepository vendaRepository;
-    @Autowired
-    private ProdutoRepository produtoRepository;
-    @Autowired
-    private ClienteRepository clienteRepository;
-    @Autowired
-    private AuditTrailService auditTrailService;
-    @Autowired
-    private EstoqueMovimentacaoService estoqueMovimentacaoService;
+    @Autowired private VendaRepository vendaRepository;
+    @Autowired private ProdutoRepository produtoRepository;
+    @Autowired private ClienteRepository clienteRepository;
+    @Autowired private UsuarioRepository usuarioRepository;
+    @Autowired private FormaPagamentoRepository formaPagamentoRepository;
+    @Autowired private CondicaoPagamentoRepository condicaoPagamentoRepository;
+    @Autowired private VendaPagamentoRepository vendaPagamentoRepository;
+    @Autowired private VendaEventoRepository vendaEventoRepository;
+    @Autowired private VendaDevolucaoRepository vendaDevolucaoRepository;
+    @Autowired private EstoqueMovimentacaoService estoqueMovimentacaoService;
+    @Autowired private CaixaService caixaService;
+    @Autowired private FinanceiroOperacionalService financeiroOperacionalService;
+    @Autowired private CreditoClienteService creditoClienteService;
+    @Autowired private AuditTrailService auditTrailService;
+    @Autowired private PrivacyGuardService privacyGuardService;
+
+    @Transactional(readOnly = true)
+    public List<Venda> listarTodos(Long empresaId, Long filialId) {
+        List<Venda> vendas = vendaRepository.findByEmpresaIdAndFilialIdOrderByDataVendaDesc(empresaId, filialId);
+        vendas.forEach(this::initialize);
+        return vendas;
+    }
 
     public List<Venda> listarTodos() {
         return vendaRepository.findAll();
-    }
-
-    public List<Venda> listarTodos(Long empresaId, Long filialId) {
-        return vendaRepository.findByEmpresaIdAndFilialIdOrderByDataVendaDesc(empresaId, filialId);
     }
 
     public Optional<Venda> buscarPorId(Long id) {
         return vendaRepository.findById(id);
     }
 
+    @Transactional(readOnly = true)
     public Optional<Venda> buscarPorId(Long id, Long empresaId, Long filialId) {
-        return vendaRepository.findByIdVendaAndEmpresaIdAndFilialId(id, empresaId, filialId);
+        Optional<Venda> venda = vendaRepository.findByIdVendaAndEmpresaIdAndFilialId(id, empresaId, filialId);
+        venda.ifPresent(this::initialize);
+        return venda;
+    }
+
+    @Transactional(readOnly = true)
+    public List<Venda> filaCaixa(Long empresaId, Long filialId) {
+        List<Venda> vendas = vendaRepository.findByEmpresaIdAndFilialIdAndStatusOperacionalOrderByEnviadoCaixaEmAsc(
+                empresaId, filialId, VendaStatus.AGUARDANDO_CAIXA);
+        vendas.forEach(this::initialize);
+        return vendas;
     }
 
     @Transactional
     public Venda realizarVenda(Venda venda) {
-        return realizarVenda(venda, venda.getEmpresaId(), venda.getFilialId());
+        return realizarVenda(venda, venda.getEmpresaId(), venda.getFilialId(), null);
     }
 
     @Transactional
     public Venda realizarVenda(Venda venda, Long empresaId, Long filialId) {
-        Long empresaAtual = empresaId == null ? 1L : empresaId;
-        Long filialAtual = filialId == null ? 1L : filialId;
-        venda.setDataVenda(LocalDateTime.now());
-        venda.setStatus(1);
-        venda.setEmpresaId(empresaAtual);
-        venda.setFilialId(filialAtual);
-        BigDecimal valorTotal = BigDecimal.ZERO;
+        return realizarVenda(venda, empresaId, filialId, null);
+    }
 
+    @Transactional
+    public Venda realizarVenda(Venda venda, Long empresaId, Long filialId, HttpServletRequest request) {
+        if (empresaId == null || filialId == null) {
+            throw new IllegalArgumentException("Empresa e filial ativas sao obrigatorias.");
+        }
         if (venda.getItens() == null || venda.getItens().isEmpty()) {
-            throw new RuntimeException("Venda sem itens.");
+            throw new IllegalArgumentException("Venda sem itens.");
         }
         if (venda.getCliente() == null || venda.getCliente().getIdCliente() == null) {
-            throw new RuntimeException("Cliente obrigatorio para venda.");
+            throw new IllegalArgumentException("Cliente obrigatorio para venda.");
         }
-        venda.setCliente(clienteRepository.findByIdClienteAndEmpresaIdAndFilialId(
-                venda.getCliente().getIdCliente(),
-                empresaAtual,
-                filialAtual)
-                .orElseThrow(() -> new RuntimeException("Cliente nao encontrado no escopo da empresa/filial.")));
-        Venda vendaSalva = vendaRepository.save(venda);
+        if (venda.getUsuario() == null || venda.getUsuario().getIdUsuario() == null) {
+            throw new IllegalArgumentException("Vendedor autenticado nao identificado.");
+        }
 
-        for (ProdutoVenda item : venda.getItens()) {
-            Produto produto = produtoRepository.findByIdProdutoAndEmpresaIdAndFilialId(
-                    item.getProduto().getIdProduto(),
-                    empresaAtual,
-                    filialAtual)
-                    .orElseThrow(() -> new RuntimeException("Produto nao encontrado no escopo da empresa/filial."));
-
-            if (produto.getQuantidadeEstoque() < item.getQuantidade()) {
-                throw new RuntimeException("Estoque insuficiente");
+        Cliente cliente = clienteRepository.findByIdClienteAndEmpresaIdAndFilialId(
+                venda.getCliente().getIdCliente(), empresaId, filialId)
+                .orElseThrow(() -> new IllegalArgumentException("Cliente nao encontrado no escopo da empresa/filial."));
+        Usuario vendedor = usuarioRepository.findByIdUsuarioAndEmpresaIdAndFilialId(
+                venda.getUsuario().getIdUsuario(), empresaId, filialId)
+                .orElseThrow(() -> new IllegalArgumentException("Vendedor nao encontrado no escopo da empresa/filial."));
+        if (venda.getCondicaoPagamentoId() != null) {
+            CondicaoPagamento condicao = condicaoPagamentoRepository.findById(venda.getCondicaoPagamentoId())
+                    .orElseThrow(() -> new IllegalArgumentException("Condicao de pagamento nao encontrada."));
+            if (!empresaId.equals(condicao.getEmpresaId()) || !filialId.equals(condicao.getFilialId())) {
+                throw new IllegalArgumentException("Condicao de pagamento pertence a outro tenant.");
             }
+        }
 
-            int saldoAnterior = produto.getQuantidadeEstoque();
-            int saldoPosterior = saldoAnterior - item.getQuantidade();
-            produto.setQuantidadeEstoque(saldoPosterior);
-            produtoRepository.save(produto);
-            estoqueMovimentacaoService.registrar(
-                    produto,
-                    TipoMovimentacaoEstoque.SAIDA,
-                    item.getQuantidade(),
-                    saldoAnterior,
-                    saldoPosterior,
-                    "Venda",
-                    vendaSalva.getIdVenda(),
-                    "Saida automatica por venda no PDV");
+        List<ProdutoVenda> itensRecebidos = new ArrayList<>(venda.getItens());
+        venda.setItens(new ArrayList<>());
+        venda.setPagamentos(new ArrayList<>());
+        venda.setCliente(cliente);
+        venda.setUsuario(vendedor);
+        venda.setEmpresaId(empresaId);
+        venda.setFilialId(filialId);
+        venda.setDataVenda(LocalDateTime.now());
+        venda.setEnviadoCaixaEm(LocalDateTime.now());
+        venda.setStatus(1);
+        venda.setStatusOperacional(VendaStatus.AGUARDANDO_CAIXA);
+        venda.setEstoqueMovimentado(false);
+        venda.setDesconto(nvl(venda.getDesconto()));
+        // A venda precisa existir para compor as chaves dos itens, mas valor_total e obrigatorio no schema.
+        venda.setValorTotal(BigDecimal.ZERO);
+        Venda salva = vendaRepository.save(venda);
 
+        BigDecimal subtotal = BigDecimal.ZERO;
+        for (ProdutoVenda recebido : itensRecebidos) {
+            if (recebido.getProduto() == null || recebido.getProduto().getIdProduto() == null
+                    || recebido.getQuantidade() <= 0) {
+                throw new IllegalArgumentException("Item de venda invalido.");
+            }
+            Produto produto = produtoRepository.findByIdProdutoAndEmpresaIdAndFilialId(
+                    recebido.getProduto().getIdProduto(), empresaId, filialId)
+                    .orElseThrow(() -> new IllegalArgumentException("Produto nao encontrado no escopo da empresa/filial."));
+            validarProdutoParaVenda(produto, recebido.getQuantidade());
+            ProdutoVenda item = new ProdutoVenda();
+            item.setVenda(salva);
+            item.setProduto(produto);
+            item.setId(new ProdutoVendaId(produto.getIdProduto(), salva.getIdVenda()));
+            item.setQuantidade(recebido.getQuantidade());
             item.setCustoUnitario(produto.getCusto());
             item.setPrecoUnitario(produto.getValorVenda());
-            item.setProduto(produto);
-
-            BigDecimal totalItem = item.getPrecoUnitario().multiply(new BigDecimal(item.getQuantidade()));
-            item.setPrecoTotal(totalItem);
-            valorTotal = valorTotal.add(totalItem);
-
-            item.setVenda(vendaSalva);
-            item.setId(new ProdutoVendaId(produto.getIdProduto(), vendaSalva.getIdVenda()));
+            item.setPrecoTotal(produto.getValorVenda().multiply(BigDecimal.valueOf(recebido.getQuantidade())));
+            salva.getItens().add(item);
+            subtotal = subtotal.add(item.getPrecoTotal());
         }
-
-        if (venda.getDesconto() != null) {
-            valorTotal = valorTotal.subtract(venda.getDesconto());
+        if (venda.getDesconto().compareTo(subtotal) > 0) {
+            throw new IllegalArgumentException("Desconto nao pode superar o subtotal da venda.");
         }
-        vendaSalva.setValorTotal(valorTotal);
+        salva.setValorTotal(subtotal.subtract(venda.getDesconto()));
+        salva = vendaRepository.save(salva);
+        salva.setNumeroVenda("V-" + filialId + "-" + String.format(Locale.ROOT, "%08d", salva.getIdVenda()));
+        salva = vendaRepository.save(salva);
+        registrarEvento(salva, "ENVIADA_CAIXA", null, VendaStatus.AGUARDANDO_CAIXA, null, request);
+        auditTrailService.registrarPrivacidade("VENDA_ENVIADA_CAIXA", "Venda", salva.getIdVenda(), "Vendas",
+                null, resumoVenda(salva), request, "Venda criada pelo vendedor e enviada ao caixa.");
+        return salva;
+    }
 
-        if (venda.getPagamentos() != null) {
-            for (VendaPagamento pag : venda.getPagamentos()) {
-                pag.setVenda(vendaSalva);
-                pag.setId(new VendaPagamentoId(vendaSalva.getIdVenda(), pag.getFormaPagamento().getIdFormaPagamento()));
+    @Transactional
+    public Venda reenviarAoCaixa(Long id, Long empresaId, Long filialId, HttpServletRequest request) {
+        Venda venda = getScoped(id, empresaId, filialId);
+        if (venda.getStatusOperacional() != VendaStatus.EM_ATENDIMENTO) {
+            throw new IllegalArgumentException("Somente venda devolvida para ajuste pode ser reenviada.");
+        }
+        VendaStatus anterior = venda.getStatusOperacional();
+        venda.setStatusOperacional(VendaStatus.AGUARDANDO_CAIXA);
+        venda.setEnviadoCaixaEm(LocalDateTime.now());
+        venda.setMotivoRecusa(null);
+        Venda salva = vendaRepository.save(venda);
+        registrarEvento(salva, "REENVIADA_CAIXA", anterior, salva.getStatusOperacional(), null, request);
+        return salva;
+    }
+
+    @Transactional
+    public Venda receberNoCaixa(Long id, RecebimentoVendaRequestDTO body,
+            Long empresaId, Long filialId, HttpServletRequest request) {
+        Venda venda = getScoped(id, empresaId, filialId);
+        if (venda.getStatusOperacional() != VendaStatus.AGUARDANDO_CAIXA) {
+            throw new IllegalArgumentException("Venda nao esta aguardando caixa.");
+        }
+        CaixaSessao caixa = caixaService.caixaAberto(request)
+                .orElseThrow(() -> new IllegalStateException("Caixa fechado bloqueia recebimento."));
+        transicionar(venda, VendaStatus.EM_PAGAMENTO, "RECEBIMENTO_INICIADO", null, request);
+        venda.setRecebidoCaixaEm(LocalDateTime.now());
+        List<RecebimentoVendaRequestDTO.PagamentoDTO> solicitados = pagamentosSolicitados(body);
+        if (solicitados.isEmpty()) {
+            throw new IllegalArgumentException("Informe ao menos uma forma de pagamento.");
+        }
+        BigDecimal recebido = solicitados.stream().map(RecebimentoVendaRequestDTO.PagamentoDTO::valor)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal troco = recebido.subtract(venda.getValorTotal());
+        if (troco.signum() < 0) {
+            throw new IllegalArgumentException("Valor recebido menor que o total da venda.");
+        }
+        Set<Long> formasUsadas = new HashSet<>();
+        List<FormaPagamento> formas = new ArrayList<>();
+        BigDecimal dinheiroRecebido = BigDecimal.ZERO;
+        for (RecebimentoVendaRequestDTO.PagamentoDTO solicitado : solicitados) {
+            if (!formasUsadas.add(solicitado.formaPagamentoId())) {
+                throw new IllegalArgumentException("Agrupe valores da mesma forma de pagamento em uma unica parcela.");
             }
+            FormaPagamento forma = formaPagamentoRepository.findVisibleById(
+                    solicitado.formaPagamentoId(), empresaId, filialId)
+                    .orElseThrow(() -> new IllegalArgumentException("Forma de pagamento nao encontrada no tenant."));
+            formas.add(forma);
+            if (isDinheiro(forma)) dinheiroRecebido = dinheiroRecebido.add(solicitado.valor());
+            if (isCreditoVale(forma)) creditoClienteService.usar(solicitado.creditoId(), venda,
+                    solicitado.valor(), request);
         }
-        Venda finalizada = vendaRepository.save(vendaSalva);
-        auditTrailService.registrarSistema("VENDA_CRIADA", "Venda", finalizada.getIdVenda(), null, resumoVenda(finalizada));
+        if (troco.signum() > 0 && dinheiroRecebido.compareTo(troco) < 0) {
+            throw new IllegalArgumentException("Troco so pode ser gerado sobre a parcela em dinheiro.");
+        }
+        venda.setValorRecebido(recebido);
+        venda.setTroco(troco);
+        venda.setDiferenca(troco);
+        venda.setFormaPagamentoRealId(formas.size() == 1 ? formas.get(0).getIdFormaPagamento() : null);
+        venda.setCaixaSessaoId(caixa.getIdCaixaSessao());
+        if (venda.getPagamentos() == null) {
+            venda.setPagamentos(new ArrayList<>());
+        }
+        BigDecimal trocoPendente = troco;
+        for (int i = 0; i < solicitados.size(); i++) {
+            RecebimentoVendaRequestDTO.PagamentoDTO solicitado = solicitados.get(i);
+            FormaPagamento forma = formas.get(i);
+            BigDecimal valorEfetivo = solicitado.valor();
+            if (trocoPendente.signum() > 0 && isDinheiro(forma)) {
+                BigDecimal abatimento = valorEfetivo.min(trocoPendente);
+                valorEfetivo = valorEfetivo.subtract(abatimento);
+                trocoPendente = trocoPendente.subtract(abatimento);
+            }
+            VendaPagamento pagamento = new VendaPagamento();
+            pagamento.setVenda(venda); pagamento.setFormaPagamento(forma);
+            pagamento.setId(new VendaPagamentoId(venda.getIdVenda(), forma.getIdFormaPagamento()));
+            pagamento.setValorPago(valorEfetivo);
+            pagamento.setNumeroParcelas(solicitado.numeroParcelas() == null ? 1 : solicitado.numeroParcelas());
+            pagamento.setCreditoId(solicitado.creditoId());
+            venda.getPagamentos().add(pagamento);
+        }
+
+        baixarEstoque(venda);
+        caixaService.registrarVenda(venda.getValorTotal(), venda.getIdVenda(), request);
+        financeiroOperacionalService.registrarVendaFinalizada(venda, request);
+        transicionar(venda, VendaStatus.PAGA, "PAGAMENTO_CONFIRMADO", null, request);
+        venda.setFinalizadoEm(LocalDateTime.now());
+        venda.setEstoqueMovimentado(true);
+        transicionar(venda, VendaStatus.FINALIZADA, "VENDA_FINALIZADA", null, request);
+        Venda finalizada = vendaRepository.save(venda);
+        auditTrailService.registrarPrivacidade("VENDA_FINALIZADA_CAIXA", "Venda", finalizada.getIdVenda(), "Caixa",
+                null, resumoVenda(finalizada), request, "Recebimento, estoque e financeiro confirmados pelo caixa.");
+        initialize(finalizada);
         return finalizada;
     }
 
     @Transactional
-    public Venda cancelarVenda(Long id) {
-        Venda venda = vendaRepository.findById(id).orElseThrow(() -> new RuntimeException("Venda nao encontrada"));
-        return cancelarVenda(venda, venda.getEmpresaId(), venda.getFilialId());
+    public Venda recusarNoCaixa(Long id, String motivo, Long empresaId, Long filialId, HttpServletRequest request) {
+        Venda venda = getScoped(id, empresaId, filialId);
+        if (venda.getStatusOperacional() != VendaStatus.AGUARDANDO_CAIXA
+                && venda.getStatusOperacional() != VendaStatus.EM_PAGAMENTO) {
+            throw new IllegalArgumentException("Venda nao pode ser devolvida para ajuste neste status.");
+        }
+        VendaStatus anterior = venda.getStatusOperacional();
+        venda.setMotivoRecusa(requireMotivo(motivo));
+        venda.setStatusOperacional(VendaStatus.EM_ATENDIMENTO);
+        Venda salva = vendaRepository.save(venda);
+        registrarEvento(salva, "RECUSADA_CAIXA", anterior, VendaStatus.EM_ATENDIMENTO, motivo, request);
+        auditTrailService.registrarPrivacidade("VENDA_RECUSADA_CAIXA", "Venda", id, "Caixa",
+                anterior.name(), VendaStatus.EM_ATENDIMENTO.name(), request, motivo);
+        return salva;
+    }
+
+    @Transactional
+    public Venda cancelarVenda(Long id, Long empresaId, Long filialId, String motivo, HttpServletRequest request) {
+        Venda venda = getScoped(id, empresaId, filialId);
+        if (venda.getStatusOperacional() == VendaStatus.CANCELADA) {
+            throw new IllegalArgumentException("Venda ja cancelada.");
+        }
+        if (venda.isEstoqueMovimentado()) {
+            devolverEstoque(venda, TipoMovimentacaoEstoque.CANCELAMENTO_VENDA, "Cancelamento de venda");
+            venda.setEstoqueMovimentado(false);
+        }
+        financeiroOperacionalService.cancelarPorVenda(venda);
+        venda.setMotivoCancelamento(requireMotivo(motivo));
+        venda.setStatus(0);
+        transicionar(venda, VendaStatus.CANCELADA, "VENDA_CANCELADA", motivo, request);
+        return vendaRepository.save(venda);
     }
 
     @Transactional
     public Venda cancelarVenda(Long id, Long empresaId, Long filialId) {
-        Venda venda = buscarPorId(id, empresaId, filialId)
-                .orElseThrow(() -> new RuntimeException("Venda nao encontrada"));
-        return cancelarVenda(venda, empresaId, filialId);
+        return cancelarVenda(id, empresaId, filialId, "Cancelamento administrativo", null);
     }
 
-    private Venda cancelarVenda(Venda venda, Long empresaId, Long filialId) {
-        if (venda.getStatus() == 0) {
-            throw new RuntimeException("Venda ja cancelada");
-        }
+    @Transactional
+    public Venda cancelarVenda(Long id) {
+        Venda venda = vendaRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Venda nao encontrada"));
+        return cancelarVenda(id, venda.getEmpresaId(), venda.getFilialId(), "Cancelamento administrativo", null);
+    }
 
-        for (ProdutoVenda item : venda.getItens()) {
-            Produto p = item.getProduto();
-            int saldoAnterior = p.getQuantidadeEstoque();
-            int saldoPosterior = saldoAnterior + item.getQuantidade();
-            p.setQuantidadeEstoque(saldoPosterior);
-            produtoRepository.save(p);
-            estoqueMovimentacaoService.registrar(
-                    p,
-                    TipoMovimentacaoEstoque.CANCELAMENTO_VENDA,
-                    item.getQuantidade(),
-                    saldoAnterior,
-                    saldoPosterior,
-                    "Venda",
-                    venda.getIdVenda(),
-                    "Estorno automatico por cancelamento de venda");
+    @Transactional
+    public VendaDevolucao registrarDevolucao(Long vendaId, VendaDevolucaoRequestDTO body,
+            Long empresaId, Long filialId, HttpServletRequest request) {
+        Venda venda = getScoped(vendaId, empresaId, filialId);
+        if (!List.of(VendaStatus.FINALIZADA, VendaStatus.TROCA_PARCIAL).contains(venda.getStatusOperacional())) {
+            throw new IllegalArgumentException("Somente venda finalizada pode ser trocada ou devolvida.");
         }
-        String anterior = resumoVenda(venda);
-        venda.setStatus(0);
-        venda.setEmpresaId(empresaId);
-        venda.setFilialId(filialId);
-        Venda cancelada = vendaRepository.save(venda);
-        auditTrailService.registrarSistema("VENDA_CANCELADA", "Venda", cancelada.getIdVenda(), anterior, resumoVenda(cancelada));
-        return cancelada;
+        TipoDevolucao tipo;
+        try {
+            tipo = TipoDevolucao.valueOf(body.tipo().trim().toUpperCase(Locale.ROOT));
+        } catch (RuntimeException ex) {
+            throw new IllegalArgumentException("Tipo deve ser TOTAL, PARCIAL ou TROCA.");
+        }
+        String motivo = requireMotivo(body.motivo());
+        VendaDevolucao devolucao = new VendaDevolucao();
+        devolucao.setVendaOriginalId(vendaId);
+        devolucao.setEmpresaId(empresaId);
+        devolucao.setFilialId(filialId);
+        devolucao.setTipo(tipo);
+        devolucao.setMotivo(motivo);
+        devolucao.setCriadoPor(privacyGuardService.currentUserLogin(request));
+        devolucao.setCriadoEm(LocalDateTime.now());
+        devolucao.setValorAjuste(BigDecimal.ZERO);
+
+        int totalVendido = venda.getItens().stream().mapToInt(ProdutoVenda::getQuantidade).sum();
+        int totalOperado = 0;
+        for (VendaDevolucaoRequestDTO.ItemDTO itemBody : body.itens()) {
+            ProdutoVenda itemVenda = venda.getItens().stream()
+                    .filter(item -> item.getProduto().getIdProduto().equals(itemBody.produtoOriginalId()))
+                    .findFirst().orElseThrow(() -> new IllegalArgumentException("Produto nao pertence a venda original."));
+            int jaDevolvido = vendaDevolucaoRepository
+                    .findByVendaOriginalIdAndEmpresaIdAndFilialIdOrderByCriadoEmDesc(vendaId, empresaId, filialId)
+                    .stream().flatMap(d -> d.getItens().stream())
+                    .filter(i -> i.getProdutoOriginalId().equals(itemBody.produtoOriginalId()))
+                    .mapToInt(VendaDevolucaoItem::getQuantidade).sum();
+            if (jaDevolvido + itemBody.quantidade() > itemVenda.getQuantidade()) {
+                throw new IllegalArgumentException("Quantidade devolvida supera a quantidade vendida.");
+            }
+            Produto original = produtoRepository.findByIdProdutoAndEmpresaIdAndFilialId(
+                    itemBody.produtoOriginalId(), empresaId, filialId).orElseThrow();
+            movimentarEstoque(original, itemBody.quantidade(), true, vendaId,
+                    TipoMovimentacaoEstoque.DEVOLUCAO, "Entrada por troca/devolucao");
+            if (tipo == TipoDevolucao.TROCA) {
+                if (itemBody.produtoNovoId() == null) {
+                    throw new IllegalArgumentException("Produto novo e obrigatorio em troca.");
+                }
+                Produto novo = produtoRepository.findByIdProdutoAndEmpresaIdAndFilialId(
+                        itemBody.produtoNovoId(), empresaId, filialId)
+                        .orElseThrow(() -> new IllegalArgumentException("Produto novo nao encontrado no tenant."));
+                validarProdutoParaVenda(novo, itemBody.quantidade());
+                movimentarEstoque(novo, itemBody.quantidade(), false, vendaId,
+                        TipoMovimentacaoEstoque.TROCA_SAIDA, "Saida por troca de produto");
+            }
+            VendaDevolucaoItem item = new VendaDevolucaoItem();
+            item.setDevolucao(devolucao);
+            item.setProdutoOriginalId(itemBody.produtoOriginalId());
+            item.setProdutoNovoId(itemBody.produtoNovoId());
+            item.setQuantidade(itemBody.quantidade());
+            item.setValorUnitario(itemVenda.getPrecoUnitario());
+            devolucao.getItens().add(item);
+            devolucao.setValorAjuste(devolucao.getValorAjuste().add(
+                    itemVenda.getPrecoUnitario().multiply(BigDecimal.valueOf(itemBody.quantidade()))));
+            totalOperado += itemBody.quantidade();
+        }
+        VendaDevolucao salva = vendaDevolucaoRepository.save(devolucao);
+        VendaStatus novoStatus = tipo == TipoDevolucao.TROCA
+                ? (totalOperado == totalVendido ? VendaStatus.TROCA_TOTAL : VendaStatus.TROCA_PARCIAL)
+                : (totalOperado == totalVendido ? VendaStatus.DEVOLVIDA : VendaStatus.TROCA_PARCIAL);
+        venda.setTipoDevolucao(tipo);
+        venda.setMotivoDevolucao(motivo);
+        transicionar(venda, novoStatus, tipo == TipoDevolucao.TROCA ? "TROCA_REGISTRADA" : "DEVOLUCAO_REGISTRADA",
+                motivo, request);
+        financeiroOperacionalService.ajustarPorDevolucao(venda, devolucao.getValorAjuste(), totalOperado == totalVendido);
+        if (tipo != TipoDevolucao.TROCA) {
+            creditoClienteService.gerarPorDevolucao(venda, salva, request);
+        }
+        auditTrailService.registrarPrivacidade("VENDA_" + tipo.name(), "Venda", vendaId, "Vendas",
+                null, "devolucao=" + salva.getIdVendaDevolucao() + ";valor=" + salva.getValorAjuste(), request, motivo);
+        return salva;
+    }
+
+    public List<VendaEvento> eventos(Long vendaId, Long empresaId, Long filialId) {
+        return vendaEventoRepository.findByVendaIdAndEmpresaIdAndFilialIdOrderByCriadoEmAsc(vendaId, empresaId, filialId);
+    }
+
+    private void baixarEstoque(Venda venda) {
+        for (ProdutoVenda item : venda.getItens()) {
+            Produto produto = produtoRepository.findByIdProdutoAndEmpresaIdAndFilialId(
+                    item.getProduto().getIdProduto(), venda.getEmpresaId(), venda.getFilialId()).orElseThrow();
+            validarProdutoParaVenda(produto, item.getQuantidade());
+            movimentarEstoque(produto, item.getQuantidade(), false, venda.getIdVenda(),
+                    TipoMovimentacaoEstoque.SAIDA, "Saida automatica na finalizacao pelo caixa");
+        }
+    }
+
+    private void devolverEstoque(Venda venda, TipoMovimentacaoEstoque tipo, String motivo) {
+        for (ProdutoVenda item : venda.getItens()) {
+            Produto produto = produtoRepository.findByIdProdutoAndEmpresaIdAndFilialId(
+                    item.getProduto().getIdProduto(), venda.getEmpresaId(), venda.getFilialId()).orElseThrow();
+            movimentarEstoque(produto, item.getQuantidade(), true, venda.getIdVenda(), tipo, motivo);
+        }
+    }
+
+    private void movimentarEstoque(Produto produto, int quantidade, boolean entrada, Long vendaId,
+            TipoMovimentacaoEstoque tipo, String motivo) {
+        int anterior = produto.getQuantidadeEstoque();
+        int posterior = entrada ? anterior + quantidade : anterior - quantidade;
+        if (posterior < 0) {
+            throw new IllegalArgumentException("Estoque insuficiente para concluir a operacao.");
+        }
+        produto.setQuantidadeEstoque(posterior);
+        produtoRepository.save(produto);
+        estoqueMovimentacaoService.registrar(produto, tipo, quantidade, anterior, posterior,
+                "Venda", vendaId, motivo);
+    }
+
+    private void validarProdutoParaVenda(Produto produto, int quantidade) {
+        if (produto.getStatus() != 1) {
+            throw new IllegalArgumentException("Produto inativo nao pode ser vendido.");
+        }
+        if (produto.getCodigoBarras() == null || produto.getCodigoBarras().isBlank()) {
+            throw new IllegalArgumentException("Produto vendavel exige codigo de barras.");
+        }
+        if (produto.getQuantidadeEstoque() < quantidade) {
+            throw new IllegalArgumentException("Estoque insuficiente para o produto " + produto.getDescricao() + ".");
+        }
+    }
+
+    private Venda getScoped(Long id, Long empresaId, Long filialId) {
+        Venda venda = vendaRepository.findByIdVendaAndEmpresaIdAndFilialId(id, empresaId, filialId)
+                .orElseThrow(() -> new IllegalArgumentException("Venda nao encontrada no escopo da empresa/filial."));
+        initialize(venda);
+        if (venda.getStatusOperacional() == null) {
+            venda.setStatusOperacional(venda.getStatus() == 0 ? VendaStatus.CANCELADA : VendaStatus.FINALIZADA);
+        }
+        return venda;
+    }
+
+    private void transicionar(Venda venda, VendaStatus novo, String evento, String motivo, HttpServletRequest request) {
+        VendaStatus anterior = venda.getStatusOperacional();
+        venda.setStatusOperacional(novo);
+        vendaRepository.save(venda);
+        registrarEvento(venda, evento, anterior, novo, motivo, request);
+    }
+
+    private void registrarEvento(Venda venda, String evento, VendaStatus anterior, VendaStatus novo,
+            String motivo, HttpServletRequest request) {
+        VendaEvento registro = new VendaEvento();
+        registro.setVendaId(venda.getIdVenda());
+        registro.setEmpresaId(venda.getEmpresaId());
+        registro.setFilialId(venda.getFilialId());
+        registro.setEvento(evento);
+        registro.setStatusAnterior(anterior == null ? null : anterior.name());
+        registro.setStatusNovo(novo == null ? null : novo.name());
+        registro.setMotivo(motivo);
+        registro.setUsuarioLogin(privacyGuardService.currentUserLogin(request));
+        registro.setCriadoEm(LocalDateTime.now());
+        vendaEventoRepository.save(registro);
+    }
+
+    private void initialize(Venda venda) {
+        Hibernate.initialize(venda.getCliente());
+        Hibernate.initialize(venda.getUsuario());
+        Hibernate.initialize(venda.getItens());
+        venda.getItens().forEach(item -> Hibernate.initialize(item.getProduto()));
+        Hibernate.initialize(venda.getPagamentos());
+        venda.getPagamentos().forEach(pagamento -> Hibernate.initialize(pagamento.getFormaPagamento()));
+    }
+
+    private String requireMotivo(String motivo) {
+        if (motivo == null || motivo.isBlank()) {
+            throw new IllegalArgumentException("Motivo e obrigatorio.");
+        }
+        return motivo.trim();
+    }
+
+    private BigDecimal nvl(BigDecimal valor) {
+        return valor == null ? BigDecimal.ZERO : valor;
+    }
+
+    private List<RecebimentoVendaRequestDTO.PagamentoDTO> pagamentosSolicitados(RecebimentoVendaRequestDTO body) {
+        if (body.pagamentos() != null && !body.pagamentos().isEmpty()) return body.pagamentos();
+        if (body.formaPagamentoId() == null || body.valorRecebido() == null) return List.of();
+        return List.of(new RecebimentoVendaRequestDTO.PagamentoDTO(
+                body.formaPagamentoId(), body.valorRecebido(), body.numeroParcelas(), null));
+    }
+
+    private boolean isDinheiro(FormaPagamento forma) {
+        return normalized(forma.getNome()).contains("dinheiro");
+    }
+
+    private boolean isCreditoVale(FormaPagamento forma) {
+        String nome = normalized(forma.getNome());
+        return nome.contains("credito") || nome.contains("vale");
+    }
+
+    private String normalized(String value) {
+        return Normalizer.normalize(value == null ? "" : value, Normalizer.Form.NFD)
+                .replaceAll("\\p{M}", "").toLowerCase(Locale.ROOT);
     }
 
     private String resumoVenda(Venda venda) {
-        return "status=" + venda.getStatus()
-                + ";valorTotal=" + venda.getValorTotal()
-                + ";desconto=" + venda.getDesconto()
-                + ";empresa=" + venda.getEmpresaId()
-                + ";filial=" + venda.getFilialId()
-                + ";dataVenda=" + venda.getDataVenda();
+        return "numero=" + venda.getNumeroVenda() + ";status=" + venda.getStatusOperacional()
+                + ";valorTotal=" + venda.getValorTotal() + ";empresa=" + venda.getEmpresaId()
+                + ";filial=" + venda.getFilialId();
     }
 }

@@ -35,6 +35,11 @@ public class Venda {
     private Cliente cliente;
     @Column(nullable = false)
     private int status;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status_operacional", length = 24)
+    private VendaStatus statusOperacional;
+    @Column(name = "numero_venda", length = 40)
+    private String numeroVenda;
     @Column(name = "valor_total", nullable = false, precision = 10, scale = 2)
     private BigDecimal valorTotal;
     @Column(precision = 10, scale = 2)
@@ -49,6 +54,33 @@ public class Venda {
     private Long caixaSessaoId;
     @Column(name = "condicao_pagamento_id")
     private Long condicaoPagamentoId;
+    @Column(name = "forma_pagamento_real_id")
+    private Long formaPagamentoRealId;
+    @Column(name = "valor_recebido", precision = 12, scale = 2)
+    private BigDecimal valorRecebido;
+    @Column(precision = 12, scale = 2)
+    private BigDecimal troco;
+    @Column(precision = 12, scale = 2)
+    private BigDecimal diferenca;
+    @Column(name = "enviado_caixa_em")
+    private LocalDateTime enviadoCaixaEm;
+    @Column(name = "recebido_caixa_em")
+    private LocalDateTime recebidoCaixaEm;
+    @Column(name = "finalizado_em")
+    private LocalDateTime finalizadoEm;
+    @Column(name = "motivo_recusa", length = 255)
+    private String motivoRecusa;
+    @Column(name = "motivo_cancelamento", length = 255)
+    private String motivoCancelamento;
+    @Column(name = "venda_original_id")
+    private Long vendaOriginalId;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "tipo_devolucao", length = 16)
+    private TipoDevolucao tipoDevolucao;
+    @Column(name = "motivo_devolucao", length = 255)
+    private String motivoDevolucao;
+    @Column(name = "estoque_movimentado", nullable = false)
+    private boolean estoqueMovimentado;
     @Column(name = "data_venda", nullable = false)
     private LocalDateTime dataVenda;
     @OneToMany(mappedBy = "venda", cascade = CascadeType.ALL, orphanRemoval = true)

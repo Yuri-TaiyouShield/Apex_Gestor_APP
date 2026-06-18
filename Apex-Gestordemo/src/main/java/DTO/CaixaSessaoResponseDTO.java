@@ -16,7 +16,10 @@ public record CaixaSessaoResponseDTO(
         BigDecimal totalSangrias,
         BigDecimal saldoAtual,
         BigDecimal saldoFinal,
+        BigDecimal saldoInformado,
+        BigDecimal diferencaFechamento,
         LocalDateTime abertoEm,
         LocalDateTime fechadoEm,
-        List<CaixaMovimentacaoResponseDTO> movimentacoes) {
+        List<CaixaMovimentacaoResponseDTO> movimentacoes,
+        List<CaixaFormaPagamentoResumoDTO> resumoPagamentos) {
 }

@@ -12,6 +12,8 @@
 **/.angular/
 **/.cache/
 **/.electron-package/
+**/playwright-report/
+**/test-results/
 
 # Native/mobile build outputs
 **/android/app/build/

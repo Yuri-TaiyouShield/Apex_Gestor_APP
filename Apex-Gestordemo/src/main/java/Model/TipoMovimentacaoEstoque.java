@@ -6,5 +6,7 @@ public enum TipoMovimentacaoEstoque {
     AJUSTE,
     TRANSFERENCIA,
     INVENTARIO,
-    CANCELAMENTO_VENDA
+    CANCELAMENTO_VENDA,
+    DEVOLUCAO,
+    TROCA_SAIDA
 }

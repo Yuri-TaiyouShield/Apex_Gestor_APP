@@ -43,6 +43,12 @@ public class CaixaSessao {
     @Column(name = "saldo_final", precision = 12, scale = 2)
     private BigDecimal saldoFinal;
 
+    @Column(name = "saldo_informado", precision = 12, scale = 2)
+    private BigDecimal saldoInformado;
+
+    @Column(name = "diferenca_fechamento", precision = 12, scale = 2)
+    private BigDecimal diferencaFechamento;
+
     @Column(name = "aberto_em", nullable = false)
     private LocalDateTime abertoEm;
 

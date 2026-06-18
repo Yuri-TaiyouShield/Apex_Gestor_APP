@@ -26,5 +26,7 @@ public interface FormaPagamentoRepository extends JpaRepository<FormaPagamento, 
             """)
     Optional<FormaPagamento> findVisibleById(@Param("id") Long id, @Param("empresaId") Long empresaId,
             @Param("filialId") Long filialId);
+
+    Optional<FormaPagamento> findByNomeAndEmpresaIdAndFilialId(String nome, Long empresaId, Long filialId);
     
 }

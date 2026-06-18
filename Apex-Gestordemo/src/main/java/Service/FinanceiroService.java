@@ -9,6 +9,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class FinanceiroService {
@@ -50,6 +51,7 @@ public class FinanceiroService {
         return gerarRelatorio(inicio, fim, 1L, 1L);
     }
 
+    @Transactional(readOnly = true)
     public RelatorioFinanceiroDTO gerarRelatorio(LocalDate inicio, LocalDate fim, Long empresaId, Long filialId) {
         LocalDateTime inicioTime = inicio.atStartOfDay();
         LocalDateTime fimTime = fim.atTime(23, 59, 59);
@@ -59,7 +61,10 @@ public class FinanceiroService {
                 filialId,
                 inicioTime,
                 fimTime,
-                1);
+                1).stream().filter(v -> v.getStatusOperacional() == null
+                        || java.util.Set.of(VendaStatus.FINALIZADA, VendaStatus.TROCA_PARCIAL,
+                                VendaStatus.TROCA_TOTAL, VendaStatus.DEVOLVIDA).contains(v.getStatusOperacional()))
+                        .toList();
         BigDecimal receita = BigDecimal.ZERO;
         BigDecimal cmv = BigDecimal.ZERO;
 

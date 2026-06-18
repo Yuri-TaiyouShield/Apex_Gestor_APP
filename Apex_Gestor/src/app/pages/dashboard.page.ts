@@ -6,7 +6,7 @@ import { catchError, of } from 'rxjs';
 
 import { ApexApiService } from '../core/apex-api.service';
 import { MOCK_EXPENSES, MOCK_PRODUCTS, MOCK_REPORT, MOCK_USERS } from '../core/mock-data';
-import { RelatorioFinanceiro } from '../core/models';
+import { DashboardVendedor, RelatorioFinanceiro } from '../core/models';
 import { SessionService } from '../core/session.service';
 import { currency } from '../core/view-utils';
 
@@ -44,7 +44,7 @@ import { currency } from '../core/view-utils';
             </ion-button>
           }
           @if (canViewFinance()) {
-            <ion-button fill="outline" routerLink="/expenses">
+            <ion-button fill="outline" routerLink="/finance-operations">
               <ion-icon slot="start" name="receipt-outline"></ion-icon>
               Financeiro
             </ion-button>
@@ -62,7 +62,7 @@ import { currency } from '../core/view-utils';
             <article class="metric-card revenue">
               <header><span>Meta do mes</span><ion-icon name="flag-outline" aria-hidden="true"></ion-icon></header>
               <strong>{{ money(sellerGoal()) }}</strong>
-              <small>Meta individual da filial ativa</small>
+              <small>{{ sellerGoalConfigured() ? 'Meta individual da filial ativa' : 'Meta ainda não configurada' }}</small>
             </article>
             <article class="metric-card profit">
               <header><span>Vendido hoje</span><ion-icon name="calendar-outline" aria-hidden="true"></ion-icon></header>
@@ -103,7 +103,7 @@ import { currency } from '../core/view-utils';
                 <ion-card-subtitle>Somente vendas do vendedor autenticado</ion-card-subtitle>
               </ion-card-header>
               <ion-card-content class="seller-list">
-                @for (sale of sellerLastSales; track sale.id) {
+                @for (sale of sellerLastSales(); track sale.id) {
                   <div class="seller-row">
                     <strong>#{{ sale.id }} {{ sale.status }}</strong>
                     <span>{{ sale.when }} - {{ money(sale.total) }}</span>
@@ -125,6 +125,10 @@ import { currency } from '../core/view-utils';
                 <ion-item lines="none">
                   <span class="action-icon"><ion-icon name="checkmark-done-outline" aria-hidden="true"></ion-icon></span>
                   <ion-label><strong>{{ sellerPaidByCashier() }} finalizadas</strong><p>Recebidas e confirmadas pelo operador de caixa.</p></ion-label>
+                </ion-item>
+                <ion-item lines="none">
+                  <span class="action-icon warning"><ion-icon name="return-down-back-outline" aria-hidden="true"></ion-icon></span>
+                  <ion-label><strong>{{ sellerRejectedByCashier() }} devolvidas para ajuste</strong><p>Corrija e reenvie pelo histórico de vendas.</p></ion-label>
                 </ion-item>
               </ion-card-content>
             </ion-card>
@@ -271,7 +275,8 @@ export class DashboardPage {
     { icon: 'receipt-outline', color: 'danger', value: `${this.expenseCount} despesas`, label: 'pendentes no periodo' },
     { icon: 'people-outline', color: 'primary', value: `${this.staffCount} usuarios`, label: 'com acesso ativo no RBAC' }
   ];
-  readonly sellerGoal = signal(50000);
+  readonly sellerGoal = signal(0);
+  readonly sellerGoalConfigured = signal(false);
   readonly sellerSoldToday = signal(0);
   readonly sellerSoldMonth = signal(0);
   readonly sellerSalesToday = signal(0);
@@ -280,15 +285,17 @@ export class DashboardPage {
   readonly sellerItemsMonth = signal(0);
   readonly sellerWaitingCashier = signal(0);
   readonly sellerPaidByCashier = signal(0);
+  readonly sellerRejectedByCashier = signal(0);
   readonly sellerMissingGoal = computed(() => Math.max(this.sellerGoal() - this.sellerSoldMonth(), 0));
   readonly sellerGoalPercent = computed(() => this.percent(this.sellerSoldMonth(), this.sellerGoal()));
   readonly sellerAverageTicket = computed(() => this.sellerSalesMonth() ? this.sellerSoldMonth() / this.sellerSalesMonth() : 0);
-  readonly sellerLastSales = [
+  readonly sellerLastSales = signal([
     { id: 'sem-vendas', status: 'Nenhuma venda no periodo', when: 'Meta aguardando operacao', total: 0 }
-  ];
+  ]);
 
   constructor() {
     if (this.isSellerDashboard()) {
+      this.loadSellerDashboard();
       return;
     }
     const now = new Date();
@@ -298,6 +305,43 @@ export class DashboardPage {
       this.apiOffline.set(true);
       return of(MOCK_REPORT);
     })).subscribe((report) => this.report.set(report));
+  }
+
+  ionViewWillEnter(): void {
+    if (this.isSellerDashboard()) {
+      this.loadSellerDashboard();
+    }
+  }
+
+  private loadSellerDashboard(): void {
+    this.api.sellerDashboard().pipe(catchError(() => {
+      this.apiOffline.set(true);
+      return of(null);
+    })).subscribe((data) => {
+      if (!data) return;
+      this.applySellerDashboard(data);
+      this.apiOffline.set(false);
+    });
+  }
+
+  private applySellerDashboard(data: DashboardVendedor): void {
+    this.sellerGoal.set(data.meta);
+    this.sellerGoalConfigured.set(data.metaConfigurada);
+    this.sellerSoldToday.set(data.vendidoHoje);
+    this.sellerSoldMonth.set(data.vendidoMes);
+    this.sellerSalesToday.set(data.vendasHoje);
+    this.sellerSalesMonth.set(data.vendasMes);
+    this.sellerItemsToday.set(data.itensHoje);
+    this.sellerItemsMonth.set(data.itensMes);
+    this.sellerWaitingCashier.set(data.aguardandoCaixa);
+    this.sellerPaidByCashier.set(data.finalizadasCaixa);
+    this.sellerRejectedByCashier.set(data.recusadasCaixa);
+    this.sellerLastSales.set(data.ultimasVendas.length ? data.ultimasVendas.map((sale) => ({
+      id: String(sale.numeroVenda || sale.idVenda),
+      status: sale.status,
+      when: new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(sale.dataVenda)),
+      total: sale.total
+    })) : [{ id: 'sem-vendas', status: 'Nenhuma venda no período', when: 'Aguardando operação', total: 0 }]);
   }
 
   private percent(value: number, total: number): string {

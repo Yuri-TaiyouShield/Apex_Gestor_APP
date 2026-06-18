@@ -6,15 +6,15 @@ Este repositorio esta sendo organizado para uma evolucao de produto comercial no
 
 ## Estado Executivo
 
-Status em 2026-05-26: **nao aprovado para lancamento oficial nacional**.
+Status em 2026-06-18: **v1 operacional homologada localmente; ainda nao aprovada para lancamento fiscal nacional**.
 
 O backend versionado possui modulos essenciais de cadastro, estoque, vendas, nota fiscal de entrada, despesas e relatorios. Ele compila e os testes atuais passam. Ainda existem bloqueios de produto e governanca antes de vender como software oficial:
 
-- o frontend `Apex_Gestor/` aparece no checkout como diretorio nao versionado e sem fonte raiz evidente;
-- autenticacao real, multiempresa, auditoria de usuario e trilhas LGPD ainda precisam virar comportamento padrao de producao;
+- o frontend `Apex_Gestor/` possui fluxo operacional Vendedor -> Caixa, financeiro inicial e E2E Playwright;
+- JWT, RBAC, tenant scope, auditoria e LGPD transversal estao protegidos por testes H2, MySQL/Testcontainers e navegador;
 - emissao fiscal brasileira, NFC-e/NF-e/SAT quando aplicavel, SPED e integracoes contabeis ainda precisam de especificacao, homologacao e validacao por UF;
 - CI/CD atual do repositorio estava focado em GitHub Pages, nao em qualidade de produto;
-- faltam migrations formais de banco, rotina de backup/restore, observabilidade operacional e testes de fluxos criticos.
+- migrations Flyway V2-V5 e variante MySQL estao validadas; backup/restore e observabilidade de producao continuam pendentes.
 
 Leia primeiro:
 
@@ -26,6 +26,7 @@ Leia primeiro:
 - [Checklist de go-live Brasil](docs/GO_LIVE_CHECKLIST_BR.md)
 - [Arquitetura e operacao](docs/ARCHITECTURE_AND_OPERATIONS.md)
 - [Como contribuir](CONTRIBUTING.md)
+- [Homologacao operacional v1](docs/HOMOLOGACAO_V1.md)
 
 ## Estrutura
 
@@ -57,6 +58,19 @@ Principais dominios versionados:
 cd Apex-Gestordemo
 cmd /c mvnw.cmd -q test
 ```
+
+Com Docker Desktop ativo, o mesmo comando executa o fluxo isolado em MySQL 8.4 via Testcontainers. Sem Docker, somente essa classe e marcada como indisponivel.
+
+### Frontend e E2E
+
+```powershell
+cd Apex_Gestor
+npm test -- --watch=false --browsers=ChromeHeadless
+npm run build:web
+npm run e2e
+```
+
+O E2E usa Chrome instalado e espera frontend em `127.0.0.1:4200` e backend em `127.0.0.1:8080`.
 
 ### Auditoria local
 

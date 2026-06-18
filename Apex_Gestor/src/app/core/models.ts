@@ -192,9 +192,133 @@ export interface CaixaSessao {
   totalSangrias: number;
   saldoAtual: number;
   saldoFinal?: number;
+  saldoInformado?: number;
+  diferencaFechamento?: number;
   abertoEm: string;
   fechadoEm?: string;
   movimentacoes: CaixaMovimentacao[];
+  resumoPagamentos: Array<{ formaPagamentoId: number; nome: string; total: number; quantidadePagamentos: number }>;
+}
+
+export type VendaStatus = 'RASCUNHO' | 'EM_ATENDIMENTO' | 'AGUARDANDO_CAIXA' | 'EM_PAGAMENTO' |
+  'PAGA' | 'FINALIZADA' | 'CANCELADA' | 'DEVOLVIDA' | 'TROCA_PARCIAL' | 'TROCA_TOTAL';
+
+export interface VendaItem {
+  produtoId: number;
+  descricao: string;
+  quantidade: number;
+  precoUnitario: number;
+  precoTotal: number;
+}
+
+export interface Venda {
+  idVenda: number;
+  numeroVenda?: string;
+  clienteId: number;
+  clienteNome: string;
+  usuarioId: number;
+  usuarioNome: string;
+  status: VendaStatus;
+  valorTotal: number;
+  desconto: number;
+  observacao?: string;
+  empresaId: number;
+  filialId: number;
+  caixaSessaoId?: number;
+  condicaoPagamentoId?: number;
+  formaPagamentoRealId?: number;
+  valorRecebido?: number;
+  troco?: number;
+  diferenca?: number;
+  dataVenda: string;
+  enviadoCaixaEm?: string;
+  recebidoCaixaEm?: string;
+  finalizadoEm?: string;
+  motivoRecusa?: string;
+  itens: VendaItem[];
+  pagamentos: Array<{ formaPagamentoId: number; nome: string; valorPago: number; numeroParcelas: number; creditoId?: number }>;
+}
+
+export interface RecebimentoPagamento {
+  formaPagamentoId: number;
+  valor: number;
+  numeroParcelas?: number;
+  creditoId?: number;
+}
+
+export interface CreditoCliente {
+  idCredito: number;
+  clienteId: number;
+  vendaOrigemId: number;
+  devolucaoId: number;
+  valorOriginal: number;
+  saldo: number;
+  status: string;
+  empresaId: number;
+  filialId: number;
+  criadoEm: string;
+}
+
+export interface ContaReceber {
+  idContaReceber: number;
+  vendaId: number;
+  numeroVenda?: string;
+  clienteId?: number;
+  clienteNome?: string;
+  formaPagamentoId?: number;
+  formaPagamentoNome?: string;
+  condicaoPagamentoId?: number;
+  caixaSessaoId?: number;
+  valorBruto: number;
+  desconto: number;
+  valorLiquido: number;
+  valorPago: number;
+  saldo: number;
+  vencimento: string;
+  status: string;
+  empresaId: number;
+  filialId: number;
+}
+
+export interface ContaPagar {
+  idContaPagar: number;
+  fornecedorId?: number;
+  fornecedorNome?: string;
+  categoriaId?: number;
+  categoriaNome?: string;
+  descricao: string;
+  valor: number;
+  vencimento: string;
+  formaPagamentoPrevistaId?: number;
+  formaPagamentoPrevistaNome?: string;
+  status: string;
+  empresaId: number;
+  filialId: number;
+}
+
+export interface DashboardVendedor {
+  meta: number;
+  metaConfigurada: boolean;
+  vendidoHoje: number;
+  vendidoMes: number;
+  vendasHoje: number;
+  vendasMes: number;
+  itensHoje: number;
+  itensMes: number;
+  faltanteMeta: number;
+  percentualMeta: number;
+  ticketMedio: number;
+  aguardandoCaixa: number;
+  finalizadasCaixa: number;
+  recusadasCaixa: number;
+  canceladasOuDevolvidas: number;
+  ultimasVendas: Array<{ idVenda: number; numeroVenda?: string; status: VendaStatus; total: number; dataVenda: string }>;
+}
+
+export interface VendaDevolucaoRequest {
+  tipo: 'TOTAL' | 'PARCIAL' | 'TROCA';
+  motivo: string;
+  itens: Array<{ produtoOriginalId: number; produtoNovoId?: number; quantidade: number }>;
 }
 
 export interface Despesa {

@@ -1,6 +1,7 @@
 package Controller;
 
 import Service.JwtTokenService;
+import Repository.UsuarioRepository;
 import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -33,9 +34,11 @@ public class AuthController {
     );
 
     private final JwtTokenService jwtTokenService;
+    private final UsuarioRepository usuarioRepository;
 
-    public AuthController(JwtTokenService jwtTokenService) {
+    public AuthController(JwtTokenService jwtTokenService, UsuarioRepository usuarioRepository) {
         this.jwtTokenService = jwtTokenService;
+        this.usuarioRepository = usuarioRepository;
     }
 
     @PostMapping("/login")
@@ -50,7 +53,7 @@ public class AuthController {
                     "Aceite a politica de privacidade para acessar o ambiente.");
         }
 
-        return ResponseEntity.ok(AuthResponse.from(user, jwtTokenService));
+        return ResponseEntity.ok(AuthResponse.from(resolvePersistedUser(user), jwtTokenService));
     }
 
     @PostMapping("/refresh")
@@ -60,7 +63,7 @@ public class AuthController {
                         && request.refreshToken().contains(candidate.login()))
                 .findFirst()
                 .orElse(DEMO_USERS.get("v5_dono"));
-        return ResponseEntity.ok(AuthResponse.from(user, jwtTokenService));
+        return ResponseEntity.ok(AuthResponse.from(resolvePersistedUser(user), jwtTokenService));
     }
 
     @PostMapping("/logout")
@@ -76,6 +79,12 @@ public class AuthController {
 
     private String normalizeLogin(String login) {
         return login == null ? "" : login.trim().toLowerCase();
+    }
+
+    private DemoUser resolvePersistedUser(DemoUser fallback) {
+        return usuarioRepository.findByLogin(fallback.login())
+                .map(usuario -> new DemoUser(usuario.getIdUsuario(), usuario.getNome(), usuario.getLogin(), fallback.roles()))
+                .orElse(fallback);
     }
 
     public record LoginRequest(

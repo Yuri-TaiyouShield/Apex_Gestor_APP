@@ -1,6 +1,7 @@
 package com.Apex.Apex_Gestordemo;
 
 import javax.sql.DataSource;
+import java.sql.SQLException;
 import org.flywaydb.core.Flyway;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.beans.factory.config.BeanDefinition;
@@ -39,9 +40,10 @@ public class FlywayRuntimeConfig {
     @Bean(initMethod = "migrate")
     @ConditionalOnProperty(prefix = "spring.flyway", name = "enabled", havingValue = "true", matchIfMissing = true)
     Flyway apexFlyway(DataSource dataSource, Environment environment) {
-        String[] locations = environment
-                .getProperty("spring.flyway.locations", "classpath:db/migration")
-                .split("\\s*,\\s*");
+        String configuredLocations = environment.getProperty("spring.flyway.locations", "").trim();
+        String[] locations = configuredLocations.isBlank()
+                ? new String[] { defaultLocation(dataSource) }
+                : configuredLocations.split("\\s*,\\s*");
         boolean baselineOnMigrate = environment
                 .getProperty("spring.flyway.baseline-on-migrate", Boolean.class, Boolean.TRUE);
         boolean validateOnMigrate = environment
@@ -53,5 +55,16 @@ public class FlywayRuntimeConfig {
                 .baselineOnMigrate(baselineOnMigrate)
                 .validateOnMigrate(validateOnMigrate)
                 .load();
+    }
+
+    private String defaultLocation(DataSource dataSource) {
+        try (var connection = dataSource.getConnection()) {
+            String database = connection.getMetaData().getDatabaseProductName();
+            return database != null && database.toLowerCase(java.util.Locale.ROOT).contains("mysql")
+                    ? "classpath:db/migration-mysql"
+                    : "classpath:db/migration";
+        } catch (SQLException ex) {
+            throw new IllegalStateException("Nao foi possivel identificar o banco para selecionar as migrations.", ex);
+        }
     }
 }

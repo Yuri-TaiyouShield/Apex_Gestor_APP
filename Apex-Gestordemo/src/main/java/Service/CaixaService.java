@@ -2,15 +2,19 @@ package Service;
 
 import DTO.CaixaMovimentacaoResponseDTO;
 import DTO.CaixaSessaoResponseDTO;
+import DTO.CaixaFormaPagamentoResumoDTO;
 import Model.CaixaMovimentacao;
 import Model.CaixaSessao;
 import Model.CaixaStatus;
 import Repository.CaixaMovimentacaoRepository;
 import Repository.CaixaSessaoRepository;
+import Repository.VendaPagamentoRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.LinkedHashMap;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +30,8 @@ public class CaixaService {
     private PrivacyGuardService privacyGuardService;
     @Autowired
     private AuditTrailService auditTrailService;
+    @Autowired
+    private VendaPagamentoRepository vendaPagamentoRepository;
 
     public CaixaSessaoResponseDTO statusAtual(HttpServletRequest request) {
         return caixaAberto(request).map(this::toResponse).orElse(null);
@@ -37,6 +43,13 @@ public class CaixaService {
                 empresaId(request),
                 filialId(request),
                 CaixaStatus.ABERTO);
+    }
+
+    public List<CaixaSessaoResponseDTO> historico(HttpServletRequest request) {
+        boolean caixaPuro = privacyGuardService.currentRoles(request).contains("ROLE_CAIXA");
+        String login = privacyGuardService.currentUserLogin(request);
+        return caixaSessaoRepository.findTop20ByEmpresaIdAndFilialIdOrderByAbertoEmDesc(empresaId(request), filialId(request))
+                .stream().filter(c -> !caixaPuro || login.equals(c.getOperadorLogin())).map(this::toResponse).toList();
     }
 
     @Transactional
@@ -103,15 +116,25 @@ public class CaixaService {
 
     @Transactional
     public CaixaSessaoResponseDTO fechar(Long caixaId, HttpServletRequest request) {
+        return fechar(caixaId, null, request);
+    }
+
+    @Transactional
+    public CaixaSessaoResponseDTO fechar(Long caixaId, BigDecimal saldoInformado, HttpServletRequest request) {
         CaixaSessao caixa = abertoPorId(caixaId, request);
         String anterior = resumo(caixa);
         caixa.setStatus(CaixaStatus.FECHADO);
-        caixa.setSaldoFinal(saldoAtual(caixa));
+        BigDecimal esperado = saldoAtual(caixa);
+        caixa.setSaldoFinal(esperado);
+        caixa.setSaldoInformado(saldoInformado == null ? esperado : nonNegative(saldoInformado));
+        caixa.setDiferencaFechamento(caixa.getSaldoInformado().subtract(esperado));
         caixa.setFechadoEm(LocalDateTime.now());
         CaixaSessao salvo = caixaSessaoRepository.save(caixa);
         registrarMovimento(salvo, "FECHAMENTO", salvo.getSaldoFinal(), "Fechamento diario", "Caixa", salvo.getIdCaixaSessao());
         auditTrailService.registrarPrivacidade("CAIXA_FECHADO", "CaixaSessao", salvo.getIdCaixaSessao(), "Caixa",
-                anterior, resumo(salvo), request, "Fechamento de caixa operacional.");
+                anterior, resumo(salvo), request, salvo.getDiferencaFechamento().signum() == 0
+                        ? "Fechamento de caixa operacional conciliado."
+                        : "Fechamento de caixa com diferenca auditada.");
         return toResponse(salvo);
     }
 
@@ -162,9 +185,26 @@ public class CaixaService {
                 caixa.getTotalSangrias(),
                 saldoAtual(caixa),
                 caixa.getSaldoFinal(),
+                caixa.getSaldoInformado(),
+                caixa.getDiferencaFechamento(),
                 caixa.getAbertoEm(),
                 caixa.getFechadoEm(),
-                movimentacoes);
+                movimentacoes,
+                resumoPagamentos(caixa));
+    }
+
+    private List<CaixaFormaPagamentoResumoDTO> resumoPagamentos(CaixaSessao caixa) {
+        if (caixa.getIdCaixaSessao() == null) return List.of();
+        Map<Long, CaixaFormaPagamentoResumoDTO> totais = new LinkedHashMap<>();
+        vendaPagamentoRepository.findByVendaCaixaSessaoIdAndVendaEmpresaIdAndVendaFilialId(
+                caixa.getIdCaixaSessao(), caixa.getEmpresaId(), caixa.getFilialId()).forEach(p -> {
+            Long id = p.getFormaPagamento().getIdFormaPagamento();
+            CaixaFormaPagamentoResumoDTO atual = totais.get(id);
+            totais.put(id, new CaixaFormaPagamentoResumoDTO(id, p.getFormaPagamento().getNome(),
+                    (atual == null ? BigDecimal.ZERO : atual.total()).add(p.getValorPago()),
+                    (atual == null ? 0L : atual.quantidadePagamentos()) + 1));
+        });
+        return List.copyOf(totais.values());
     }
 
     private CaixaMovimentacaoResponseDTO toMovimentoResponse(CaixaMovimentacao mov) {

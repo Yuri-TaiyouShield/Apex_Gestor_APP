@@ -18,7 +18,7 @@ public record VendaRequestDTO(
         Long empresaId,
         Long filialId,
         @NotEmpty List<@Valid ItemDTO> itens,
-        @NotEmpty List<@Valid PagamentoDTO> pagamentos) {
+        List<@Valid PagamentoDTO> pagamentos) {
 
     public record ItemDTO(
             @NotNull Long produtoId,

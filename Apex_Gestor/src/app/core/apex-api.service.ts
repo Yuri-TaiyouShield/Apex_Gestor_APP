@@ -10,6 +10,10 @@ import {
   B2cCartMergeRequest,
   B2cCartMergeResponse,
   CaixaSessao,
+  ContaPagar,
+  ContaReceber,
+  CreditoCliente,
+  DashboardVendedor,
   CheckoutPayment,
   Cliente,
   CondicaoPagamento,
@@ -26,10 +30,13 @@ import {
   PricingCalculationResponse,
   Produto,
   RelatorioFinanceiro,
+  RecebimentoPagamento,
   SignFinancialDocumentRequest,
   TaxCalculationRequest,
   TipoDespesa,
-  Usuario
+  Usuario,
+  Venda,
+  VendaDevolucaoRequest
 } from './models';
 
 @Injectable({ providedIn: 'root' })
@@ -143,10 +150,85 @@ export class ApexApiService {
     );
   }
 
-  closeCashier(id: number): Observable<CaixaSessao> {
+  closeCashier(id: number, saldoInformado?: number): Observable<CaixaSessao> {
     return this.readiness.waitForApi().pipe(
-      switchMap(() => this.http.post<CaixaSessao>(this.config.apiUrl(`/api/caixa/${id}/fechar`), {})),
+      switchMap(() => this.http.post<CaixaSessao>(this.config.apiUrl(`/api/caixa/${id}/fechar`), { valor: saldoInformado })),
       tap(() => this.invalidate('/api/caixa'))
+    );
+  }
+
+  pendingCashierSales(): Observable<Venda[]> {
+    return this.readiness.waitForApi().pipe(
+      switchMap(() => this.http.get<Venda[]>(this.config.apiUrl('/api/caixa/vendas-pendentes')))
+    );
+  }
+
+  receiveCashierSale(id: number, pagamentos: RecebimentoPagamento[]): Observable<Venda> {
+    return this.readiness.waitForApi().pipe(
+      switchMap(() => this.http.post<Venda>(this.config.apiUrl(`/api/caixa/vendas/${id}/receber`), {
+        pagamentos
+      })),
+      tap(() => this.invalidateOperationalSaleData())
+    );
+  }
+
+  cashierCredits(clienteId: number): Observable<CreditoCliente[]> {
+    return this.readiness.waitForApi().pipe(
+      switchMap(() => this.http.get<CreditoCliente[]>(this.config.apiUrl(`/api/caixa/clientes/${clienteId}/creditos`)))
+    );
+  }
+
+  cashierHistory(): Observable<CaixaSessao[]> {
+    return this.readiness.waitForApi().pipe(
+      switchMap(() => this.http.get<CaixaSessao[]>(this.config.apiUrl('/api/caixa/historico')))
+    );
+  }
+
+  accountsReceivable(): Observable<ContaReceber[]> {
+    return this.readiness.waitForApi().pipe(
+      switchMap(() => this.http.get<ContaReceber[]>(this.config.apiUrl('/api/financeiro/operacional/contas-receber')))
+    );
+  }
+
+  accountsPayable(): Observable<ContaPagar[]> {
+    return this.readiness.waitForApi().pipe(
+      switchMap(() => this.http.get<ContaPagar[]>(this.config.apiUrl('/api/financeiro/operacional/contas-pagar')))
+    );
+  }
+
+  createAccountPayable(payload: Partial<ContaPagar>): Observable<ContaPagar> {
+    return this.readiness.waitForApi().pipe(
+      switchMap(() => this.http.post<ContaPagar>(this.config.apiUrl('/api/financeiro/operacional/contas-pagar'), payload)),
+      tap(() => this.invalidate('/api/financeiro'))
+    );
+  }
+
+  rejectCashierSale(id: number, motivo: string): Observable<Venda> {
+    return this.readiness.waitForApi().pipe(
+      switchMap(() => this.http.post<Venda>(this.config.apiUrl(`/api/caixa/vendas/${id}/recusar`), { motivo })),
+      tap(() => this.invalidateOperationalSaleData())
+    );
+  }
+
+  sellerDashboard(): Observable<DashboardVendedor> {
+    return this.readiness.waitForApi().pipe(
+      switchMap(() => this.http.get<DashboardVendedor>(this.config.apiUrl('/api/dashboard/vendedor')))
+    );
+  }
+
+  salesHistory(q = '', status = ''): Observable<Venda[]> {
+    let params = new HttpParams();
+    if (q.trim()) params = params.set('q', q.trim());
+    if (status) params = params.set('status', status);
+    return this.readiness.waitForApi().pipe(
+      switchMap(() => this.http.get<Venda[]>(this.config.apiUrl('/api/vendas/historico'), { params }))
+    );
+  }
+
+  returnSale(id: number, payload: VendaDevolucaoRequest): Observable<unknown> {
+    return this.readiness.waitForApi().pipe(
+      switchMap(() => this.http.post(this.config.apiUrl(`/api/vendas/${id}/devolucoes`), payload)),
+      tap(() => this.invalidateOperationalSaleData())
     );
   }
 
@@ -230,21 +312,23 @@ export class ApexApiService {
     usuarioId: number;
     desconto: number;
     itens: Array<{ produtoId: number; quantidade: number }>;
-    pagamentos: CheckoutPayment[];
+    pagamentos?: CheckoutPayment[];
     observacao?: string;
     caixaSessaoId?: number;
+    condicaoPagamentoId?: number;
   }): Observable<Identifiable> {
     const body = {
       clienteId: payload.clienteId,
-      usuarioId: payload.usuarioId,
+      usuarioId: this.auth.user()?.usuarioId ?? payload.usuarioId,
       desconto: payload.desconto,
       observacao: payload.observacao,
       caixaSessaoId: payload.caixaSessaoId,
+      condicaoPagamentoId: payload.condicaoPagamentoId,
       itens: payload.itens.map((item) => ({
         produtoId: item.produtoId,
         quantidade: item.quantidade
       })),
-      pagamentos: payload.pagamentos.map((payment) => ({
+      pagamentos: (payload.pagamentos ?? []).map((payment) => ({
         formaPagamentoId: payment.formaPagamentoId,
         valorPago: payment.valorPago
       }))
@@ -257,6 +341,14 @@ export class ApexApiService {
         this.invalidate('/api/despesas');
       })
     );
+  }
+
+  private invalidateOperationalSaleData(): void {
+    this.invalidate('/api/vendas');
+    this.invalidate('/api/caixa');
+    this.invalidate('/api/dashboard');
+    this.invalidate('/api/financeiro');
+    this.invalidate('/api/produtos');
   }
 
   invoiceEntry(payload: Identifiable): Observable<Identifiable> {

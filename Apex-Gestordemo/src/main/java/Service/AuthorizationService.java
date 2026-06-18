@@ -37,6 +37,9 @@ public class AuthorizationService {
                 ApexPermission.STOCK_CHANGE,
                 ApexPermission.STOCK_TRANSFER,
                 ApexPermission.SALE_CREATE,
+                ApexPermission.SALE_RECEIVE,
+                ApexPermission.SALE_HISTORY_VIEW,
+                ApexPermission.SALE_RETURN,
                 ApexPermission.SALE_CANCEL,
                 ApexPermission.SALE_DISCOUNT_APPLY,
                 ApexPermission.SALE_DISCOUNT_OVERRIDE,
@@ -53,6 +56,7 @@ public class AuthorizationService {
                 ApexPermission.PAYMENT_CONDITION_VIEW,
                 ApexPermission.PAYMENT_CONDITION_MANAGE,
                 ApexPermission.SETTINGS_PERSONAL_MANAGE,
+                ApexPermission.ROLE_MANAGE,
                 ApexPermission.USER_VIEW,
                 ApexPermission.PERSONAL_DATA_VIEW,
                 ApexPermission.AUDIT_LOG_VIEW));
@@ -61,6 +65,8 @@ public class AuthorizationService {
                 ApexPermission.CUSTOMER_VIEW,
                 ApexPermission.STOCK_VIEW,
                 ApexPermission.SALE_CREATE,
+                ApexPermission.SALE_RECEIVE,
+                ApexPermission.SALE_HISTORY_VIEW,
                 ApexPermission.SALE_DISCOUNT_APPLY,
                 ApexPermission.CASHIER_VIEW,
                 ApexPermission.CASHIER_OPEN,
@@ -75,8 +81,23 @@ public class AuthorizationService {
                 ApexPermission.CUSTOMER_VIEW,
                 ApexPermission.STOCK_VIEW,
                 ApexPermission.SALE_CREATE,
+                ApexPermission.SALE_HISTORY_VIEW,
                 ApexPermission.SALE_DISCOUNT_APPLY,
                 ApexPermission.PAYMENT_CONDITION_VIEW,
+                ApexPermission.SETTINGS_PERSONAL_MANAGE));
+        ROLE_PERMISSIONS.put(Role.FINANCEIRO, EnumSet.of(
+                ApexPermission.PRODUCT_VIEW,
+                ApexPermission.SUPPLIER_VIEW,
+                ApexPermission.STOCK_VIEW,
+                ApexPermission.STOCK_CHANGE,
+                ApexPermission.SALE_HISTORY_VIEW,
+                ApexPermission.FINANCE_VIEW,
+                ApexPermission.FINANCE_MANAGE,
+                ApexPermission.FINANCE_CHANGE,
+                ApexPermission.PAYMENT_CONDITION_VIEW,
+                ApexPermission.PAYMENT_CONDITION_MANAGE,
+                ApexPermission.PERSONAL_DATA_VIEW,
+                ApexPermission.AUDIT_LOG_VIEW,
                 ApexPermission.SETTINGS_PERSONAL_MANAGE));
         ROLE_PERMISSIONS.put(Role.CLIENTE, EnumSet.of(ApexPermission.SETTINGS_PERSONAL_MANAGE));
         ROLE_PERMISSIONS.put(Role.PUBLICO, EnumSet.noneOf(ApexPermission.class));
@@ -130,6 +151,7 @@ public class AuthorizationService {
             case "ROLE_ADMIN", "ROLE_ADMIN_MASTER", "ROLE_GERENTE", "ROLE_GESTOR", "ROLE_SUPERVISOR" -> Role.GERENTE;
             case "ROLE_CAIXA" -> Role.CAIXA;
             case "ROLE_VENDEDOR" -> Role.VENDEDOR;
+            case "ROLE_FINANCEIRO", "ROLE_CONTADOR", "ROLE_AUDITOR" -> Role.FINANCEIRO;
             case "ROLE_CLIENTE_B2C" -> Role.CLIENTE;
             default -> Role.PUBLICO;
         };
@@ -141,6 +163,7 @@ public class AuthorizationService {
         GERENTE,
         CAIXA,
         VENDEDOR,
+        FINANCEIRO,
         CLIENTE,
         PUBLICO
     }

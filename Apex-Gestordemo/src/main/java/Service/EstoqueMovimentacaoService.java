@@ -102,10 +102,11 @@ public class EstoqueMovimentacaoService {
     }
 
     private int calcularSaldoPosterior(TipoMovimentacaoEstoque tipo, int quantidade, Integer saldoContado, int saldoAnterior) {
-        if (tipo == TipoMovimentacaoEstoque.ENTRADA || tipo == TipoMovimentacaoEstoque.CANCELAMENTO_VENDA) {
+        if (tipo == TipoMovimentacaoEstoque.ENTRADA || tipo == TipoMovimentacaoEstoque.CANCELAMENTO_VENDA
+                || tipo == TipoMovimentacaoEstoque.DEVOLUCAO) {
             return saldoAnterior + quantidade;
         }
-        if (tipo == TipoMovimentacaoEstoque.SAIDA) {
+        if (tipo == TipoMovimentacaoEstoque.SAIDA || tipo == TipoMovimentacaoEstoque.TROCA_SAIDA) {
             return saldoAnterior - quantidade;
         }
         if (tipo == TipoMovimentacaoEstoque.AJUSTE || tipo == TipoMovimentacaoEstoque.INVENTARIO) {

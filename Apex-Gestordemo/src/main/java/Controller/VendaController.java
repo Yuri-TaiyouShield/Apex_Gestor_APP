@@ -2,6 +2,10 @@ package Controller;
 
 import DTO.VendaRequestDTO;
 import DTO.VendaResponseDTO;
+import DTO.MotivoOperacaoRequestDTO;
+import DTO.VendaDevolucaoRequestDTO;
+import DTO.VendaDevolucaoResponseDTO;
+import DTO.VendaEventoResponseDTO;
 import Model.Cliente;
 import Model.FormaPagamento;
 import Model.Produto;
@@ -11,7 +15,7 @@ import Model.Venda;
 import Model.VendaPagamento;
 import Service.AuditTrailService;
 import Service.AuthorizationService;
-import Service.CaixaService;
+import Service.PrivacyGuardService;
 import Service.TenantScopeService;
 import Service.VendaService;
 import com.Apex.Apex_Gestordemo.security.ApexPermission;
@@ -30,6 +34,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -42,58 +47,108 @@ public class VendaController {
     @Autowired
     private AuthorizationService authorizationService;
     @Autowired
-    private CaixaService caixaService;
-    @Autowired
     private AuditTrailService auditTrailService;
     @Autowired
     private TenantScopeService tenantScopeService;
+    @Autowired
+    private PrivacyGuardService privacyGuardService;
 
     @GetMapping
     public List<VendaResponseDTO> listarTodos(HttpServletRequest request) {
         authorizationService.require(request, ApexPermission.SALE_CREATE, "Vendas", "listar vendas");
-        return vendaService.listarTodos(empresaId(request), filialId(request)).stream()
+        return filtrarEscopoVendedor(vendaService.listarTodos(empresaId(request), filialId(request)), request).stream()
                 .map(this::toResponse)
                 .toList();
+    }
+
+    @GetMapping("/historico")
+    public List<VendaResponseDTO> historico(@RequestParam(required = false) String q,
+            @RequestParam(required = false) String status, HttpServletRequest request) {
+        authorizationService.require(request, ApexPermission.SALE_HISTORY_VIEW, "Vendas", "consultar historico");
+        List<Venda> vendas = filtrarEscopoVendedor(
+                vendaService.listarTodos(empresaId(request), filialId(request)), request);
+        String termo = q == null ? "" : q.trim().toLowerCase();
+        if (termo.replaceAll("\\D", "").length() >= 11) {
+            auditTrailService.registrarPrivacidade("VENDA_BUSCA_DOCUMENTO", "Venda", null, "Vendas",
+                    null, "busca sensivel mascarada", request, "Pesquisa no historico por identificador documental.");
+        }
+        return vendas.stream()
+                .filter(v -> status == null || status.isBlank()
+                        || status.equalsIgnoreCase(status(v)))
+                .filter(v -> termo.isBlank() || corresponde(v, termo))
+                .map(this::toResponse).toList();
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<VendaResponseDTO> buscarPorId(@PathVariable Long id, HttpServletRequest request) {
         authorizationService.require(request, ApexPermission.SALE_CREATE, "Vendas", "consultar venda");
         return vendaService.buscarPorId(id, empresaId(request), filialId(request))
-                .map(venda -> ResponseEntity.ok(toResponse(venda)))
+                .map(venda -> {
+                    requireOwnerIfSeller(venda, request);
+                    return ResponseEntity.ok(toResponse(venda));
+                })
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping
     public ResponseEntity<VendaResponseDTO> realizarVenda(@Valid @RequestBody VendaRequestDTO requestBody,
             HttpServletRequest request) {
-        authorizationService.require(request, ApexPermission.SALE_CREATE, "Vendas", "finalizar venda");
+        authorizationService.require(request, ApexPermission.SALE_CREATE, "Vendas", "enviar venda ao caixa");
         validarPermissaoDesconto(requestBody, request);
-        Venda novaVenda = vendaService.realizarVenda(toEntity(requestBody), empresaId(request), filialId(request));
-        if (requestBody.caixaSessaoId() != null || authorizationService.can(request, ApexPermission.CASHIER_VIEW)) {
-            caixaService.registrarVenda(novaVenda.getValorTotal(), novaVenda.getIdVenda(), request);
-        }
-        auditTrailService.registrarPrivacidade("VENDA_FINALIZADA", "Venda", novaVenda.getIdVenda(), "Vendas",
-                null, resumoVenda(novaVenda), request, "Venda operacional finalizada.");
+        Venda novaVenda = vendaService.realizarVenda(toEntity(requestBody, request), empresaId(request), filialId(request), request);
         return new ResponseEntity<>(toResponse(novaVenda), HttpStatus.CREATED);
     }
 
+    @PatchMapping("/{id}/enviar-caixa")
+    public VendaResponseDTO reenviar(@PathVariable Long id, HttpServletRequest request) {
+        authorizationService.require(request, ApexPermission.SALE_CREATE, "Vendas", "reenviar venda ao caixa");
+        requireOwnerIfSeller(vendaService.buscarPorId(id, empresaId(request), filialId(request))
+                .orElseThrow(() -> new IllegalArgumentException("Venda nao encontrada no tenant.")), request);
+        return toResponse(vendaService.reenviarAoCaixa(id, empresaId(request), filialId(request), request));
+    }
+
     @PatchMapping("/{id}/cancelar")
-    public ResponseEntity<VendaResponseDTO> cancelarVenda(@PathVariable Long id, HttpServletRequest request) {
+    public ResponseEntity<VendaResponseDTO> cancelarVenda(@PathVariable Long id,
+            @RequestBody(required = false) MotivoOperacaoRequestDTO body, HttpServletRequest request) {
         authorizationService.require(request, ApexPermission.SALE_CANCEL, "Vendas", "cancelar venda");
-        Venda cancelada = vendaService.cancelarVenda(id, empresaId(request), filialId(request));
+        Venda cancelada = vendaService.cancelarVenda(id, empresaId(request), filialId(request),
+                body == null ? "Cancelamento administrativo" : body.motivo(), request);
         auditTrailService.registrarPrivacidade("VENDA_CANCELADA", "Venda", cancelada.getIdVenda(), "Vendas",
                 null, resumoVenda(cancelada), request, "Cancelamento de venda com estorno de estoque.");
         return ResponseEntity.ok(toResponse(cancelada));
     }
 
-    private Venda toEntity(VendaRequestDTO request) {
+    @PostMapping("/{id}/devolucoes")
+    public VendaDevolucaoResponseDTO devolver(@PathVariable Long id,
+            @Valid @RequestBody VendaDevolucaoRequestDTO body, HttpServletRequest request) {
+        authorizationService.require(request, ApexPermission.SALE_RETURN, "Vendas", "trocar ou devolver venda");
+        var devolucao = vendaService.registrarDevolucao(id, body, empresaId(request), filialId(request), request);
+        return new VendaDevolucaoResponseDTO(devolucao.getIdVendaDevolucao(), devolucao.getVendaOriginalId(),
+                devolucao.getTipo().name(), devolucao.getMotivo(), devolucao.getValorAjuste(), devolucao.getCriadoEm(),
+                devolucao.getItens().stream().map(item -> new VendaDevolucaoResponseDTO.ItemDTO(
+                        item.getProdutoOriginalId(), item.getProdutoNovoId(), item.getQuantidade(), item.getValorUnitario()))
+                        .toList());
+    }
+
+    @GetMapping("/{id}/eventos")
+    public List<VendaEventoResponseDTO> eventos(@PathVariable Long id, HttpServletRequest request) {
+        authorizationService.require(request, ApexPermission.SALE_HISTORY_VIEW, "Vendas", "consultar eventos da venda");
+        Venda venda = vendaService.buscarPorId(id, empresaId(request), filialId(request))
+                .orElseThrow(() -> new IllegalArgumentException("Venda nao encontrada no tenant."));
+        requireOwnerIfSeller(venda, request);
+        return vendaService.eventos(id, empresaId(request), filialId(request)).stream()
+                .map(e -> new VendaEventoResponseDTO(e.getIdVendaEvento(), e.getEvento(), e.getStatusAnterior(),
+                        e.getStatusNovo(), e.getMotivo(), e.getUsuarioLogin(), e.getCriadoEm())).toList();
+    }
+
+    private Venda toEntity(VendaRequestDTO request, HttpServletRequest httpRequest) {
         Venda venda = new Venda();
         Cliente cliente = new Cliente();
         cliente.setIdCliente(request.clienteId());
         venda.setCliente(cliente);
         Usuario usuario = new Usuario();
-        usuario.setIdUsuario(request.usuarioId() != null ? request.usuarioId() : 1L);
+        Long currentUserId = privacyGuardService.currentUserId(httpRequest);
+        usuario.setIdUsuario(currentUserId != null ? currentUserId : request.usuarioId());
         venda.setUsuario(usuario);
         venda.setDesconto(request.desconto() == null ? BigDecimal.ZERO : request.desconto());
         venda.setObservacao(request.observacao());
@@ -110,7 +165,7 @@ public class VendaController {
         }
         venda.setItens(itens);
         List<VendaPagamento> pagamentos = new ArrayList<>();
-        for (VendaRequestDTO.PagamentoDTO pagamento : request.pagamentos()) {
+        for (VendaRequestDTO.PagamentoDTO pagamento : request.pagamentos() == null ? List.<VendaRequestDTO.PagamentoDTO>of() : request.pagamentos()) {
             FormaPagamento formaPagamento = new FormaPagamento();
             formaPagamento.setIdFormaPagamento(pagamento.formaPagamentoId());
             VendaPagamento vendaPagamento = new VendaPagamento();
@@ -137,6 +192,10 @@ public class VendaController {
                 null, "desconto=" + desconto, httpRequest, "Desconto aplicado no PDV.");
     }
 
+    public VendaResponseDTO toPublicResponse(Venda venda) {
+        return toResponse(venda);
+    }
+
     private VendaResponseDTO toResponse(Venda venda) {
         return new VendaResponseDTO(
                 venda.getIdVenda(),
@@ -144,7 +203,8 @@ public class VendaController {
                 venda.getCliente() == null ? null : venda.getCliente().getNomeRazao(),
                 venda.getUsuario() == null ? null : venda.getUsuario().getIdUsuario(),
                 venda.getUsuario() == null ? null : venda.getUsuario().getNome(),
-                venda.getStatus(),
+                venda.getNumeroVenda(),
+                status(venda),
                 venda.getValorTotal(),
                 venda.getDesconto(),
                 venda.getObservacao(),
@@ -152,7 +212,15 @@ public class VendaController {
                 venda.getFilialId(),
                 venda.getCaixaSessaoId(),
                 venda.getCondicaoPagamentoId(),
+                venda.getFormaPagamentoRealId(),
+                venda.getValorRecebido(),
+                venda.getTroco(),
+                venda.getDiferenca(),
                 venda.getDataVenda(),
+                venda.getEnviadoCaixaEm(),
+                venda.getRecebidoCaixaEm(),
+                venda.getFinalizadoEm(),
+                venda.getMotivoRecusa(),
                 safeItems(venda),
                 safePagamentos(venda));
     }
@@ -179,7 +247,8 @@ public class VendaController {
                             pagamento.getFormaPagamento() == null ? null : pagamento.getFormaPagamento().getIdFormaPagamento(),
                             pagamento.getFormaPagamento() == null ? null : pagamento.getFormaPagamento().getNome(),
                             pagamento.getValorPago(),
-                            pagamento.getNumeroParcelas()))
+                            pagamento.getNumeroParcelas(),
+                            pagamento.getCreditoId()))
                     .toList();
         } catch (RuntimeException ex) {
             return List.of();
@@ -191,6 +260,52 @@ public class VendaController {
                 + ";status=" + venda.getStatus()
                 + ";valorTotal=" + venda.getValorTotal()
                 + ";desconto=" + venda.getDesconto();
+    }
+
+    private List<Venda> filtrarEscopoVendedor(List<Venda> vendas, HttpServletRequest request) {
+        boolean vendedorPuro = privacyGuardService.currentRoles(request).contains("ROLE_VENDEDOR")
+                && !authorizationService.can(request, ApexPermission.SALE_CANCEL);
+        Long usuarioId = privacyGuardService.currentUserId(request);
+        return vendedorPuro && usuarioId != null
+                ? vendas.stream().filter(v -> v.getUsuario() != null && usuarioId.equals(v.getUsuario().getIdUsuario())).toList()
+                : vendas;
+    }
+
+    private boolean corresponde(Venda venda, String termo) {
+        if (String.valueOf(venda.getIdVenda()).equals(termo)
+                || contains(venda.getNumeroVenda(), termo)
+                || contains(status(venda), termo)
+                || (venda.getCliente() != null && (contains(venda.getCliente().getNomeRazao(), termo)
+                    || contains(venda.getCliente().getCpfCnpj(), termo)))
+                || (venda.getUsuario() != null && contains(venda.getUsuario().getNome(), termo))) {
+            return true;
+        }
+        return safeItems(venda).stream().anyMatch(item -> contains(item.descricao(), termo)
+                || String.valueOf(item.produtoId()).equals(termo)
+                || venda.getItens().stream().anyMatch(raw -> raw.getProduto() != null
+                    && raw.getProduto().getIdProduto().equals(item.produtoId())
+                    && (contains(raw.getProduto().getCodigoBarras(), termo)
+                        || contains(raw.getProduto().getCodigoInterno(), termo))));
+    }
+
+    private void requireOwnerIfSeller(Venda venda, HttpServletRequest request) {
+        boolean vendedorPuro = privacyGuardService.currentRoles(request).contains("ROLE_VENDEDOR")
+                && !authorizationService.can(request, ApexPermission.SALE_CANCEL);
+        Long usuarioId = privacyGuardService.currentUserId(request);
+        if (vendedorPuro && (usuarioId == null || venda.getUsuario() == null
+                || !usuarioId.equals(venda.getUsuario().getIdUsuario()))) {
+            throw new org.springframework.security.access.AccessDeniedException("Vendedor so pode acessar as proprias vendas.");
+        }
+    }
+
+    private boolean contains(String value, String termo) {
+        return value != null && value.toLowerCase().contains(termo);
+    }
+
+    private String status(Venda venda) {
+        return venda.getStatusOperacional() == null
+                ? (venda.getStatus() == 0 ? "CANCELADA" : "FINALIZADA")
+                : venda.getStatusOperacional().name();
     }
 
     private Long empresaId(HttpServletRequest request) {

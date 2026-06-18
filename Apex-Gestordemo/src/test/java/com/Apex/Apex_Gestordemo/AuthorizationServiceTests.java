@@ -27,6 +27,8 @@ class AuthorizationServiceTests {
         assertThat(authorizationService.can(request, ApexPermission.SALE_CREATE)).isTrue();
         assertThat(authorizationService.can(request, ApexPermission.CASHIER_OPEN)).isFalse();
         assertThat(authorizationService.can(request, ApexPermission.CASHIER_CLOSE)).isFalse();
+        assertThat(authorizationService.can(request, ApexPermission.SALE_RECEIVE)).isFalse();
+        assertThat(authorizationService.can(request, ApexPermission.FINANCE_VIEW)).isFalse();
     }
 
     @Test
@@ -40,6 +42,8 @@ class AuthorizationServiceTests {
         assertThat(authorizationService.can(request, ApexPermission.PRODUCT_UPDATE)).isFalse();
         assertThat(authorizationService.can(request, ApexPermission.PRODUCT_PRICE_UPDATE)).isFalse();
         assertThat(authorizationService.can(request, ApexPermission.SUPPLIER_VIEW)).isFalse();
+        assertThat(authorizationService.can(request, ApexPermission.SALE_RECEIVE)).isTrue();
+        assertThat(authorizationService.can(request, ApexPermission.SALE_RETURN)).isFalse();
     }
 
     @Test

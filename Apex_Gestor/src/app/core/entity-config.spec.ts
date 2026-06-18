@@ -32,6 +32,16 @@ describe('ERP operational configuration', () => {
     expect(columnKeys('categories')).toContain('idCategoria');
     expect(columnKeys('productGroups')).toContain('idGrupoProduto');
   });
+
+  it('exposes sales history to seller without exposing cashier or finance', () => {
+    const history = APEX_NAV_ITEMS.find((item) => item.path === '/sales-history');
+    const cashier = APEX_NAV_ITEMS.find((item) => item.path === '/cashier');
+    const finance = APEX_NAV_ITEMS.find((item) => item.path === '/finance-operations');
+
+    expect(history?.allowedRoles).toContain('ROLE_VENDEDOR');
+    expect(cashier?.allowedRoles).not.toContain('ROLE_VENDEDOR');
+    expect(finance?.allowedRoles).not.toContain('ROLE_VENDEDOR');
+  });
 });
 
 function groups(key: keyof typeof ENTITY_CONFIGS): string[] {

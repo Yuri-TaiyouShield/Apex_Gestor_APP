@@ -55,6 +55,23 @@ class FlywayRuntimeTests {
                 WHERE TABLE_NAME = 'Produto'
                   AND INDEX_NAME = 'idx_produto_tenant_codigo_barras'
                 """, Integer.class);
+        Integer vendaStatusOperacional = jdbcTemplate.queryForObject("""
+                SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+                WHERE TABLE_NAME = 'Venda' AND COLUMN_NAME = 'status_operacional'
+                """, Integer.class);
+        Integer contaReceber = jdbcTemplate.queryForObject("""
+                SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'Conta_Receber'
+                """, Integer.class);
+        Integer devolucao = jdbcTemplate.queryForObject("""
+                SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'Venda_Devolucao'
+                """, Integer.class);
+        Integer credito = jdbcTemplate.queryForObject("""
+                SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'Credito_Cliente'
+                """, Integer.class);
+        Integer saldoReceber = jdbcTemplate.queryForObject("""
+                SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+                WHERE TABLE_NAME = 'Conta_Receber' AND COLUMN_NAME = 'saldo'
+                """, Integer.class);
 
         assertThat(historico).isEqualTo(1);
         assertThat(caixaSessao).isEqualTo(1);
@@ -62,5 +79,10 @@ class FlywayRuntimeTests {
         assertThat(categoriaEmpresa).isEqualTo(1);
         assertThat(produtoCodigoBarras).isEqualTo(1);
         assertThat(produtoBarcodeIndex).isGreaterThanOrEqualTo(1);
+        assertThat(vendaStatusOperacional).isEqualTo(1);
+        assertThat(contaReceber).isEqualTo(1);
+        assertThat(devolucao).isEqualTo(1);
+        assertThat(credito).isEqualTo(1);
+        assertThat(saldoReceber).isEqualTo(1);
     }
 }

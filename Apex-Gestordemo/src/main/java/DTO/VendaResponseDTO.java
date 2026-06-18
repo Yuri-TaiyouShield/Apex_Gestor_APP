@@ -10,7 +10,8 @@ public record VendaResponseDTO(
         String clienteNome,
         Long usuarioId,
         String usuarioNome,
-        Integer status,
+        String numeroVenda,
+        String status,
         BigDecimal valorTotal,
         BigDecimal desconto,
         String observacao,
@@ -18,7 +19,15 @@ public record VendaResponseDTO(
         Long filialId,
         Long caixaSessaoId,
         Long condicaoPagamentoId,
+        Long formaPagamentoRealId,
+        BigDecimal valorRecebido,
+        BigDecimal troco,
+        BigDecimal diferenca,
         LocalDateTime dataVenda,
+        LocalDateTime enviadoCaixaEm,
+        LocalDateTime recebidoCaixaEm,
+        LocalDateTime finalizadoEm,
+        String motivoRecusa,
         List<ItemDTO> itens,
         List<PagamentoDTO> pagamentos) {
 
@@ -26,6 +35,7 @@ public record VendaResponseDTO(
             BigDecimal precoTotal) {
     }
 
-    public record PagamentoDTO(Long formaPagamentoId, String nome, BigDecimal valorPago, Integer numeroParcelas) {
+    public record PagamentoDTO(Long formaPagamentoId, String nome, BigDecimal valorPago, Integer numeroParcelas,
+            Long creditoId) {
     }
 }

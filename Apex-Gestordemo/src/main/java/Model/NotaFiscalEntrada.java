@@ -28,6 +28,10 @@ public class NotaFiscalEntrada {
     private LocalDateTime dataEntrada;
     @Column(name = "valor_total", nullable = false, precision = 10, scale = 2)
     private BigDecimal valorTotal;
+    @Column(name = "empresa_id")
+    private Long empresaId;
+    @Column(name = "filial_id")
+    private Long filialId;
     @OneToMany(mappedBy = "notaFiscal", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ItemNotaFiscal> itens;
 }

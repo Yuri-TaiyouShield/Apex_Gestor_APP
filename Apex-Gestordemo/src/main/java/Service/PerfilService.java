@@ -21,12 +21,18 @@ public class PerfilService {
     @Autowired
     private AuditTrailService auditTrailService;
 
+    @Transactional(readOnly = true)
     public List<Perfil> listarTodos() {
-        return repository.findAll();
+        List<Perfil> perfis = repository.findAll();
+        perfis.forEach(perfil -> org.hibernate.Hibernate.initialize(perfil.getMenus()));
+        return perfis;
     }
 
+    @Transactional(readOnly = true)
     public Optional<Perfil> buscarPorId(Long id) {
-        return repository.findById(id);
+        Optional<Perfil> perfil = repository.findById(id);
+        perfil.ifPresent(item -> org.hibernate.Hibernate.initialize(item.getMenus()));
+        return perfil;
     }
 
     public Perfil salvar(Perfil obj) {

@@ -80,6 +80,13 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/cashier.page').then((m) => m.CashierPage)
   },
   {
+    path: 'sales-history',
+    title: 'Histórico de Vendas',
+    canActivate: [roleGuard],
+    data: { roles: SALES_ROLES },
+    loadComponent: () => import('./pages/sales-history.page').then((m) => m.SalesHistoryPage)
+  },
+  {
     path: 'invoice-entry',
     title: 'Entrada de NF',
     canActivate: [roleGuard],
@@ -99,6 +106,13 @@ export const routes: Routes = [
     canActivate: [roleGuard],
     data: { roles: FINANCE_ROLES },
     loadComponent: () => import('./pages/finance-compliance.page').then((m) => m.FinanceCompliancePage)
+  },
+  {
+    path: 'finance-operations',
+    title: 'Financeiro operacional',
+    canActivate: [roleGuard],
+    data: { roles: FINANCE_ROLES },
+    loadComponent: () => import('./pages/finance-operations.page').then((m) => m.FinanceOperationsPage)
   },
   {
     path: 'reports',
