@@ -1,6 +1,6 @@
 $ErrorActionPreference = "Stop"
-$repoRoot = Resolve-Path (Join-Path $PSScriptRoot "..\..")
-$javaRoot = Join-Path $repoRoot "Apex-Gestordemo\src\main\java"
+$repoRoot = Resolve-Path (Join-Path (Join-Path $PSScriptRoot "..") "..")
+$javaRoot = Join-Path (Join-Path (Join-Path (Join-Path $repoRoot "Apex-Gestordemo") "src") "main") "java"
 
 if (-not (Test-Path $javaRoot)) {
     Write-Host "Backend Java nao encontrado em $javaRoot"

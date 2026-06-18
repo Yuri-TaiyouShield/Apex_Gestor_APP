@@ -52,4 +52,22 @@ public class PerfilController {
             return ResponseEntity.notFound().build();
         }
     }
+
+    @PostMapping("/{perfilId}/menus/{menuId}")
+    public ResponseEntity<Perfil> vincularMenu(@PathVariable Long perfilId, @PathVariable Long menuId) {
+        try {
+            return ResponseEntity.ok(perfilService.vincularMenu(perfilId, menuId));
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @DeleteMapping("/{perfilId}/menus/{menuId}")
+    public ResponseEntity<Perfil> desvincularMenu(@PathVariable Long perfilId, @PathVariable Long menuId) {
+        try {
+            return ResponseEntity.ok(perfilService.desvincularMenu(perfilId, menuId));
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
 }

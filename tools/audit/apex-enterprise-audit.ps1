@@ -4,8 +4,8 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-$repoRoot = Resolve-Path (Join-Path $PSScriptRoot "..\..")
-$excluded = @("\\.git\\", "\\node_modules\\", "\\target\\", "\\dist\\", "\\release\\", "\\runtime-logs\\", "\\run-logs\\")
+$repoRoot = Resolve-Path (Join-Path (Join-Path $PSScriptRoot "..") "..")
+$excluded = @("/.git/", "/node_modules/", "/target/", "/dist/", "/release/", "/runtime-logs/", "/run-logs/")
 
 function Write-Section($title) {
     Write-Host ""
@@ -16,7 +16,8 @@ function Get-TrackedTextFiles {
     git -C $repoRoot ls-files |
         Where-Object {
             $path = $_
-            -not ($excluded | Where-Object { $path -match $_ }) -and
+            $normalizedPath = "/" + ($path -replace "\\", "/")
+            -not ($excluded | Where-Object { $normalizedPath.Contains($_) }) -and
             $path -match "\.(java|ts|js|json|yml|yaml|properties|xml|md|sql|ps1|html|css)$"
         } |
         ForEach-Object { Join-Path $repoRoot $_ }

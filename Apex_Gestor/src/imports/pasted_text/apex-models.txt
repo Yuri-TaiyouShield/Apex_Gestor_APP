@@ -1,0 +1,344 @@
+// ============================================================================
+// 🏆 PROJETO: APEX GESTOR (BACKEND COMPLETO SPRING BOOT)
+// ============================================================================
+// Este arquivo contém todas as camadas (Model, DTO, Repository, Service, Controller)
+// para auxiliar na criação do Front-end em Angular/Ionic e UI/UX no Figma.
+// ============================================================================
+
+// ============================================================================
+// 📦 1. CAMADA MODEL (ENTIDADES DO BANCO DE DADOS)
+// Define os formulários e tabelas que precisam ser desenhados no Front-end.
+// ============================================================================
+package com.apex.store.model;
+import jakarta.persistence.*;
+import lombok.Data;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Set;
+import java.io.Serializable;
+
+@Entity @Table(name = "Perfil") @Data
+public class Perfil {
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long idPerfil;
+    @Column(nullable = false, length = 45) private String nome;
+    @Column(nullable = false) private int status;
+    @ManyToMany(mappedBy = "perfis") private Set<Menu> menus;
+}
+
+@Entity @Table(name = "Menu") @Data
+public class Menu {
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long idMenu;
+    @Column(nullable = false, length = 45) private String nome;
+    @Column(nullable = false, length = 100) private String link;
+    @Column(length = 45) private String icone;
+    @Column(nullable = false) private int exibir;
+    @ManyToMany(fetch = FetchType.EAGER) @JoinTable(name = "Menu_Perfil", joinColumns = @JoinColumn(name = "menu_id"), inverseJoinColumns = @JoinColumn(name = "perfil_id")) private Set<Perfil> perfis;
+}
+
+@Entity @Table(name = "Usuario") @Data
+public class Usuario {
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long idUsuario;
+    @Column(nullable = false, length = 45) private String nome;
+    @Column(nullable = false, unique = true, length = 45) private String login;
+    @Column(nullable = false, length = 255) private String senha;
+    @Column(name = "data_nascimento", nullable = false) private LocalDate dataNascimento;
+    @Column(nullable = false) private int status;
+    @ManyToOne @JoinColumn(name = "perfil_id", nullable = false) private Perfil perfil;
+}
+
+@Entity @Table(name = "Endereco") @Data
+public class Endereco {
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long idEndereco;
+    @Column(length = 45) private String estado;
+    @Column(length = 45) private String cidade;
+    @Column(nullable = false, length = 9) private String cep;
+    @Column(length = 100) private String bairro;
+    @Column(length = 100) private String logradouro;
+    @Column(length = 2) private String uf;
+    @Column(length = 10) private String numero;
+    @Column(length = 100) private String complemento;
+}
+
+@Entity @Table(name = "Fornecedor") @Data
+public class Fornecedor {
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long idFornecedor;
+    @Column(nullable = false) private int status;
+    @Column(name = "razao_social", nullable = false, length = 100) private String razaoSocial;
+    @Column(name = "nome_fantasia", nullable = false, length = 45) private String nomeFantasia;
+    @Column(nullable = false, unique = true, length = 18) private String cnpj;
+    @Column(name = "inscricao_estadual", length = 20) private String inscricaoEstadual;
+    @Column(name = "data_cadastro", nullable = false) private LocalDateTime dataCadastro;
+    @Column(nullable = false, length = 15) private String telefone;
+    @OneToOne(cascade = CascadeType.ALL) @JoinColumn(name = "endereco_id", referencedColumnName = "id_endereco", nullable = false) private Endereco endereco;
+}
+
+@Entity @Table(name = "Categoria") @Data
+public class Categoria {
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long idCategoria;
+    @Column(length = 45) private String descricao;
+    private int status;
+}
+
+@Entity @Table(name = "Produtos") @Data
+public class Produto {
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long idProduto;
+    @Column(nullable = false, length = 60) private String descricao;
+    @Column(nullable = false, precision = 10, scale = 2) private BigDecimal custo;
+    @Column(name = "codigo_barras", length = 20) private String codigoBarras;
+    @Column(length = 45) private String marca;
+    @Column(name = "unidade_medida", length = 10) private String unidadeMedida;
+    @Column(name = "data_aquisicao") private LocalDateTime dataAquisicao;
+    @Column(name = "quantidade_estoque", nullable = false) private int quantidadeEstoque;
+    @Column(name = "estoque_minimo", nullable = false) private int estoqueMinimo;
+    @Column(name = "valor_venda", nullable = false, precision = 10, scale = 2) private BigDecimal valorVenda;
+    @Column(nullable = false) private int status;
+    @ManyToOne @JoinColumn(name = "fornecedor_id") private Fornecedor fornecedor;
+    @ManyToOne @JoinColumn(name = "categoria_id", nullable = false) private Categoria categoria;
+}
+
+@Entity @Table(name = "Cliente", uniqueConstraints = {@UniqueConstraint(columnNames = {"tipo_documento", "cpf_cnpj"})}) @Data
+public class Cliente {
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long idCliente;
+    @Column(name = "nome_razao", nullable = false, length = 100) private String nomeRazao;
+    @Column(nullable = false, length = 15) private String telefone;
+    @Column(name = "tipo_documento") private int tipoDocumento;
+    @Column(name = "cpf_cnpj", nullable = false, length = 14) private String cpfCnpj;
+    @Column(name = "data_cadastro") private LocalDateTime dataCadastro;
+    private int status;
+    @ManyToMany(fetch = FetchType.LAZY) @JoinTable(name = "Cliente_Endereco", joinColumns = @JoinColumn(name = "cliente_id"), inverseJoinColumns = @JoinColumn(name = "endereco_id")) private Set<Endereco> enderecos;
+}
+
+@Entity @Table(name = "Venda") @Data
+public class Venda {
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long idVenda;
+    @ManyToOne @JoinColumn(name = "usuario_id", nullable = false) private Usuario usuario;
+    @ManyToOne @JoinColumn(name = "cliente_id", nullable = false) private Cliente cliente;
+    @Column(nullable = false) private int status;
+    @Column(name = "valor_total", nullable = false, precision = 10, scale = 2) private BigDecimal valorTotal;
+    @Column(precision = 10, scale = 2) private BigDecimal desconto;
+    @Column(length = 255) private String observacao;
+    @Column(name = "data_venda", nullable = false) private LocalDateTime dataVenda;
+    @OneToMany(mappedBy = "venda", cascade = CascadeType.ALL, orphanRemoval = true) private List<ItemVenda> itens;
+    @OneToMany(mappedBy = "venda", cascade = CascadeType.ALL, orphanRemoval = true) private List<PagamentoVenda> pagamentos;
+}
+
+@Embeddable @Data
+public class ItemVendaId implements Serializable {
+    @Column(name = "produto_id") private Long produtoId;
+    @Column(name = "venda_id") private Long vendaId;
+    public ItemVendaId() {} public ItemVendaId(Long p, Long v) { this.produtoId = p; this.vendaId = v; }
+}
+
+@Entity @Table(name = "Produto_Venda") @Data
+public class ItemVenda {
+    @EmbeddedId private ItemVendaId id;
+    @ManyToOne(fetch = FetchType.LAZY) @MapsId("produtoId") @JoinColumn(name = "produto_id") private Produto produto;
+    @ManyToOne(fetch = FetchType.LAZY) @MapsId("vendaId") @JoinColumn(name = "venda_id") private Venda venda;
+    @Column(nullable = false) private int quantidade;
+    @Column(name = "preco_unitario", nullable = false, precision = 10, scale = 2) private BigDecimal precoUnitario;
+    @Column(name = "custo_unitario", nullable = false, precision = 10, scale = 2) private BigDecimal custoUnitario;
+    @Column(name = "preco_total", precision = 10, scale = 2) private BigDecimal precoTotal;
+}
+
+@Entity @Table(name = "Formas_Pagamento") @Data
+public class FormaPagamento {
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long idFormaPagamento;
+    @Column(nullable = false, columnDefinition = "TEXT") private String descricao;
+    @Column(nullable = false, length = 50) private String nome;
+    @Column(nullable = false) private int status;
+    @Column(name = "tipo_pagamento", nullable = false) private int tipoPagamento;
+}
+
+@Embeddable @Data
+public class PagamentoVendaId implements Serializable {
+    @Column(name = "venda_id") private Long vendaId;
+    @Column(name = "forma_pagamento_id") private Long formaPagamentoId;
+    public PagamentoVendaId() {} public PagamentoVendaId(Long v, Long f) { this.vendaId = v; this.formaPagamentoId = f; }
+}
+
+@Entity @Table(name = "Venda_FormasPagamento") @Data
+public class PagamentoVenda {
+    @EmbeddedId private PagamentoVendaId id;
+    @ManyToOne(fetch = FetchType.LAZY) @MapsId("vendaId") @JoinColumn(name = "venda_id") private Venda venda;
+    @ManyToOne(fetch = FetchType.LAZY) @MapsId("formaPagamentoId") @JoinColumn(name = "forma_pagamento_id") private FormaPagamento formaPagamento;
+    @Column(name = "valor_pago", precision = 10, scale = 2) private BigDecimal valorPago;
+    @Column(name = "numero_parcelas") private Integer numeroParcelas;
+}
+
+@Entity @Table(name = "Nota_Fiscal_Entrada") @Data
+public class NotaFiscalEntrada {
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long idNfEntrada;
+    @Column(nullable = false, length = 20) private String numero;
+    @Column(length = 5) private String serie;
+    @ManyToOne @JoinColumn(name = "fornecedor_id", nullable = false) private Fornecedor fornecedor;
+    @Column(name = "data_emissao", nullable = false) private LocalDateTime dataEmissao;
+    @Column(name = "data_entrada", nullable = false) private LocalDateTime dataEntrada;
+    @Column(name = "valor_total", nullable = false, precision = 10, scale = 2) private BigDecimal valorTotal;
+    @OneToMany(mappedBy = "notaFiscal", cascade = CascadeType.ALL, orphanRemoval = true) private List<ItemNotaFiscal> itens;
+}
+
+@Entity @Table(name = "Item_Nota_Fiscal") @Data
+public class ItemNotaFiscal {
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long idItemNf;
+    @ManyToOne @JoinColumn(name = "nf_entrada_id", nullable = false) private NotaFiscalEntrada notaFiscal;
+    @ManyToOne @JoinColumn(name = "produto_id", nullable = false) private Produto produto;
+    @Column(nullable = false) private int quantidade;
+    @Column(name = "valor_custo_unitario", nullable = false, precision = 10, scale = 2) private BigDecimal valorCustoUnitario;
+}
+
+@Entity @Table(name = "Tipo_Despesa") @Data
+public class TipoDespesa {
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long idTipoDespesa;
+    @Column(nullable = false, length = 50) private String nome;
+    private int status;
+}
+
+@Entity @Table(name = "Despesas") @Data
+public class Despesa {
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long idDespesa;
+    @Column(nullable = false) private String descricao;
+    @Column(nullable = false, precision = 10, scale = 2) private BigDecimal valor;
+    @Column(name = "data_vencimento", nullable = false) private LocalDate dataVencimento;
+    @Column(name = "data_pagamento") private LocalDate dataPagamento;
+    @ManyToOne @JoinColumn(name = "tipo_despesa_id", nullable = false) private TipoDespesa tipoDespesa;
+    private int status;
+}
+
+// ============================================================================
+// 📦 2. CAMADA DTO (DATA TRANSFER OBJECTS)
+// Dados mastigados para o Dashboard do Front-end.
+// ============================================================================
+package com.apex.store.dto;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import java.math.BigDecimal;
+
+@Data @AllArgsConstructor
+public class RelatorioFinanceiroDTO {
+    private BigDecimal totalVendas;
+    private BigDecimal totalCustosProdutos;
+    private BigDecimal totalDespesas;
+    private BigDecimal lucroLiquido;
+    private BigDecimal saldoCaixa;
+}
+
+// ============================================================================
+// 📦 3. CAMADA REPOSITORY (JPA)
+// Acesso ao banco de dados.
+// ============================================================================
+package com.apex.store.repository;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import java.util.Optional;
+import java.util.List;
+import java.time.LocalDateTime;
+import java.time.LocalDate;
+
+public interface PerfilRepository extends JpaRepository<Perfil, Long> {}
+public interface MenuRepository extends JpaRepository<Menu, Long> {}
+public interface EnderecoRepository extends JpaRepository<Endereco, Long> {}
+public interface CategoriaRepository extends JpaRepository<Categoria, Long> {}
+public interface ProdutoRepository extends JpaRepository<Produto, Long> {}
+public interface FormaPagamentoRepository extends JpaRepository<FormaPagamento, Long> {}
+public interface ItemVendaRepository extends JpaRepository<ItemVenda, ItemVendaId> {}
+public interface PagamentoVendaRepository extends JpaRepository<PagamentoVenda, PagamentoVendaId> {}
+public interface NotaFiscalEntradaRepository extends JpaRepository<NotaFiscalEntrada, Long> {}
+public interface ItemNotaFiscalRepository extends JpaRepository<ItemNotaFiscal, Long> {}
+public interface TipoDespesaRepository extends JpaRepository<TipoDespesa, Long> {}
+public interface UsuarioRepository extends JpaRepository<Usuario, Long> { Optional<Usuario> findByLogin(String login); }
+public interface FornecedorRepository extends JpaRepository<Fornecedor, Long> { Optional<Fornecedor> findByCnpj(String cnpj); }
+public interface ClienteRepository extends JpaRepository<Cliente, Long> { Optional<Cliente> findByCpfCnpj(String cpfCnpj); }
+public interface VendaRepository extends JpaRepository<Venda, Long> {
+    @Query("SELECT v FROM Venda v WHERE v.dataVenda BETWEEN :inicio AND :fim AND v.status = 1")
+    List<Venda> findByPeriodo(LocalDateTime inicio, LocalDateTime fim);
+}
+public interface DespesaRepository extends JpaRepository<Despesa, Long> {
+    @Query("SELECT d FROM Despesa d WHERE d.dataVencimento BETWEEN :inicio AND :fim AND d.status = 1")
+    List<Despesa> findByDataVencimentoBetween(LocalDate inicio, LocalDate fim);
+}
+
+// ============================================================================
+// 📦 4. CAMADA SERVICE (REGRAS DE NEGÓCIO)
+// Lógica que o Figma deve entender (ex: Venda atualiza estoque).
+// ============================================================================
+package com.apex.store.service;
+import org.springframework.stereotype.Service;
+
+@Service public class PerfilService { /* CRUD: listarTodos, buscarPorId, salvar, desativar */ }
+@Service public class MenuService { /* CRUD */ }
+@Service public class EnderecoService { /* CRUD */ }
+@Service public class FornecedorService { /* CRUD */ }
+@Service public class CategoriaService { /* CRUD */ }
+@Service public class ProdutoService { /* CRUD - Custo inicializa em zero, atualizado via NF */ }
+@Service public class ClienteService { /* CRUD */ }
+@Service public class FormaPagamentoService { /* CRUD */ }
+@Service public class ItemVendaService { /* CRUD Leitura */ }
+@Service public class PagamentoVendaService { /* CRUD Leitura */ }
+@Service public class DespesaService { /* CRUD de Despesas */ }
+
+@Service public class UsuarioService {
+    /* CRUD com Criptografia de Senha no Salvar() */
+}
+
+@Service public class NotaFiscalService {
+    /* darEntrada(NotaFiscalEntrada nf):
+       1. Adiciona itens ao estoque.
+       2. Recalcula o Custo Médio Ponderado dos Produtos (Custo Atual vs Custo Nova Nota). */
+}
+
+@Service public class VendaService {
+    /* realizarVenda(Venda venda):
+       1. Subtrai produtos do estoque.
+       2. Salva o Custo Médio e Preço atual na tabela ItemVenda (snapshot financeiro).
+       cancelarVenda(Long id):
+       1. Devolve itens pro estoque. */
+}
+
+@Service public class FinanceiroService {
+    /* gerarRelatorio(LocalDate inicio, LocalDate fim):
+       Cruza dados do VendaRepository (Receita/CMV) e DespesaRepository (Custos operacionais)
+       para retornar o RelatorioFinanceiroDTO ao Frontend. */
+}
+
+// ============================================================================
+// 📦 5. CAMADA CONTROLLER (ENDPOINTS DA API REST)
+// Rotas que o Angular vai chamar no Frontend (http://localhost:8080/api/...).
+// ============================================================================
+package com.apex.store.controller;
+import org.springframework.web.bind.annotation.*;
+
+@RestController @RequestMapping("/api/perfis") public class PerfilController { /* GET, GET /{id}, POST, PUT /{id}, PATCH /{id}/desativar */ }
+@RestController @RequestMapping("/api/usuarios") public class UsuarioController { /* GET, GET /{id}, GET /login/{login}, POST, PUT, PATCH */ }
+@RestController @RequestMapping("/api/menus") public class MenuController { /* Padrão CRUD */ }
+@RestController @RequestMapping("/api/enderecos") public class EnderecoController { /* Padrão CRUD */ }
+@RestController @RequestMapping("/api/fornecedores") public class FornecedorController { /* Padrão CRUD */ }
+@RestController @RequestMapping("/api/categorias") public class CategoriaController { /* Padrão CRUD */ }
+@RestController @RequestMapping("/api/produtos") public class ProdutoController { /* Padrão CRUD */ }
+@RestController @RequestMapping("/api/clientes") public class ClienteController { /* Padrão CRUD */ }
+@RestController @RequestMapping("/api/formaspagamento") public class FormaPagamentoController { /* Padrão CRUD */ }
+@RestController @RequestMapping("/api/itensvenda") public class ItemVendaController { /* GET, GET /buscar */ }
+@RestController @RequestMapping("/api/pagamentosvenda") public class PagamentoVendaController { /* GET, GET /buscar */ }
+
+@RestController @RequestMapping("/api/vendas")
+public class VendaController {
+    /* POST /api/vendas (Realiza venda e baixa estoque) */
+    /* PATCH /api/vendas/{id}/cancelar (Cancela e estorna estoque) */
+}
+
+@RestController @RequestMapping("/api/nfs")
+public class NotaFiscalController {
+    /* POST /api/nfs/entrada (Alimenta estoque e altera custo) */
+}
+
+@RestController @RequestMapping("/api/despesas")
+public class DespesaController {
+    /* Padrão CRUD de despesas */
+    /* GET e POST em /api/despesas/tipos (Categorias de Despesa) */
+}
+
+@RestController @RequestMapping("/api/relatorios")
+public class RelatorioController {
+    /* GET /api/relatorios/financeiro?inicio={data}&fim={data} (Retorna RelatorioFinanceiroDTO) */
+}

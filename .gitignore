@@ -11,20 +11,50 @@
 **/release-check/
 **/.angular/
 **/.cache/
+**/.electron-package/
 
 # Native/mobile build outputs
 **/android/app/build/
 **/android/.gradle/
 **/android/build/
+**/android/app/src/main/assets/public/
+
+# Local databases, dumps and backups
+**/dumps/
+**/backups/
+*.dump
+*.bak
+*.backup
+*.sql.gz
+*.db
+*.sqlite
+*.sqlite3
+
+# Private keys, certificates and local credentials
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+*.crt
+*.cer
+secrets.*
+credentials.*
+application-local-secrets.properties
 
 # Local IDE/runtime files
-.idea/
-.vscode/*.log
+**/.idea/
+**/.vscode/
+**/nbproject/private/
 run-logs/
 runtime-logs/
 tools/mysql-workbench-*/
 *.log
 *.pid
+
+# Accidental local scaffolds
+Apex-Gestordemo/demo/
 
 # Local environment and private delivery documents
 .env

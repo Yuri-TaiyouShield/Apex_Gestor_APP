@@ -20,10 +20,20 @@ public class Produto {
     private BigDecimal custo; // Custo Médio
     @Column(name = "codigo_barras", length = 20)
     private String codigoBarras;
+    @Column(name = "codigo_interno", length = 40)
+    private String codigoInterno;
+    @Column(name = "codigo_original", length = 60)
+    private String codigoOriginal;
     @Column(length = 45)
     private String marca;
+    @Column(length = 60)
+    private String grupo;
+    @Column(length = 60)
+    private String subgrupo;
     @Column(name = "unidade_medida", length = 10)
     private String unidadeMedida;
+    @Column(length = 40)
+    private String embalagem;
     @Column(name = "data_aquisicao")
     private LocalDateTime dataAquisicao;
     @Column(name = "quantidade_estoque", nullable = false)
@@ -32,6 +42,30 @@ public class Produto {
     private int estoqueMinimo;
     @Column(name = "valor_venda", nullable = false, precision = 10, scale = 2)
     private BigDecimal valorVenda;
+    @Column(precision = 10, scale = 2)
+    private BigDecimal margem;
+    @Column(length = 80)
+    private String localizacao;
+    @Column(name = "situacao_fiscal", length = 60)
+    private String situacaoFiscal;
+    @Column(length = 12)
+    private String ncm;
+    @Column(length = 12)
+    private String cfop;
+    @Column(precision = 7, scale = 2)
+    private BigDecimal icms;
+    @Column(precision = 7, scale = 2)
+    private BigDecimal ipi;
+    @Column(precision = 7, scale = 2)
+    private BigDecimal pis;
+    @Column(precision = 7, scale = 2)
+    private BigDecimal cofins;
+    @Column(length = 500)
+    private String observacoes;
+    @Column(name = "empresa_id")
+    private Long empresaId;
+    @Column(name = "filial_id")
+    private Long filialId;
     @Column(nullable = false)
     private int status;
     @ManyToOne

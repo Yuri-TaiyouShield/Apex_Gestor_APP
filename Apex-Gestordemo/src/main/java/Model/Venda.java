@@ -31,6 +31,14 @@ public class Venda {
     private BigDecimal desconto;
     @Column(length = 255)
     private String observacao;
+    @Column(name = "empresa_id")
+    private Long empresaId;
+    @Column(name = "filial_id")
+    private Long filialId;
+    @Column(name = "caixa_sessao_id")
+    private Long caixaSessaoId;
+    @Column(name = "condicao_pagamento_id")
+    private Long condicaoPagamentoId;
     @Column(name = "data_venda", nullable = false)
     private LocalDateTime dataVenda;
     @OneToMany(mappedBy = "venda", cascade = CascadeType.ALL, orphanRemoval = true)

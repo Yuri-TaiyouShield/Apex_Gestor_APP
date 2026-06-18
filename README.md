@@ -1,68 +1,118 @@
-# Apex Gestor 🏗️
+# Apex Gestor
 
-![GitHub last commit](https://img.shields.io/github/last-commit/JorginhoVigas/apex-gestor?style=for-the-badge&logo=github)
-![GitHub language count](https://img.shields.io/github/languages/count/JorginhoVigas/apex-gestor?style=for-the-badge)
-![License](https://img.shields.io/github/license/JorginhoVigas/apex-gestor?style=for-the-badge)
+Sistema de gestao para lojas de materiais de construcao, com backend Java/Spring Boot, banco MySQL e artefatos de frontend/mobile/desktop baseados em Angular/Ionic/Capacitor/Electron.
 
-> Sistema completo para gerenciamento de lojas de material de construção. O Apex Gestor foi desenvolvido para otimizar processos, controlar o estoque e facilitar a gestão financeira do seu negócio.
+Este repositorio esta sendo organizado para uma evolucao de produto comercial no Brasil. A meta e sair de uma base de demonstracao para uma plataforma confiavel de operacao, suporte, auditoria, fiscal, financeiro, estoque, vendas e gestao.
 
----
+## Estado Executivo
 
-## 📋 Índice
+Status em 2026-05-26: **nao aprovado para lancamento oficial nacional**.
 
-- [Visão Geral do Projeto](#-visão-geral-do-projeto)
-- [✨ Funcionalidades Principais](#-funcionalidades-principais)
-- [🚀 Tecnologias Utilizadas](#-tecnologias-utilizadas)
-- [🤝 Como Contribuir](#-como-contribuir)
-- [👥 Equipe](#-equipe)
-- [📄 Licença](#-licença)
+O backend versionado possui modulos essenciais de cadastro, estoque, vendas, nota fiscal de entrada, despesas e relatorios. Ele compila e os testes atuais passam. Ainda existem bloqueios de produto e governanca antes de vender como software oficial:
 
----
+- o frontend `Apex_Gestor/` aparece no checkout como diretorio nao versionado e sem fonte raiz evidente;
+- autenticacao real, multiempresa, auditoria de usuario e trilhas LGPD ainda precisam virar comportamento padrao de producao;
+- emissao fiscal brasileira, NFC-e/NF-e/SAT quando aplicavel, SPED e integracoes contabeis ainda precisam de especificacao, homologacao e validacao por UF;
+- CI/CD atual do repositorio estava focado em GitHub Pages, nao em qualidade de produto;
+- faltam migrations formais de banco, rotina de backup/restore, observabilidade operacional e testes de fluxos criticos.
 
-## 📖 Visão Geral do Projeto
+Leia primeiro:
 
-O **Apex Gestor** é uma solução de software robusta, pensada para atender às necessidades específicas de uma loja de material de construção. O sistema centraliza informações e automatiza tarefas, desde o controle de entrada e saída de produtos até a geração de relatórios gerenciais, proporcionando uma visão 360° da empresa.
+- [Roadmap versionado ERP/PDV](docs/VERSIONED_EVOLUTION_ROADMAP.md)
+- [Matriz RBAC, auditoria e operacoes criticas](docs/RBAC_AUDIT_MATRIX.md)
+- [Rastreabilidade dos casos de uso](docs/USE_CASE_TRACEABILITY.md)
+- [Plano CTO de lancamento Brasil](docs/CTO_LAUNCH_PLAN_BR.md)
+- [Auditoria de prontidao 2026-05-26](docs/LAUNCH_READINESS_AUDIT_2026-05-26.md)
+- [Checklist de go-live Brasil](docs/GO_LIVE_CHECKLIST_BR.md)
+- [Arquitetura e operacao](docs/ARCHITECTURE_AND_OPERATIONS.md)
+- [Como contribuir](CONTRIBUTING.md)
 
----
+## Estrutura
 
-## ✨ Funcionalidades Principais
+```text
+.
+├── Apex-Gestordemo/          # Backend Spring Boot
+├── Apex_Gestor/              # Artefatos frontend/mobile/desktop no checkout atual
+├── docs/                     # Documentacao executiva, tecnica e operacional
+├── tools/audit/              # Scripts de auditoria local
+├── docker-compose.yml        # MySQL + backend API para desenvolvimento
+└── .github/workflows/        # CI e workflows GitHub
+```
 
-- **Gestão de Estoque:** Controle de produtos, lotes, fornecedores e notificações de estoque baixo.
-- **Módulo de Vendas (PDV):** Interface rápida para registro de vendas, orçamentos e emissão de notas.
-- **Controle Financeiro:** Gerenciamento de contas a pagar e a receber, fluxo de caixa e relatórios financeiros.
-- **Cadastro de Clientes e Fornecedores:** Base de dados centralizada para contatos e histórico de transações.
-- **Relatórios Gerenciais:** Dashboards intuitivos com indicadores de performance, vendas por período, produtos mais vendidos, etc.
-- **Controle de Acesso:** Níveis de permissão por usuário (vendedor, gerente, administrador).
+## Backend
 
----
+Principais dominios versionados:
 
-## 🚀 Tecnologias Utilizadas
+- produtos, categorias, fornecedores e enderecos;
+- clientes e usuarios;
+- vendas, itens de venda e pagamentos;
+- nota fiscal de entrada e custo medio;
+- despesas, tipos de despesa e relatorio financeiro;
+- seguranca configuravel por ambiente;
+- auditoria automatizada basica em PowerShell.
 
-- **Frontend:** `HTML`, `CSS`, `Bootstrap`
-- **Backend:** `Java (Servlets & JSP)`
-- **Banco de Dados:** `PostgreSQL`
-- **Servidor de Aplicação:** `Apache Tomcat`
-- **Controle de Versão:** `Git & GitHub`
-- **Gerenciador de Dependências:** `Maven`
+### Rodar testes
 
----
+```powershell
+cd Apex-Gestordemo
+cmd /c mvnw.cmd -q test
+```
 
-## 🤝 Como Contribuir
+### Auditoria local
 
-Ficou interessado em contribuir? Confira nosso guia de contribuição `CONTRIBUTING.md` para saber mais detalhes sobre o fluxo de trabalho, como abrir *issues* e submeter *pull requests*. Toda ajuda é bem-vinda!
+```powershell
+powershell -ExecutionPolicy Bypass -File tools\audit\apex-enterprise-audit.ps1 -SkipBuild
+```
 
----
+Para incluir build/test no script:
 
-## 👥 Equipe
+```powershell
+powershell -ExecutionPolicy Bypass -File tools\audit\apex-enterprise-audit.ps1
+```
 
-| Foto | Nome | Função | GitHub | LinkedIn |
-| :--: | :----------------------------------------------------------: | :----------------: | :----------------------------------------------------------: | :----------------------------------------------------------: |
-| <img src="URL_DA_FOTO_AQUI" width="70" height="70"> | **Yuri Alcantara** | Desenvolvedor Full Stack | [GitHub](https://github.com/Yuri-TaiyouShield) | [LinkedIn](https://www.linkedin.com/in/yuri-alcantara-802a76243/) |
+## Ambiente Local
 
+Crie um `.env` a partir de `.env.example` e ajuste as variaveis.
 
----
+```powershell
+copy .env.example .env
+docker compose up --build
+```
 
-## 📄 Licença
+Endpoints principais:
 
-Este projeto está sob a licença [MIT](link-para-o-arquivo-de-licenca). Veja o arquivo `LICENSE` para mais detalhes.
+- API: `http://localhost:8080`
+- Health: `http://localhost:8080/actuator/health`
+- MySQL local: porta `2705` por padrao
 
+## Decisoes de Produto
+
+Para competir com ERPs estabelecidos de material de construcao, o Apex Gestor deve ser lancado por fases:
+
+1. **v1-desktop-core**: PDV, caixa, financeiro basico, estoque, inventario, cadastros, RBAC, auditoria, soft delete e multiempresa preparado.
+2. **v2-admCalc**: motor de calculos empresariais, precificacao, simulacoes, dashboard gerencial e alertas operacionais.
+3. **v3-logistica-delivery**: delivery, entregadores, rotas, frete, status em tempo real e comprovante digital.
+4. **Piloto pago controlado**: 3 a 5 lojas reais, suporte proximo, sem promessa nacional.
+5. **Release Brasil v1 comercial**: fiscal, LGPD, backup, suporte, contrato, onboarding e estabilidade.
+
+O objetivo nao e apenas copiar ADM Santri ou SoftCosmos. O objetivo e entregar profundidade de varejo de construcao com produto mais simples de implantar, mais moderno de usar e mais confiavel de operar.
+
+## Padrao de Qualidade
+
+Toda mudanca relevante deve passar por:
+
+- testes automatizados do backend;
+- auditoria local em `tools/audit`;
+- revisao de seguranca para autenticacao, dados pessoais e permissao;
+- atualizacao de documentacao quando houver mudanca de produto, operacao ou API;
+- plano de rollback quando mexer em banco, pagamento, fiscal ou estoque.
+
+## Licenca e Comercializacao
+
+Antes do lancamento oficial, validar:
+
+- licenca do codigo e dependencias;
+- contratos de uso e suporte;
+- politica de privacidade LGPD;
+- termos de responsabilidade fiscal;
+- estrategia de marca, dominio e canal de atendimento.

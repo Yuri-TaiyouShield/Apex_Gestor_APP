@@ -21,10 +21,17 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @Configuration
 public class SecurityConfig {
 
+    private static final String[] ADMIN_ROLES = {"SYSADMIN", "DONO_GERENTE", "ADMIN_MASTER", "ADMIN", "GESTOR", "GERENTE"};
+    private static final String[] MANAGER_ROLES = {"SYSADMIN", "DONO_GERENTE", "ADMIN_MASTER", "ADMIN", "GESTOR", "GERENTE", "SUPERVISOR"};
+    private static final String[] SALES_ROLES = {"VENDEDOR", "CAIXA", "SUPERVISOR", "GESTOR", "GERENTE", "ADMIN", "DONO_GERENTE", "SYSADMIN"};
+    private static final String[] CASHIER_ROLES = {"CAIXA", "GESTOR", "GERENTE", "ADMIN", "DONO_GERENTE", "SYSADMIN"};
+    private static final String[] STOCK_ROLES = {"ESTOQUISTA", "SUPERVISOR", "GESTOR", "GERENTE", "ADMIN", "DONO_GERENTE", "SYSADMIN"};
+    private static final String[] FINANCE_ROLES = {"FINANCEIRO", "GESTOR", "GERENTE", "ADMIN", "DONO_GERENTE", "SYSADMIN"};
+
     @Value("${apex.security.require-auth:false}")
     private boolean requireAuthentication;
 
-    @Value("${apex.security.cors.allowed-origins:http://localhost:4200,http://localhost:8100,http://localhost:5173,app://localhost,ionic://localhost}")
+    @Value("${apex.security.cors.allowed-origins:http://localhost:4200,http://127.0.0.1:4200,http://localhost:8100,http://127.0.0.1:8100,http://localhost:5173,http://127.0.0.1:5173,app://localhost,ionic://localhost}")
     private String allowedOrigins;
 
     @Bean
@@ -49,14 +56,35 @@ public class SecurityConfig {
                     .authorizeHttpRequests(auth -> auth
                             .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                             .requestMatchers("/actuator/health/**", "/actuator/info").permitAll()
-                            .requestMatchers("/api/despesas/**", "/api/relatorios/**", "/api/admcalc/**")
-                            .hasAnyRole("FINANCEIRO", "GESTOR", "ADMIN")
+                            .requestMatchers(HttpMethod.POST, "/api/auth/**", "/api/privacy/consents").permitAll()
+                            .requestMatchers("/api/privacy/admin/**", "/api/privacy/requests", "/api/privacy/export/**",
+                                    "/api/privacy/clientes/**")
+                            .hasAnyRole(ADMIN_ROLES)
+                            .requestMatchers("/api/despesas/**", "/api/relatorios/**", "/api/admcalc/**",
+                                    "/api/condicoes-pagamento/**")
+                            .hasAnyRole(FINANCE_ROLES)
+                            .requestMatchers("/api/caixa/**")
+                            .hasAnyRole(CASHIER_ROLES)
+                            .requestMatchers("/api/grupos-produtos/**", "/api/categorias/**", "/api/formaspagamento/**")
+                            .hasAnyRole(ADMIN_ROLES)
                             .requestMatchers("/api/usuarios/**", "/api/perfis/**", "/api/menus/**")
-                            .hasAnyRole("GESTOR", "ADMIN")
+                            .hasAnyRole(ADMIN_ROLES)
+                            .requestMatchers("/api/auditoria/**")
+                            .hasAnyRole(ADMIN_ROLES)
+                            .requestMatchers("/api/estoque/**")
+                            .hasAnyRole(STOCK_ROLES)
+                            .requestMatchers(HttpMethod.PATCH, "/api/produtos/**")
+                            .hasAnyRole(STOCK_ROLES)
+                            .requestMatchers(HttpMethod.POST, "/api/produtos/**")
+                            .hasAnyRole(STOCK_ROLES)
+                            .requestMatchers(HttpMethod.PUT, "/api/produtos/**")
+                            .hasAnyRole(STOCK_ROLES)
+                            .requestMatchers(HttpMethod.PATCH, "/api/vendas/*/cancelar")
+                            .hasAnyRole(MANAGER_ROLES)
                             .requestMatchers(HttpMethod.POST, "/api/vendas/**")
-                            .hasAnyRole("VENDEDOR", "CAIXA", "GESTOR", "ADMIN")
+                            .hasAnyRole(SALES_ROLES)
                             .requestMatchers(HttpMethod.PATCH, "/api/vendas/**")
-                            .hasAnyRole("CAIXA", "GESTOR", "ADMIN")
+                            .hasAnyRole(SALES_ROLES)
                             .anyRequest().authenticated())
                     .httpBasic(Customizer.withDefaults());
         } else {
@@ -71,7 +99,21 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(parseAllowedOrigins());
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-Requested-With", "X-Trace-Id"));
+        configuration.setAllowedHeaders(List.of(
+                "Authorization",
+                "Content-Type",
+                "X-Requested-With",
+                "X-Trace-Id",
+                "X-Client-Platform",
+                "X-Apex-License-Key",
+                "X-Apex-Device-Fingerprint",
+                "X-Apex-App-Id",
+                "X-Apex-Tenant-Code",
+                "X-Apex-User-Id",
+                "X-Apex-User-Login",
+                "X-Apex-Roles",
+                "X-Apex-Empresa-Id",
+                "X-Apex-Filial-Id"));
         configuration.setExposedHeaders(List.of("X-Trace-Id"));
         configuration.setMaxAge(3600L);
         configuration.setAllowCredentials(false);

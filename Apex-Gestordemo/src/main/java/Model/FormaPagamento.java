@@ -20,4 +20,10 @@ public class FormaPagamento {
     private int status;
     @Column(name = "tipo_pagamento", nullable = false)
     private int tipoPagamento;
+
+    @Column(name = "empresa_id")
+    private Long empresaId;
+
+    @Column(name = "filial_id")
+    private Long filialId;
 }
