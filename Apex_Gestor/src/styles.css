@@ -11,30 +11,42 @@
 
 :root {
   --ion-font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --ion-color-primary: #0b3a42;
-  --ion-color-primary-rgb: 11, 58, 66;
+  --ion-color-primary: #0f5f58;
+  --ion-color-primary-rgb: 15, 95, 88;
   --ion-color-primary-contrast: #ffffff;
-  --ion-color-primary-shade: #0a333a;
-  --ion-color-primary-tint: #234e55;
-  --ion-color-secondary: #1e3a8a;
-  --ion-color-success: #166534;
-  --ion-color-warning: #b45309;
-  --ion-color-danger: #b91c1c;
-  --ion-background-color: #f8fafc;
-  --ion-text-color: #0f172a;
-  --apex-sidebar: #ffffff;
-  --apex-border: rgba(100, 116, 139, 0.24);
-  --apex-muted: #475569;
+  --ion-color-primary-shade: #0b4f49;
+  --ion-color-primary-tint: #24746d;
+  --ion-color-secondary: #3158a8;
+  --ion-color-success: #167342;
+  --ion-color-warning: #b4690e;
+  --ion-color-danger: #b4232b;
+  --ion-background-color: #eef2f1;
+  --ion-text-color: #17201f;
+  --apex-sidebar: #17201f;
+  --apex-sidebar-muted: #9fb0ac;
+  --apex-border: rgba(47, 64, 61, 0.16);
+  --apex-border-strong: rgba(47, 64, 61, 0.28);
+  --apex-muted: #60716d;
   --apex-card: #ffffff;
-  --apex-primary: #0b3a42;
-  --apex-primary-strong: #062b31;
-  --apex-primary-soft: #dbeafe;
-  --apex-focus: #f59e0b;
-  --apex-ink: #020617;
-  --apex-surface: #f8fafc;
-  --apex-success: #166534;
-  --apex-warning: #b45309;
-  --apex-danger: #b91c1c;
+  --apex-card-muted: #f4f7f6;
+  --apex-primary: #0f5f58;
+  --apex-primary-strong: #0a3935;
+  --apex-primary-soft: #d8ebe7;
+  --apex-primary-faint: #ecf6f3;
+  --apex-accent: #b4690e;
+  --apex-accent-soft: #fff1d6;
+  --apex-coral: #b4232b;
+  --apex-coral-soft: #ffe4e6;
+  --apex-indigo: #3158a8;
+  --apex-indigo-soft: #e8eefb;
+  --apex-focus: #b4690e;
+  --apex-ink: #111817;
+  --apex-surface: #eef2f1;
+  --apex-success: #167342;
+  --apex-warning: #b4690e;
+  --apex-danger: #b4232b;
+  --apex-shadow: 0 12px 28px rgba(16, 24, 22, 0.08);
+  --apex-shadow-soft: 0 6px 16px rgba(16, 24, 22, 0.05);
 }
 
 * {
@@ -48,34 +60,218 @@ body {
 }
 
 ion-content {
-  --background: var(--ion-background-color);
+  --background: transparent;
+}
+
+ion-card {
+  display: block;
+  margin: 0;
+}
+
+ion-card-header {
+  display: block;
+  padding: 14px 16px 8px;
+}
+
+ion-card-content {
+  display: block;
+  padding: 12px 16px 16px;
+}
+
+ion-card-title {
+  color: var(--apex-ink);
+  display: block;
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+ion-card-subtitle {
+  color: var(--apex-muted);
+  display: block;
+  font-size: 0.82rem;
+  letter-spacing: 0;
+  margin-top: 4px;
+  text-transform: none;
+}
+
+ion-header,
+ion-toolbar,
+ion-title,
+ion-buttons,
+ion-list,
+ion-item,
+ion-label,
+ion-router-outlet {
+  display: block;
+}
+
+ion-toolbar {
+  align-items: center;
+  border-bottom: 1px solid var(--apex-border);
+  display: flex;
+  gap: 10px;
+  min-height: 50px;
+  padding: 0 12px;
+}
+
+ion-title {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+ion-buttons {
+  align-items: center;
+  display: flex;
+  flex: 0 0 auto;
+}
+
+ion-item {
+  min-height: 38px;
+}
+
+app-root ion-router-outlet {
+  flex: 1 1 auto;
+  display: block;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+app-root ion-router-outlet > .ion-page {
+  contain: initial !important;
+  display: flex !important;
+  flex-direction: column;
+  inset: 0 !important;
+  min-height: 0;
+  overflow: hidden;
+  position: absolute !important;
+  width: 100%;
+}
+
+app-root ion-router-outlet > .ion-page > ion-content {
+  flex: 1 1 auto;
+  height: 100%;
+  min-height: 0;
+  position: relative;
+}
+
+ion-searchbar {
+  --background: var(--apex-card-muted);
+  --border-radius: 8px;
+  --box-shadow: none;
+  --color: var(--apex-ink);
+  --placeholder-color: var(--apex-muted);
+  padding: 0;
+}
+
+ion-button {
+  --border-radius: 8px;
+  align-items: center;
+  background: var(--apex-primary);
+  border: 1px solid var(--apex-primary);
+  border-radius: 8px;
+  color: #ffffff;
+  cursor: pointer;
+  display: inline-flex;
+  font-weight: 800;
+  justify-content: center;
+  min-height: 38px;
+  padding: 0 12px;
+  text-transform: none;
+}
+
+ion-button[fill="outline"] {
+  background: #ffffff;
+  color: var(--apex-primary-strong);
+}
+
+ion-button[fill="clear"] {
+  background: transparent;
+  border-color: transparent;
+  color: var(--apex-primary-strong);
+}
+
+ion-button[expand="block"] {
+  display: flex;
+  width: 100%;
+}
+
+ion-button[size="small"] {
+  font-size: 0.82rem;
+  min-height: 34px;
+  padding: 0 10px;
+}
+
+ion-button[disabled] {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+app-root ion-router-outlet > .ion-page.ion-page-hidden,
+app-root ion-router-outlet > .ion-page-invisible {
+  display: none !important;
+  pointer-events: none;
+}
+
+ion-badge {
+  border-radius: 8px;
+  font-weight: 800;
+  letter-spacing: 0;
+  padding: 7px 10px;
 }
 
 .page {
   margin: 0 auto;
-  max-width: 1480px;
-  padding: 18px;
+  max-width: 1560px;
+  min-height: 100%;
+  padding: 14px;
 }
 
 .page-header {
-  align-items: flex-end;
+  align-items: center;
   display: flex;
-  gap: 16px;
+  gap: 12px;
   justify-content: space-between;
-  margin-bottom: 18px;
+  margin-bottom: 10px;
 }
 
 .page-header h1 {
-  font-size: clamp(1.45rem, 2vw, 2.05rem);
+  color: var(--apex-ink);
+  font-size: clamp(1.22rem, 1.65vw, 1.62rem);
   font-weight: 800;
   letter-spacing: 0;
-  line-height: 1.08;
+  line-height: 1.12;
   margin: 0;
 }
 
 .page-header p {
   color: var(--apex-muted);
-  margin: 7px 0 0;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  margin: 5px 0 0;
+  max-width: 760px;
+}
+
+.page-kicker {
+  align-items: center;
+  color: var(--apex-primary-strong);
+  display: inline-flex;
+  font-size: 0.74rem;
+  font-weight: 850;
+  gap: 7px;
+  letter-spacing: 0;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+}
+
+.page-kicker::before {
+  background: var(--apex-accent);
+  border-radius: 999px;
+  content: "";
+  height: 7px;
+  width: 7px;
 }
 
 .toolbar-card,
@@ -85,11 +281,7 @@ ion-content {
   background: var(--apex-card);
   border: 1px solid var(--apex-border);
   border-radius: 8px;
-  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.05);
-}
-
-ion-button {
-  min-height: 44px;
+  box-shadow: none;
 }
 
 a:focus-visible,
@@ -102,12 +294,36 @@ ion-item:focus-visible {
 
 .metric-grid {
   display: grid;
-  gap: 14px;
+  gap: 8px;
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 .metric-card {
-  padding: 16px;
+  display: grid;
+  gap: 8px;
+  min-height: 96px;
+  padding: 12px;
+}
+
+.metric-card header {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+}
+
+.metric-card ion-icon,
+.metric-icon {
+  align-items: center;
+  background: var(--apex-primary-faint);
+  border: 1px solid rgba(15, 118, 110, 0.18);
+  border-radius: 8px;
+  color: var(--apex-primary);
+  display: inline-flex;
+  font-size: 1.16rem;
+  height: 34px;
+  justify-content: center;
+  width: 34px;
 }
 
 .metric-card span {
@@ -120,7 +336,27 @@ ion-item:focus-visible {
 .metric-card strong {
   color: var(--apex-ink);
   display: block;
-  font-size: clamp(1.35rem, 2vw, 2rem);
+  font-size: clamp(1.24rem, 2vw, 1.78rem);
+  line-height: 1;
+}
+
+.metric-card small {
+  color: var(--apex-muted);
+  display: inline-flex;
+  font-size: 0.78rem;
+  gap: 5px;
+}
+
+.metric-card small.positive {
+  color: var(--apex-success);
+}
+
+.metric-card small.attention {
+  color: var(--apex-warning);
+}
+
+.metric-card small.danger {
+  color: var(--apex-danger);
 }
 
 .grid-two {
@@ -130,33 +366,52 @@ ion-item:focus-visible {
 }
 
 .table-wrap {
-  overflow-x: auto;
+  max-height: min(58vh, 620px);
+  overflow: auto;
 }
 
 table {
   border-collapse: collapse;
-  min-width: 720px;
+  min-width: 760px;
   width: 100%;
 }
 
 th,
 td {
   border-bottom: 1px solid var(--apex-border);
-  padding: 12px 14px;
+  padding: 8px 10px;
   text-align: left;
   vertical-align: middle;
 }
 
 th {
+  background: #ffffff;
   color: var(--apex-muted);
-  font-size: 0.78rem;
+  font-size: 0.74rem;
   font-weight: 800;
+  position: sticky;
+  top: 0;
+  z-index: 1;
   text-transform: uppercase;
 }
 
 td {
-  color: #1e293b;
-  font-size: 0.92rem;
+  color: #22302e;
+  font-size: 0.86rem;
+}
+
+tbody tr {
+  transition: background 120ms ease;
+}
+
+tbody tr:hover {
+  background: var(--apex-primary-faint);
+}
+
+.table-actions {
+  align-items: center;
+  display: flex;
+  gap: 4px;
 }
 
 .status-pill {
@@ -182,18 +437,40 @@ td {
   gap: 14px;
 }
 
+.surface-row {
+  align-items: center;
+  background: var(--apex-card-muted);
+  border: 1px solid var(--apex-border);
+  border-radius: 8px;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  padding: 12px;
+}
+
+.surface-row strong,
+.surface-row span {
+  display: block;
+}
+
+.surface-row span {
+  color: var(--apex-muted);
+  font-size: 0.82rem;
+  margin-top: 2px;
+}
+
 .empty-state {
   align-items: center;
   color: var(--apex-muted);
   display: flex;
-  min-height: 160px;
+  min-height: 118px;
   justify-content: center;
   text-align: center;
 }
 
 @media (max-width: 991px) {
   .page {
-    padding: 14px;
+    padding: 16px;
   }
 
   .page-header {
@@ -208,6 +485,10 @@ td {
 }
 
 @media (max-width: 640px) {
+  .page {
+    padding: 12px;
+  }
+
   .metric-grid {
     gap: 10px;
   }

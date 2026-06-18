@@ -3,7 +3,7 @@ import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { IonicModule } from '@ionic/angular';
-import { catchError, of } from 'rxjs';
+import { catchError, of, switchMap } from 'rxjs';
 
 import { ApexApiService } from '../core/apex-api.service';
 import { CartService } from '../core/cart.service';
@@ -45,7 +45,7 @@ import { currency } from '../core/view-utils';
                 </ion-select>
               </ion-item>
               <ion-item>
-                <ion-textarea label="Observação" label-placement="stacked" [(ngModel)]="observacao" placeholder="Retirada, entrega ou instruções do pedido"></ion-textarea>
+                <ion-textarea label="Observacao" label-placement="stacked" [(ngModel)]="observacao" placeholder="Retirada, entrega ou instrucoes do pedido"></ion-textarea>
               </ion-item>
               @if (message()) {
                 <ion-note color="primary">{{ message() }}</ion-note>
@@ -115,21 +115,31 @@ export class CheckoutPage {
       return;
     }
     const selectedMethod = this.paymentMethods().find((method) => method.idFormaPagamento === this.formaPagamentoId);
-    this.api.checkoutVenda({
+    const itens = this.cart.items()
+      .map((item) => ({ produtoId: item.produto.idProduto ?? 0, quantidade: item.quantidade }))
+      .filter((item) => item.produtoId > 0);
+
+    this.api.mergeB2cCart({
       clienteId: this.clienteId,
-      usuarioId: 1,
-      desconto: 0,
-      observacao: this.observacao,
-      itens: this.cart.items().map((item) => ({ produtoId: item.produto.idProduto ?? 0, quantidade: item.quantidade })).filter((item) => item.produtoId > 0),
-      pagamentos: [
-        {
-          formaPagamentoId: this.formaPagamentoId,
-          nome: selectedMethod?.nome ?? 'Pagamento',
-          valorPago: this.cart.subtotal()
-        }
-      ]
-    }).pipe(catchError(() => of({ offline: true }))).subscribe(() => {
-      this.message.set('Pedido confirmado. O estoque será reservado e baixado pela venda.');
+      itens
+    }).pipe(
+      switchMap(() => this.api.checkoutVenda({
+        clienteId: this.clienteId!,
+        usuarioId: 1,
+        desconto: 0,
+        observacao: this.observacao,
+        itens,
+        pagamentos: [
+          {
+            formaPagamentoId: this.formaPagamentoId!,
+            nome: selectedMethod?.nome ?? 'Pagamento',
+            valorPago: this.cart.subtotal()
+          }
+        ]
+      })),
+      catchError(() => of({ offline: true }))
+    ).subscribe(() => {
+      this.message.set('Pedido confirmado. O estoque sera reservado e baixado pela venda.');
       this.cart.clear();
       setTimeout(() => this.router.navigateByUrl('/store'), 900);
     });

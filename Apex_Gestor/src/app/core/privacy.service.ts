@@ -14,19 +14,24 @@ export class PrivacyService {
 
   request(payload: PrivacyRequestPayload) {
     return this.readiness.waitForApi().pipe(
-      switchMap(() => this.http.post(this.apiConfig.apiUrl('/api/privacy/requests'), payload))
+      switchMap(() => this.http.post(this.apiConfig.apiUrl('/api/privacy/admin/requests'), payload))
     );
   }
 
   exportCliente(id: number) {
     return this.readiness.waitForApi().pipe(
-      switchMap(() => this.http.get(this.apiConfig.apiUrl(`/api/privacy/export/clientes/${id}`)))
+      switchMap(() => this.http.get(this.apiConfig.apiUrl(`/api/privacy/admin/clientes/${id}/export`)))
     );
   }
 
   anonymizeCliente(id: number) {
     return this.readiness.waitForApi().pipe(
-      switchMap(() => this.http.delete(this.apiConfig.apiUrl(`/api/privacy/clientes/${id}`)))
+      switchMap(() => this.http.post(this.apiConfig.apiUrl(`/api/privacy/admin/clientes/${id}/anonymize`), {
+        titularId: String(id),
+        tipoTitular: 'CLIENTE',
+        tipo: 'ANONIMIZACAO',
+        justificativa: 'Anonimizacao administrativa solicitada no contexto do cadastro.'
+      }))
     );
   }
 

@@ -1,13 +1,18 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable, catchError, shareReplay, switchMap, tap, throwError } from 'rxjs';
+import { Observable, catchError, of, shareReplay, switchMap, tap, throwError } from 'rxjs';
 
 import { ApiConfigService } from './api-config.service';
 import { ApiReadinessService } from './api-readiness.service';
+import { AuthService } from './auth.service';
 import {
   AdmCalcRequest,
+  B2cCartMergeRequest,
+  B2cCartMergeResponse,
+  CaixaSessao,
   CheckoutPayment,
   Cliente,
+  CondicaoPagamento,
   Despesa,
   FinancialAuditEvent,
   FinancialCalculationResponse,
@@ -16,6 +21,9 @@ import {
   FormaPagamento,
   Identifiable,
   LaborCalculationRequest,
+  RelatorioOperacional,
+  PricingCalculationRequest,
+  PricingCalculationResponse,
   Produto,
   RelatorioFinanceiro,
   SignFinancialDocumentRequest,
@@ -29,10 +37,19 @@ export class ApexApiService {
   private readonly http = inject(HttpClient);
   private readonly config = inject(ApiConfigService);
   private readonly readiness = inject(ApiReadinessService);
+  private readonly auth = inject(AuthService);
   private readonly listCache = new Map<string, Observable<unknown>>();
 
-  list<T>(endpoint: string): Observable<T[]> {
-    const cached = this.listCache.get(endpoint) as Observable<T[]> | undefined;
+  constructor() {
+    window.addEventListener('apex-auth-cleared', () => this.listCache.clear());
+  }
+
+  list<T>(endpoint: string, options: { refresh?: boolean } = {}): Observable<T[]> {
+    const cacheKey = this.cacheKey(endpoint);
+    if (options.refresh) {
+      this.listCache.delete(cacheKey);
+    }
+    const cached = this.listCache.get(cacheKey) as Observable<T[]> | undefined;
     if (cached) {
       return cached;
     }
@@ -40,12 +57,12 @@ export class ApexApiService {
     const request = this.readiness.waitForApi().pipe(
       switchMap(() => this.http.get<T[]>(this.config.apiUrl(endpoint))),
       catchError((error) => {
-        this.listCache.delete(endpoint);
+        this.listCache.delete(cacheKey);
         return throwError(() => error);
       }),
       shareReplay({ bufferSize: 1, refCount: false })
     );
-    this.listCache.set(endpoint, request);
+    this.listCache.set(cacheKey, request);
     return request;
   }
 
@@ -86,6 +103,53 @@ export class ApexApiService {
     return this.list<FormaPagamento>('/api/formaspagamento');
   }
 
+  paymentConditions(): Observable<CondicaoPagamento[]> {
+    return this.list<CondicaoPagamento>('/api/condicoes-pagamento');
+  }
+
+  currentCashier(): Observable<CaixaSessao | null> {
+    return this.readiness.waitForApi().pipe(
+      switchMap(() => this.http.get<CaixaSessao>(this.config.apiUrl('/api/caixa/atual'))),
+      catchError((error) => {
+        if (error?.status === 204 || error?.status === 404) {
+          return of(null);
+        }
+        return throwError(() => error);
+      })
+    );
+  }
+
+  openCashier(valor: number): Observable<CaixaSessao> {
+    return this.readiness.waitForApi().pipe(
+      switchMap(() => this.http.post<CaixaSessao>(this.config.apiUrl('/api/caixa/abrir'), {
+        valor,
+        observacao: 'Abertura de caixa pelo Apex Gestor'
+      })),
+      tap(() => this.invalidate('/api/caixa'))
+    );
+  }
+
+  cashierSupply(id: number, valor: number, observacao = 'Suprimento operacional'): Observable<CaixaSessao> {
+    return this.readiness.waitForApi().pipe(
+      switchMap(() => this.http.post<CaixaSessao>(this.config.apiUrl(`/api/caixa/${id}/suprimento`), { valor, observacao })),
+      tap(() => this.invalidate('/api/caixa'))
+    );
+  }
+
+  cashierWithdraw(id: number, valor: number, observacao = 'Sangria operacional'): Observable<CaixaSessao> {
+    return this.readiness.waitForApi().pipe(
+      switchMap(() => this.http.post<CaixaSessao>(this.config.apiUrl(`/api/caixa/${id}/sangria`), { valor, observacao })),
+      tap(() => this.invalidate('/api/caixa'))
+    );
+  }
+
+  closeCashier(id: number): Observable<CaixaSessao> {
+    return this.readiness.waitForApi().pipe(
+      switchMap(() => this.http.post<CaixaSessao>(this.config.apiUrl(`/api/caixa/${id}/fechar`), {})),
+      tap(() => this.invalidate('/api/caixa'))
+    );
+  }
+
   expenses(): Observable<Despesa[]> {
     return this.list<Despesa>('/api/despesas');
   }
@@ -98,6 +162,12 @@ export class ApexApiService {
     const params = new HttpParams().set('inicio', inicio).set('fim', fim);
     return this.readiness.waitForApi().pipe(
       switchMap(() => this.http.get<RelatorioFinanceiro>(this.config.apiUrl('/api/relatorios/financeiro'), { params }))
+    );
+  }
+
+  operationalReport(kind: 'clientes' | 'estoque' | 'funcionarios' | 'vendas' | 'fornecedores'): Observable<RelatorioOperacional> {
+    return this.readiness.waitForApi().pipe(
+      switchMap(() => this.http.get<RelatorioOperacional>(this.config.apiUrl(`/api/relatorios/${kind}`)))
     );
   }
 
@@ -116,6 +186,18 @@ export class ApexApiService {
   admCalcCalculation(payload: AdmCalcRequest): Observable<FinancialCalculationResponse> {
     return this.readiness.waitForApi().pipe(
       switchMap(() => this.http.post<FinancialCalculationResponse>(this.config.apiUrl('/api/financeiro/calculos/admcalc'), payload))
+    );
+  }
+
+  pricingCalculation(payload: PricingCalculationRequest): Observable<PricingCalculationResponse> {
+    return this.readiness.waitForApi().pipe(
+      switchMap(() => this.http.post<PricingCalculationResponse>(this.config.apiUrl('/api/financeiro/precificacao'), payload))
+    );
+  }
+
+  mergeB2cCart(payload: B2cCartMergeRequest): Observable<B2cCartMergeResponse> {
+    return this.readiness.waitForApi().pipe(
+      switchMap(() => this.http.post<B2cCartMergeResponse>(this.config.apiUrl('/api/b2c/cart/merge'), payload))
     );
   }
 
@@ -150,23 +232,30 @@ export class ApexApiService {
     itens: Array<{ produtoId: number; quantidade: number }>;
     pagamentos: CheckoutPayment[];
     observacao?: string;
+    caixaSessaoId?: number;
   }): Observable<Identifiable> {
     const body = {
-      cliente: { idCliente: payload.clienteId },
-      usuario: { idUsuario: payload.usuarioId },
+      clienteId: payload.clienteId,
+      usuarioId: payload.usuarioId,
       desconto: payload.desconto,
       observacao: payload.observacao,
+      caixaSessaoId: payload.caixaSessaoId,
       itens: payload.itens.map((item) => ({
-        produto: { idProduto: item.produtoId },
+        produtoId: item.produtoId,
         quantidade: item.quantidade
       })),
       pagamentos: payload.pagamentos.map((payment) => ({
-        formaPagamento: { idFormaPagamento: payment.formaPagamentoId },
+        formaPagamentoId: payment.formaPagamentoId,
         valorPago: payment.valorPago
       }))
     };
     return this.readiness.waitForApi().pipe(
-      switchMap(() => this.http.post<Identifiable>(this.config.apiUrl('/api/vendas'), body))
+      switchMap(() => this.http.post<Identifiable>(this.config.apiUrl('/api/vendas'), body)),
+      tap(() => {
+        this.invalidate('/api/vendas');
+        this.invalidate('/api/caixa');
+        this.invalidate('/api/despesas');
+      })
     );
   }
 
@@ -178,9 +267,26 @@ export class ApexApiService {
 
   private invalidate(path: string): void {
     for (const key of this.listCache.keys()) {
-      if (path.startsWith(key) || key.startsWith(path)) {
+      const endpoint = key.split('|')[0] ?? key;
+      if (path.startsWith(endpoint) || endpoint.startsWith(path)) {
         this.listCache.delete(key);
       }
     }
+  }
+
+  private cacheKey(endpoint: string): string {
+    const user = this.auth.user();
+    const empresa = safeLocalStorage('apex.activeEmpresaId') ?? '1';
+    const filial = safeLocalStorage('apex.activeFilialId') ?? '1';
+    const roles = user?.roles?.join(',') ?? 'publico';
+    return `${endpoint}|${user?.login ?? 'anon'}|${roles}|empresa:${empresa}|filial:${filial}`;
+  }
+}
+
+function safeLocalStorage(key: string): string | null {
+  try {
+    return globalThis.localStorage?.getItem(key) ?? null;
+  } catch {
+    return null;
   }
 }

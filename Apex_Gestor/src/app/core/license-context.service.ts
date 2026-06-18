@@ -7,6 +7,7 @@ import { SecureStorageService } from './secure-storage.service';
 export const DEVICE_KEY = 'apex.deviceFingerprint';
 export const LICENSE_KEY = 'apex.licenseKey';
 export const LICENSE_STATUS_KEY = 'apex.licenseStatus';
+export const TENANT_CODE_KEY = 'apex.tenantCode';
 
 export type ApexLicenseAppId = 'desktop' | 'mobile-staff' | 'mobile-client' | 'web-client';
 
@@ -34,6 +35,25 @@ export class LicenseContextService {
 
   async storeLicenseKey(licenseKey: string): Promise<void> {
     await this.secureStorage.setItem(LICENSE_KEY, licenseKey);
+  }
+
+  tenantCode(): string {
+    const cachedStatus = localStorage.getItem(LICENSE_STATUS_KEY);
+    if (cachedStatus) {
+      try {
+        const parsed = JSON.parse(cachedStatus) as { tenantCode?: string };
+        if (parsed.tenantCode) {
+          return parsed.tenantCode;
+        }
+      } catch {
+        // Ignore cache corruption and fall back to the configured tenant key.
+      }
+    }
+    return localStorage.getItem(TENANT_CODE_KEY) ?? 'apex-demo';
+  }
+
+  storeTenantCode(tenantCode: string): void {
+    localStorage.setItem(TENANT_CODE_KEY, tenantCode || 'apex-demo');
   }
 
   async deviceInfo(): Promise<DeviceInfo> {
@@ -73,7 +93,8 @@ export class LicenseContextService {
     return {
       'X-Apex-License-Key': licenseKey,
       'X-Apex-Device-Fingerprint': device.deviceFingerprint,
-      'X-Apex-App-Id': device.appId
+      'X-Apex-App-Id': device.appId,
+      'X-Apex-Tenant-Code': this.tenantCode()
     };
   }
 }

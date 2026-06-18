@@ -1,0 +1,9 @@
+{
+	"appId": "br.com.apexgestor.app",
+	"appName": "Apex Gestor",
+	"webDir": "dist/apex-gestor/browser",
+	"bundledWebRuntime": false,
+	"server": {
+		"androidScheme": "https"
+	}
+}

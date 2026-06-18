@@ -1,0 +1,63 @@
+package com.Apex.Apex_Gestordemo.security;
+
+public enum ApexPermission {
+    PRODUCT_VIEW("product.view"),
+    PRODUCT_CREATE("product.create"),
+    PRODUCT_UPDATE("product.update"),
+    PRODUCT_DISABLE("product.disable"),
+    PRODUCT_PRICE_UPDATE("product.price.update"),
+    CUSTOMER_VIEW("customer.view"),
+    CUSTOMER_CREATE("customer.create"),
+    CUSTOMER_UPDATE("customer.update"),
+    CUSTOMER_DISABLE("customer.disable"),
+    SUPPLIER_VIEW("supplier.view"),
+    SUPPLIER_CREATE("supplier.create"),
+    SUPPLIER_UPDATE("supplier.update"),
+    SUPPLIER_DISABLE("supplier.disable"),
+    STOCK_VIEW("stock.view"),
+    STOCK_ADJUST("stock.adjust"),
+    SALE_CREATE("sale.create"),
+    SALE_CANCEL("sale.cancel"),
+    SALE_DELETE("sale.delete"),
+    SALE_DISCOUNT_APPLY("sale.discount.apply"),
+    SALE_DISCOUNT_OVERRIDE("sale.discount.override"),
+    DISCOUNT_APPROVE("discount.approve"),
+    INVOICE_CANCEL("invoice.cancel"),
+    STOCK_CHANGE("stock.change"),
+    STOCK_TRANSFER("stock.transfer"),
+    STOCK_INVENTORY_APPROVE("stock.inventory.approve"),
+    CASHIER_OPEN("cashier.open"),
+    CASHIER_SUPPLY("cashier.supply"),
+    CASHIER_WITHDRAW("cashier.withdraw"),
+    CASHIER_CLOSE("cashier.close"),
+    CASHIER_VIEW("cashier.view"),
+    PAYMENT_CONDITION_VIEW("payment_condition.view"),
+    PAYMENT_CONDITION_MANAGE("payment_condition.manage"),
+    FINANCE_VIEW("finance.view"),
+    FINANCE_MANAGE("finance.manage"),
+    FINANCE_CHANGE("finance.change"),
+    CASH_CLOSE("cash.close"),
+    SETTINGS_GLOBAL_MANAGE("settings.global.manage"),
+    SETTINGS_PERSONAL_MANAGE("settings.personal.manage"),
+    USER_VIEW("user.view"),
+    USER_MANAGE("user.manage"),
+    PERMISSION_MANAGE("permission.manage"),
+    ROLE_MANAGE("role.manage"),
+    PERSONAL_DATA_VIEW("personal_data.view"),
+    PERSONAL_DATA_EXPORT("personal_data.export"),
+    PERSONAL_DATA_ANONYMIZE("personal_data.anonymize"),
+    CONSENT_MANAGE("consent.manage"),
+    AUDIT_LOG_VIEW("audit_log.view"),
+    TIMECLOCK_ADJUST("timeclock.adjust"),
+    DELIVERY_DISPATCH("delivery.dispatch");
+
+    private final String code;
+
+    ApexPermission(String code) {
+        this.code = code;
+    }
+
+    public String getCode() {
+        return code;
+    }
+}

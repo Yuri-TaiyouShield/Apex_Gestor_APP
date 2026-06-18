@@ -26,6 +26,10 @@ public class Despesa {
     private LocalDate dataVencimento;
     @Column(name = "data_pagamento")
     private LocalDate dataPagamento;
+    @Column(name = "empresa_id")
+    private Long empresaId;
+    @Column(name = "filial_id")
+    private Long filialId;
     @ManyToOne
     @JoinColumn(name = "tipo_despesa_id", nullable = false)
     private TipoDespesa tipoDespesa;

@@ -1,13 +1,17 @@
 import { HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
-import { from, switchMap } from 'rxjs';
+import { Router } from '@angular/router';
+import { catchError, from, switchMap, throwError } from 'rxjs';
 
 import { AuthService } from './auth.service';
 import { LicenseContextService } from './license-context.service';
+import { SessionService } from './session.service';
 
 export const authInterceptor: HttpInterceptorFn = (request, next) => {
   const auth = inject(AuthService);
+  const router = inject(Router);
   const licenseContext = inject(LicenseContextService);
+  const session = inject(SessionService);
   const token = auth.accessToken();
   const isApiRequest = request.url.includes('/api/');
 
@@ -22,6 +26,12 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
   if (token) {
     baseHeaders['Authorization'] = `Bearer ${token}`;
   }
+  const user = auth.user();
+  if (user) {
+    baseHeaders['X-Apex-User-Id'] = String(user.usuarioId);
+    baseHeaders['X-Apex-User-Login'] = user.login;
+    baseHeaders['X-Apex-Roles'] = user.roles.join(',');
+  }
 
   return from(licenseContext.licenseHeaders()).pipe(
     switchMap((licenseHeaders) => next(request.clone({
@@ -29,7 +39,18 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
         ...baseHeaders,
         ...licenseHeaders
       }
-    })))
+    })).pipe(
+      catchError((error) => {
+        if (error?.status === 401) {
+          auth.logout('expired');
+          session.setAccessIssue('Sessão expirada. Entre novamente para continuar.');
+          void router.navigate(['/login'], { queryParams: { reason: 'session-expired', redirect: router.url } });
+        } else if (error?.status === 403) {
+          session.setAccessIssue('Acesso negado para este perfil.');
+        }
+        return throwError(() => error);
+      })
+    ))
   );
 };
 

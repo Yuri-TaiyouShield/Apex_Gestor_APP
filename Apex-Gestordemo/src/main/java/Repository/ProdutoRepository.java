@@ -2,14 +2,16 @@ package Repository;
 
 import Model.Produto;
 import java.util.List;
-import org.springframework.data.jpa.repository.Lock;
+import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
-import jakarta.persistence.LockModeType;
 
 @Repository
 public interface ProdutoRepository extends JpaRepository<Produto, Long> {
 
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    List<Produto> findByIdProdutoIn(List<Long> ids);
+    List<Produto> findByEmpresaIdAndFilialIdOrderByDescricaoAsc(Long empresaId, Long filialId);
+
+    Optional<Produto> findByIdProdutoAndEmpresaIdAndFilialId(Long idProduto, Long empresaId, Long filialId);
+
+    Optional<Produto> findByCodigoBarrasAndEmpresaIdAndFilialId(String codigoBarras, Long empresaId, Long filialId);
 }

@@ -1,5 +1,22 @@
 export type Persona = 'cliente' | 'vendedor' | 'gerente' | 'admin';
 
+export type ApexRole =
+  | 'ROLE_SYSADMIN'
+  | 'ROLE_DONO_GERENTE'
+  | 'ROLE_FINANCEIRO'
+  | 'ROLE_VENDEDOR'
+  | 'ROLE_CAIXA'
+  | 'ROLE_DESPACHANTE'
+  | 'ROLE_CLIENTE_B2C'
+  | 'ROLE_ADMIN'
+  | 'ROLE_GERENTE'
+  | 'ROLE_GESTOR'
+  | 'ROLE_FINANCAS'
+  | 'ROLE_ADMINISTRACAO'
+  | 'ROLE_AUDITOR'
+  | 'ROLE_CONTADOR'
+  | 'ROLE_ADVOGADO';
+
 export interface Identifiable {
   [key: string]: unknown;
 }
@@ -10,6 +27,13 @@ export interface Categoria {
   status?: number;
 }
 
+export interface GrupoProduto {
+  idGrupoProduto?: number;
+  nome: string;
+  descricao?: string;
+  status?: number;
+}
+
 export interface Fornecedor {
   idFornecedor?: number;
   status?: number;
@@ -17,6 +41,17 @@ export interface Fornecedor {
   nomeFantasia?: string;
   cnpj: string;
   telefone?: string;
+  celular?: string;
+  email?: string;
+  inscricaoEstadual?: string;
+  situacaoFiscal?: string;
+  condicoesPagamento?: string;
+  dadosBancarios?: string;
+  observacoes?: string;
+  empresaId?: number;
+  filialId?: number;
+  dataCadastro?: string;
+  endereco?: Endereco;
 }
 
 export interface Produto {
@@ -24,11 +59,33 @@ export interface Produto {
   descricao: string;
   custo?: number;
   codigoBarras?: string;
+  codigoInterno?: string;
+  codigoOriginal?: string;
   marca?: string;
+  grupo?: string;
+  subgrupo?: string;
+  modelo?: string;
+  imagemUrl?: string;
+  imagemMimeType?: string;
+  imagemAtualizadaEm?: string;
+  enriquecimentoCatalogoStatus?: string;
   unidadeMedida?: string;
+  embalagem?: string;
   quantidadeEstoque: number;
   estoqueMinimo?: number;
   valorVenda: number;
+  margem?: number;
+  localizacao?: string;
+  situacaoFiscal?: string;
+  ncm?: string;
+  cfop?: string;
+  icms?: number;
+  ipi?: number;
+  pis?: number;
+  cofins?: number;
+  observacoes?: string;
+  empresaId?: number;
+  filialId?: number;
   status?: number;
   categoria?: Categoria;
   fornecedor?: Fornecedor;
@@ -37,10 +94,32 @@ export interface Produto {
 export interface Cliente {
   idCliente?: number;
   nomeRazao: string;
+  nomeFantasia?: string;
   telefone?: string;
+  celular?: string;
+  email?: string;
   tipoDocumento?: number;
   cpfCnpj?: string;
+  rgIe?: string;
+  situacaoFiscal?: string;
+  observacoes?: string;
+  empresaId?: number;
+  filialId?: number;
+  dataCadastro?: string;
   status?: number;
+  enderecos?: Endereco[];
+}
+
+export interface Endereco {
+  idEndereco?: number;
+  estado?: string;
+  cidade?: string;
+  cep: string;
+  bairro?: string;
+  logradouro?: string;
+  uf?: string;
+  numero?: string;
+  complemento?: string;
 }
 
 export interface Usuario {
@@ -54,12 +133,68 @@ export interface Usuario {
   };
 }
 
+export interface Menu {
+  idMenu?: number;
+  nome: string;
+  link: string;
+  icone?: string;
+  exibir?: number;
+  perfis?: Perfil[];
+}
+
+export interface Perfil {
+  idPerfil?: number;
+  nome: string;
+  status?: number;
+  menus?: Menu[];
+}
+
 export interface FormaPagamento {
   idFormaPagamento?: number;
   nome: string;
   descricao?: string;
   tipoPagamento?: number;
   status?: number;
+}
+
+export interface CondicaoPagamento {
+  idCondicaoPagamento?: number;
+  nome: string;
+  tipoPagamento: string;
+  quantidadeParcelas: number;
+  prazoDias: number;
+  percentual: number;
+  restricoes?: string;
+  status?: number;
+  empresaId?: number;
+  filialId?: number;
+}
+
+export interface CaixaMovimentacao {
+  idCaixaMovimentacao?: number;
+  tipo: string;
+  valor: number;
+  observacao?: string;
+  referenciaTipo?: string;
+  referenciaId?: number;
+  criadoEm: string;
+}
+
+export interface CaixaSessao {
+  idCaixaSessao: number;
+  operadorLogin: string;
+  empresaId?: number;
+  filialId?: number;
+  status: 'ABERTO' | 'FECHADO';
+  saldoInicial: number;
+  totalVendas: number;
+  totalSuprimentos: number;
+  totalSangrias: number;
+  saldoAtual: number;
+  saldoFinal?: number;
+  abertoEm: string;
+  fechadoEm?: string;
+  movimentacoes: CaixaMovimentacao[];
 }
 
 export interface Despesa {
@@ -84,6 +219,15 @@ export interface RelatorioFinanceiro {
   totalDespesas: number;
   lucroLiquido: number;
   saldoCaixa: number;
+}
+
+export interface RelatorioOperacional {
+  tipo: string;
+  totalRegistros: number;
+  ativos: number;
+  inativos: number;
+  valorTotal: number;
+  alertas: string[];
 }
 
 export interface TaxBracket {
@@ -169,6 +313,32 @@ export interface AdmCalcRequest {
   fluxosDeCaixa?: number[];
 }
 
+export interface PricingCalculationRequest {
+  productCost: number;
+  fixedExpensePercent?: number;
+  taxPercent?: number;
+  desiredMarginPercent?: number;
+  sellerCommissionPercent?: number;
+  onlineSale?: boolean;
+  branchCode?: string;
+  orderId?: string;
+  grossAmount?: number;
+}
+
+export interface PricingCalculationResponse {
+  tenantCode: string;
+  planCode: string;
+  productCost: number;
+  fixedExpensePercent: number;
+  taxPercent: number;
+  desiredMarginPercent: number;
+  sellerCommissionPercent: number;
+  suggestedPrice: number;
+  expectedProfit: number;
+  commissionPoolId?: number;
+  message: string;
+}
+
 export interface FinancialCalculationResponse {
   calculationId: number;
   tipo: string;
@@ -242,6 +412,8 @@ export interface EntityField {
   label: string;
   type: 'text' | 'number' | 'date';
   required?: boolean;
+  placeholder?: string;
+  group?: string;
 }
 
 export interface EntityConfig {
@@ -279,6 +451,24 @@ export interface AuthResponse {
   roles: string[];
 }
 
+export interface B2cCartMergeItem {
+  produtoId: number;
+  quantidade: number;
+}
+
+export interface B2cCartMergeRequest {
+  clienteId: number;
+  itens: B2cCartMergeItem[];
+}
+
+export interface B2cCartMergeResponse {
+  cartId: number;
+  clienteId: number;
+  totalItems: number;
+  subtotal: number;
+  status: string;
+}
+
 export interface ConsentRequest {
   titularId?: string;
   tipoTitular: string;
@@ -299,6 +489,14 @@ export interface LicenseValidationRequest {
   platform: string;
   appVersion: string;
   appId: string;
+  tenantCode?: string;
+}
+
+export interface TenantBranding {
+  primaryColor: string;
+  secondaryColor: string;
+  logoUrl?: string;
+  storefrontName: string;
 }
 
 export interface LicenseValidationResponse {
@@ -312,4 +510,9 @@ export interface LicenseValidationResponse {
   licensePlan?: string;
   allowedApps?: string[];
   activatedApps?: string[];
+  tenantCode?: string;
+  tenantName?: string;
+  subscriptionTier?: string;
+  features?: string[];
+  branding?: TenantBranding | null;
 }

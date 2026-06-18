@@ -6,6 +6,7 @@ import { IonicModule } from '@ionic/angular';
 import { catchError, of } from 'rxjs';
 
 import { ApexApiService } from '../core/apex-api.service';
+import { ApiConfigService } from '../core/api-config.service';
 import { CartService } from '../core/cart.service';
 import { MOCK_PRODUCTS } from '../core/mock-data';
 import { Produto } from '../core/models';
@@ -44,7 +45,11 @@ import { currency } from '../core/view-utils';
           @for (product of filteredProducts(); track product.idProduto) {
             <article class="commerce-card product-card">
               <div class="product-media">
-                <ion-icon name="cube-outline"></ion-icon>
+                @if (product.imagemUrl) {
+                  <img [src]="productImageUrl(product)" [alt]="product.descricao" loading="lazy">
+                } @else {
+                  <ion-icon name="cube-outline"></ion-icon>
+                }
               </div>
               <div class="product-body">
                 <ion-badge color="success" *ngIf="product.quantidadeEstoque > 0">Disponível</ion-badge>
@@ -132,6 +137,13 @@ import { currency } from '../core/view-utils';
       justify-content: center;
     }
 
+    .product-media img {
+      height: 100%;
+      object-fit: contain;
+      padding: 12px;
+      width: 100%;
+    }
+
     .product-media ion-icon {
       color: #0f766e;
       font-size: 52px;
@@ -176,6 +188,7 @@ import { currency } from '../core/view-utils';
 })
 export class StorefrontPage {
   private readonly api = inject(ApexApiService);
+  private readonly apiConfig = inject(ApiConfigService);
   readonly cart = inject(CartService);
   readonly money = currency;
   readonly products = signal<Produto[]>(MOCK_PRODUCTS);
@@ -198,5 +211,12 @@ export class StorefrontPage {
 
   constructor() {
     this.api.products().pipe(catchError(() => of(MOCK_PRODUCTS))).subscribe((products) => this.products.set(products));
+  }
+
+  productImageUrl(product: Produto): string {
+    if (!product.imagemUrl) {
+      return '';
+    }
+    return product.imagemUrl.startsWith('/') ? this.apiConfig.apiUrl(product.imagemUrl) : product.imagemUrl;
   }
 }
