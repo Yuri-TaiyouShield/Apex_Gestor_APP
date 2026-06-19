@@ -37,6 +37,10 @@ O teste `MySqlOperationalFlowTests` sobe MySQL 8.4, aplica a variante MySQL das 
 
 O Playwright executa Vendedor -> Caixa com Dinheiro + PIX, confirma estoque e financeiro, verifica os bloqueios de perfil, exige motivo na devolucao e preserva o badge `Privacidade ativa` sem criar menu LGPD.
 
+Tambem valida o encerramento por inatividade: a sessao e os caches sensiveis sao limpos, o host do frontend e preservado, a tela anterior deixa de ser renderizada e a navegacao interna retorna para `/login?reason=inactivity` com mensagem clara. O perfil `local` desativa apenas o healthcheck do RabbitMQ, pois o broker nao e dependencia da homologacao operacional v1; banco e aplicacao continuam participando do readiness.
+
+No backend, a integracao MySQL confirma 401 sem token e com token expirado, 403 com token valido sem permissao e auditoria de logout por inatividade sem persistir token, senha ou segredo.
+
 ## Limites da v1
 
 Credito/vale exige origem em devolucao, cliente e tenant coincidentes e registra geracao/uso. O financeiro cobre contas a receber, contas a pagar e conciliacao inicial; fiscal nacional, backup/restore e operacao comercial continuam bloqueadores. A v2-admCalc permanece fora de escopo.

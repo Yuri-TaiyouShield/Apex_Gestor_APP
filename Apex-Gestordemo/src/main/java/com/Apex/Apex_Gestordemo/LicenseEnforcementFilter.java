@@ -7,6 +7,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.MediaType;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -15,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 @Component
+@ConditionalOnProperty(name = "apex.license.enforcement.enabled", havingValue = "true", matchIfMissing = true)
 public class LicenseEnforcementFilter extends OncePerRequestFilter {
 
     public static final String LICENSE_KEY_HEADER = "X-Apex-License-Key";

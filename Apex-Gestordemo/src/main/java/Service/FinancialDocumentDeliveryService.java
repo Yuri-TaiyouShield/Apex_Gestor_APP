@@ -40,8 +40,8 @@ public class FinancialDocumentDeliveryService {
             DataProtectionService dataProtectionService,
             ObjectProvider<RabbitTemplate> rabbitTemplateProvider,
             @Value("${apex.messaging.rabbit.enabled:false}") boolean rabbitEnabled,
-            @Value("${apex.messaging.rabbit.exchange}") String exchange,
-            @Value("${apex.messaging.rabbit.document-routing-key}") String routingKey
+            @Value("${apex.messaging.rabbit.exchange:apex.events}") String exchange,
+            @Value("${apex.messaging.rabbit.document-routing-key:financial.document.signed}") String routingKey
     ) {
         this.outboxRepository = outboxRepository;
         this.documentRepository = documentRepository;

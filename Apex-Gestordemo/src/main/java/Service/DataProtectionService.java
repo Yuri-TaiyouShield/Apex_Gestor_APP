@@ -17,7 +17,7 @@ public class DataProtectionService {
     private static final Pattern PHONE = Pattern.compile("\\b(?:\\+?55\\s?)?(?:\\(?\\d{2}\\)?\\s?)?\\d{4,5}-?\\d{4}\\b");
     private static final Pattern BEARER = Pattern.compile("Bearer\\s+[A-Za-z0-9._~+/-]+=*", Pattern.CASE_INSENSITIVE);
 
-    @Value("${apex.privacy.hash-pepper}")
+    @Value("${apex.privacy.hash-pepper:local-only-non-secret-pepper}")
     private String pepper;
 
     public String hash(String value) {

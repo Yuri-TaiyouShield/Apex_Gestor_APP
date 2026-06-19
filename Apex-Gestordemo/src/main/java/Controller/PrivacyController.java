@@ -11,9 +11,11 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.context.annotation.Profile;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
+@Profile("legacy-privacy")
 @RequestMapping("/api/privacy")
 @CrossOrigin(originPatterns = {"http://localhost:*", "https://localhost:*", "capacitor://localhost", "ionic://localhost", "app://localhost"})
 public class PrivacyController {

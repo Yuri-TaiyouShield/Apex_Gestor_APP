@@ -28,7 +28,7 @@ public class AuthService {
     private final DataProtectionService dataProtectionService;
     private final SecureRandom secureRandom = new SecureRandom();
 
-    @Value("${apex.security.jwt.refresh-token-days}")
+    @Value("${apex.security.jwt.refresh-token-days:30}")
     private long refreshTokenDays;
 
     public AuthService(

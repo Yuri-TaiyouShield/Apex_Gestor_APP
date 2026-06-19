@@ -71,8 +71,12 @@ test.describe.serial('homologação operacional v1', () => {
     await menuLink(page, 'Caixa').click();
     await expect(page).toHaveURL(/\/cashier$/);
 
-    const open = page.getByRole('button', { name: 'Abrir caixa' });
-    if (await open.isVisible()) {
+    const currentCashier = await page.request.get(`${API}/api/caixa/atual`, {
+      headers: { Authorization: `Bearer ${await token(page)}` }
+    });
+    expect([200, 204]).toContain(currentCashier.status());
+    if (currentCashier.status() === 204) {
+      const open = page.locator('.cashier-page:visible').getByRole('button', { name: 'Abrir caixa' });
       await open.click();
       await expect(page.getByText('Caixa aberto.')).toBeVisible();
     }
@@ -95,7 +99,12 @@ test.describe.serial('homologação operacional v1', () => {
     await page.getByRole('button', { name: 'Buscar' }).click();
     const historyId = page.locator('.history-page').getByRole('cell', { name: new RegExp(`^#${saleId}\\b`) });
     await expect(historyId).toBeVisible();
-    await expect(historyId.locator('..')).toContainText('FINALIZADA');
+    const historyRow = historyId.locator('..');
+    await expect(historyRow).toContainText('FINALIZADA');
+    const saleNumber = (await historyRow.innerText()).match(/V-\d+-\d+/)?.[0];
+    if (!saleNumber) {
+      throw new Error(`Número operacional da venda #${saleId} não foi renderizado no histórico.`);
+    }
 
     await login(page, 'v5_gerente');
     await menuLink(page, 'Histórico de Vendas').click();
@@ -107,7 +116,12 @@ test.describe.serial('homologação operacional v1', () => {
     await expect(page.getByText('Motivo obrigatório.')).toBeVisible();
     await menuLink(page, 'Financeiro').click();
     await expect(page.locator('h1:visible')).toContainText('Contas e conciliação');
-    await expect(page.locator('.finance-page').getByRole('cell', { name: `#${saleId}`, exact: true })).toBeVisible();
+    await expect(page.locator('.finance-page tbody tr').filter({ hasText: saleNumber })).toBeVisible();
+
+    await login(page, 'v5_dono');
+    await expect(menuLink(page, 'Financeiro')).toBeVisible();
+    await menuLink(page, 'Financeiro').click();
+    await expect(page.locator('h1:visible')).toContainText('Contas e conciliação');
 
     await login(page, 'v5_sysadmin');
     await expect(menuLink(page, 'Administração')).toBeVisible();
@@ -115,5 +129,29 @@ test.describe.serial('homologação operacional v1', () => {
     await expect(page).toHaveURL(/\/admin-settings$/);
     await expect(page.getByText('Privacidade ativa')).toBeVisible();
     await expect(page.getByText('Privacidade LGPD', { exact: true })).toHaveCount(0);
+  });
+
+  test('inatividade apenas encerra a sessão e mantém o usuário no frontend', async ({ page }) => {
+    await login(page, 'v5_vendedor');
+    const frontendOrigin = new URL(page.url()).origin;
+    page.once('dialog', (dialog) => dialog.dismiss());
+
+    await page.evaluate(() => {
+      localStorage.setItem('apex.session.timeoutMinutes', '0.03');
+      window.dispatchEvent(new Event('mousemove'));
+    });
+
+    await expect(page).toHaveURL(/\/login\?reason=inactivity/);
+    await expect(page.getByText('Sessão encerrada por inatividade. Faça login novamente.')).toBeVisible();
+    await expect(page.locator('h1:visible')).not.toContainText('Dashboard do Vendedor');
+    expect(new URL(page.url()).origin).toBe(frontendOrigin);
+    expect(page.url()).not.toContain('127.0.0.1:8080');
+    expect(await page.evaluate(() => ({
+      accessToken: sessionStorage.getItem('apex.accessToken'),
+      authUser: localStorage.getItem('apex.authUser'),
+      roles: localStorage.getItem('apex.roles'),
+      empresa: localStorage.getItem('apex.activeEmpresaId'),
+      filial: localStorage.getItem('apex.activeFilialId')
+    }))).toEqual({ accessToken: null, authUser: null, roles: null, empresa: null, filial: null });
   });
 });

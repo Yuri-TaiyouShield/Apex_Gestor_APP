@@ -8,7 +8,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import Service.JwtTokenService;
 import java.math.BigDecimal;
+import java.time.Duration;
+import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,6 +55,7 @@ class MySqlOperationalFlowTests {
 
     @Autowired MockMvc mvc;
     @Autowired JdbcTemplate jdbc;
+    @Autowired JwtTokenService jwtTokenService;
     private final ObjectMapper json = new ObjectMapper();
 
     @Test
@@ -60,6 +64,13 @@ class MySqlOperationalFlowTests {
                 "SELECT COUNT(*) FROM flyway_schema_history WHERE success = 1 AND version IN ('2','3','4','5')",
                 Integer.class);
         assertThat(migrations).isEqualTo(4);
+
+        mvc.perform(get("/api/caixa/atual"))
+                .andExpect(status().isUnauthorized());
+        String expiredToken = jwtTokenService.issueAccessToken(6L, "Vendedor Homologacao", "v5_vendedor",
+                List.of("ROLE_VENDEDOR"), 1L, 1L, Duration.ofSeconds(-1));
+        mvc.perform(get("/api/caixa/atual").header("Authorization", bearer(expiredToken)))
+                .andExpect(status().isUnauthorized());
 
         String seller = login("v5_vendedor");
         String cashier = login("v5_caixa");
@@ -140,8 +151,52 @@ class MySqlOperationalFlowTests {
                 .andExpect(status().isOk());
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM credito_cliente WHERE venda_origem_id=? AND saldo>0", Integer.class, saleId))
                 .isEqualTo(1);
+
+        Long creditId = id("SELECT id_credito FROM credito_cliente WHERE venda_origem_id=" + saleId + " LIMIT 1");
+        Long creditMethodId = id("SELECT id_forma_pagamento FROM formas_pagamento WHERE nome='Credito/Vale' AND empresa_id=1 LIMIT 1");
+        String creditSaleBody = json.writeValueAsString(Map.of(
+                "clienteId", clientId, "desconto", 0, "condicaoPagamentoId", conditionId,
+                "itens", new Object[] { Map.of("produtoId", productId, "quantidade", 1) },
+                "pagamentos", new Object[] {}));
+        String creditSaleResponse = mvc.perform(post("/api/vendas").header("Authorization", bearer(seller))
+                        .contentType(MediaType.APPLICATION_JSON).content(creditSaleBody))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.status").value("AGUARDANDO_CAIXA"))
+                .andReturn().getResponse().getContentAsString();
+        JsonNode creditSale = json.readTree(creditSaleResponse);
+        long creditSaleId = creditSale.get("idVenda").asLong();
+        BigDecimal creditSaleTotal = creditSale.get("valorTotal").decimalValue();
+        String creditReceiveBody = json.writeValueAsString(Map.of("pagamentos", new Object[] {
+                Map.of("formaPagamentoId", creditMethodId, "valor", creditSaleTotal,
+                        "numeroParcelas", 1, "creditoId", creditId)
+        }));
+        mvc.perform(post("/api/caixa/vendas/{id}/receber", creditSaleId).header("Authorization", bearer(cashier))
+                        .contentType(MediaType.APPLICATION_JSON).content(creditReceiveBody))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("FINALIZADA"))
+                .andExpect(jsonPath("$.pagamentos[0].creditoId").value(creditId));
+        assertThat(jdbc.queryForObject("SELECT status FROM credito_cliente WHERE id_credito=?", String.class, creditId))
+                .isEqualTo("UTILIZADO");
+        assertThat(jdbc.queryForObject("SELECT saldo FROM credito_cliente WHERE id_credito=?", BigDecimal.class, creditId))
+                .isEqualByComparingTo(BigDecimal.ZERO);
+        assertThat(jdbc.queryForObject(
+                "SELECT COUNT(*) FROM credito_movimentacao WHERE credito_id=? AND venda_id=? AND tipo='USO'",
+                Integer.class, creditId, creditSaleId)).isEqualTo(1);
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM auditoria_log WHERE empresa_id=1 AND filial_id=1", Integer.class))
                 .isGreaterThan(0);
+
+        mvc.perform(post("/api/auth/logout").header("Authorization", bearer(manager))
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"reason\":\"idle\"}"))
+                .andExpect(status().isNoContent());
+        Map<String, Object> logoutAudit = jdbc.queryForMap("""
+                SELECT usuario_login, valor_novo, justificativa
+                  FROM auditoria_log
+                 WHERE acao='LOGOUT' AND entidade='SESSAO'
+                 ORDER BY id_auditoria DESC LIMIT 1
+                """);
+        assertThat(logoutAudit.get("usuario_login")).isEqualTo("v5_gerente");
+        assertThat(logoutAudit.get("valor_novo").toString()).isEqualTo("reason=INATIVIDADE");
+        assertThat(logoutAudit.toString()).doesNotContain("Bearer", "refresh", "accessToken", "Apex@2026");
 
         String clients = mvc.perform(get("/api/clientes").header("Authorization", bearer(seller)))
                 .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();

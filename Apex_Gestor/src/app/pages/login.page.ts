@@ -446,6 +446,28 @@ export class LoginPage {
   totpCode = '';
   acceptedPrivacyTerms = false;
 
+  constructor() {
+    this.applyRouteMessage();
+  }
+
+  ionViewWillEnter(): void {
+    this.applyRouteMessage();
+  }
+
+  private applyRouteMessage(): void {
+    const reason = this.route.snapshot.queryParamMap.get('reason');
+    if (reason === 'inactivity') {
+      this.messageColor.set('danger');
+      this.message.set('Sessão encerrada por inatividade. Faça login novamente.');
+    } else if (reason === 'session-expired') {
+      this.messageColor.set('danger');
+      this.message.set('Sessão expirada. Faça login novamente.');
+    } else if (reason === 'forbidden') {
+      this.messageColor.set('danger');
+      this.message.set('Acesso negado para este perfil.');
+    }
+  }
+
   enter(): void {
     this.message.set('');
     this.login = this.login.trim();

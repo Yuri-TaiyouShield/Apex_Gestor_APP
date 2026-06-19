@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
-import { Router } from '@angular/router';
+import { NavigationEnd, Router } from '@angular/router';
+import { filter } from 'rxjs';
 
 import { AuthService } from './auth.service';
 
@@ -20,9 +21,12 @@ export class SessionTimeoutService {
       return;
     }
     this.started = true;
-    ['click', 'keydown', 'mousemove', 'touchstart', 'scroll'].forEach((eventName) => {
+    ['click', 'keydown', 'mousemove', 'pointerdown', 'touchstart', 'scroll'].forEach((eventName) => {
       window.addEventListener(eventName, () => this.reset(), { passive: true });
     });
+    this.router.events.pipe(
+      filter((event): event is NavigationEnd => event instanceof NavigationEnd)
+    ).subscribe(() => this.reset());
     this.reset();
   }
 
@@ -52,12 +56,15 @@ export class SessionTimeoutService {
     if (!this.auth.isAuthenticated()) {
       return;
     }
-    this.auth.logout('expired');
-    void this.router.navigate(['/login'], { queryParams: { reason: 'session-expired' } });
+    this.auth.logout('idle');
+    void this.router.navigate(['/login'], {
+      replaceUrl: true,
+      queryParams: { reason: 'inactivity' }
+    });
   }
 
   private timeoutMinutes(): number {
     const configured = Number(localStorage.getItem(TIMEOUT_KEY) || DEFAULT_TIMEOUT_MINUTES);
-    return Number.isFinite(configured) && configured >= 5 ? configured : DEFAULT_TIMEOUT_MINUTES;
+    return Number.isFinite(configured) && configured > 0 ? configured : DEFAULT_TIMEOUT_MINUTES;
   }
 }

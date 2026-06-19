@@ -3,6 +3,7 @@ import { addIcons } from 'ionicons';
 import {
   add,
   addCircleOutline,
+  addOutline,
   albumsOutline,
   bagHandleOutline,
   bagCheckOutline,
@@ -59,6 +60,8 @@ import { appConfig } from './app/app.config';
 
 addIcons({
   add,
+  'add-outline': addOutline,
+  addOutline,
   'add-circle-outline': addCircleOutline,
   addCircleOutline,
   'albums-outline': albumsOutline,

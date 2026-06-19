@@ -1,13 +1,17 @@
 package Service;
 
+import DTO.AuthResponseDTO;
+import Model.Usuario;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.nio.charset.StandardCharsets;
+import java.text.Normalizer;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -74,6 +78,24 @@ public class JwtTokenService {
                 numberObject(payload.get("empresaId")),
                 numberObject(payload.get("filialId")),
                 exp);
+    }
+
+    public AuthResponseDTO response(Usuario usuario, String refreshToken) {
+        Duration ttl = Duration.ofMinutes(30);
+        List<String> roles = roles(usuario);
+        String accessToken = issueAccessToken(usuario.getIdUsuario(), usuario.getNome(), usuario.getLogin(), roles,
+                usuario.getEmpresaId(), usuario.getFilialId(), ttl);
+        return new AuthResponseDTO(accessToken, refreshToken, Instant.now().plus(ttl), "Bearer",
+                usuario.getIdUsuario(), usuario.getNome(), usuario.getLogin(), roles);
+    }
+
+    private List<String> roles(Usuario usuario) {
+        String perfil = usuario.getPerfil() == null ? "VENDEDOR" : usuario.getPerfil().getNome();
+        String normalized = Normalizer.normalize(perfil, Normalizer.Form.NFD)
+                .replaceAll("\\p{M}", "")
+                .replaceAll("[^A-Za-z0-9]", "_")
+                .toUpperCase(Locale.ROOT);
+        return List.of(normalized.isBlank() ? "VENDEDOR" : normalized);
     }
 
     private String sign(Map<String, Object> payload) {

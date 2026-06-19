@@ -1,6 +1,7 @@
 package Controller;
 
 import Service.JwtTokenService;
+import Service.AuditLogService;
 import Repository.UsuarioRepository;
 import java.time.Duration;
 import java.time.OffsetDateTime;
@@ -11,6 +12,7 @@ import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -35,10 +38,13 @@ public class AuthController {
 
     private final JwtTokenService jwtTokenService;
     private final UsuarioRepository usuarioRepository;
+    private final AuditLogService auditLogService;
 
-    public AuthController(JwtTokenService jwtTokenService, UsuarioRepository usuarioRepository) {
+    public AuthController(JwtTokenService jwtTokenService, UsuarioRepository usuarioRepository,
+            AuditLogService auditLogService) {
         this.jwtTokenService = jwtTokenService;
         this.usuarioRepository = usuarioRepository;
+        this.auditLogService = auditLogService;
     }
 
     @PostMapping("/login")
@@ -67,7 +73,9 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout() {
+    public ResponseEntity<Void> logout(@RequestBody(required = false) LogoutRequest request,
+            HttpServletRequest servletRequest, Authentication authentication) {
+        auditLogService.recordLogout(servletRequest, authentication, request == null ? null : request.reason());
         return ResponseEntity.noContent().build();
     }
 
@@ -96,6 +104,9 @@ public class AuthController {
     }
 
     public record RefreshRequest(String refreshToken) {
+    }
+
+    public record LogoutRequest(String reason) {
     }
 
     private record DemoUser(Long id, String nome, String login, List<String> roles) {

@@ -11,6 +11,13 @@ import { SessionService } from './session.service';
 const ACCESS_TOKEN_KEY = 'apex.accessToken';
 const REFRESH_TOKEN_KEY = 'apex.refreshToken';
 const USER_KEY = 'apex.authUser';
+const SENSITIVE_CONTEXT_KEYS = [
+  'apex.activeEmpresaId',
+  'apex.activeFilialId',
+  'apex.licenseStatus'
+];
+
+export type LogoutReason = 'manual' | 'expired' | 'forbidden' | 'idle';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -46,15 +53,14 @@ export class AuthService {
     );
   }
 
-  logout(reason: 'manual' | 'expired' | 'forbidden' = 'manual'): void {
-    void this.secureStorage.getItem(REFRESH_TOKEN_KEY).then((refreshToken) => {
-      if (refreshToken) {
-        this.http.post(this.apiConfig.apiUrl('/api/auth/logout'), { refreshToken }).subscribe({ error: () => undefined });
-      }
-    });
+  logout(reason: LogoutReason = 'manual'): void {
+    // The request is subscribed before the local token is removed so the backend can
+    // identify the actor. No token or secret is copied into the audit payload.
+    this.http.post(this.apiConfig.apiUrl('/api/auth/logout'), { reason }).subscribe({ error: () => undefined });
     sessionStorage.removeItem(ACCESS_TOKEN_KEY);
     localStorage.removeItem(REFRESH_TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
+    SENSITIVE_CONTEXT_KEYS.forEach((key) => localStorage.removeItem(key));
     void this.secureStorage.removeItem(REFRESH_TOKEN_KEY);
     this.accessToken.set(null);
     this.user.set(null);
@@ -92,6 +98,7 @@ export class AuthService {
     this.user.set(safeUser);
     this.session.setRoles(response.roles);
     this.session.setPersona(this.personaFromRoles(response.roles));
+    this.session.setAccessIssue(null);
   }
 
   private reconcileStoredSession(): void {
