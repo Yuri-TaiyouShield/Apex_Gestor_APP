@@ -1,4 +1,5 @@
 import { Injectable, signal } from '@angular/core';
+import { Capacitor } from '@capacitor/core';
 
 const STORAGE_KEY = 'apex.apiBaseUrl';
 
@@ -33,12 +34,21 @@ export class ApiConfigService {
 
   private defaultBaseUrl(): string {
     const protocol = globalThis.location?.protocol ?? 'http:';
-    if (window.apexDesktop?.defaultApiUrl) {
-      return window.apexDesktop.defaultApiUrl;
+    const desktopApiUrl = globalThis.window?.apexDesktop?.defaultApiUrl;
+    if (desktopApiUrl) {
+      return desktopApiUrl;
     }
-    if (protocol === 'capacitor:' || protocol === 'ionic:' || protocol === 'app:') {
+
+    if (Capacitor.isNativePlatform() || protocol === 'capacitor:' || protocol === 'ionic:' || protocol === 'app:') {
+      return Capacitor.getPlatform() === 'android' ? 'http://10.0.2.2:8080' : 'http://localhost:8080';
+    }
+
+    const host = globalThis.location?.hostname ?? '';
+    if (host === 'localhost' || host === '127.0.0.1') {
       return 'http://localhost:8080';
     }
+
+    // Hosted web deployments can keep the API on the same origin behind a reverse proxy.
     return '';
   }
 }

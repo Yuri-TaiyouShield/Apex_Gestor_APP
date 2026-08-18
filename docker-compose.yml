@@ -29,6 +29,7 @@ services:
       JPA_DDL_AUTO: ${JPA_DDL_AUTO:-update}
       APEX_SECURITY_REQUIRE_AUTH: ${APEX_SECURITY_REQUIRE_AUTH:-false}
       APEX_CORS_ALLOWED_ORIGINS: ${APEX_CORS_ALLOWED_ORIGINS:-http://localhost:4200,http://localhost:8100,http://localhost:5173,app://localhost,ionic://localhost}
+      MANAGEMENT_HEALTH_RABBIT_ENABLED: ${MANAGEMENT_HEALTH_RABBIT_ENABLED:-false}
     ports:
       - "${API_PORT:-8080}:8080"
     depends_on:

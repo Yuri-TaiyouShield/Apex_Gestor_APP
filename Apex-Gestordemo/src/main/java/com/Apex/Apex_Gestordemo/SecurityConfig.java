@@ -38,7 +38,7 @@ public class SecurityConfig {
     @Value("${apex.security.require-auth:false}")
     private boolean requireAuthentication;
 
-    @Value("${apex.security.cors.allowed-origins:http://localhost:4200,http://127.0.0.1:4200,http://localhost:8100,http://127.0.0.1:8100,http://localhost:5173,http://127.0.0.1:5173,app://localhost,ionic://localhost}")
+    @Value("${apex.security.cors.allowed-origins:http://localhost:*,https://localhost:*,http://127.0.0.1:*,https://127.0.0.1:*,app://localhost,ionic://localhost,capacitor://localhost}")
     private String allowedOrigins;
 
     @Bean
@@ -105,7 +105,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(parseAllowedOrigins());
+        configuration.setAllowedOriginPatterns(parseAllowedOrigins());
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of(
                 "Authorization",

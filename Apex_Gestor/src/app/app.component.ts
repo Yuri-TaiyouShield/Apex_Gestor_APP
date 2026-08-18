@@ -63,6 +63,8 @@ export class AppComponent implements OnInit {
     });
   });
 
+  readonly canOpenPdv = computed(() => this.visibleNavItems().some((item) => item.path === '/pos'));
+
   readonly visibleNavGroups = computed(() => {
     const labels: Record<NonNullable<ApexNavItem['group']>, string> = {
       principal: 'Principal',

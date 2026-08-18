@@ -27,7 +27,11 @@
     "build:electron:secure": "ng build --configuration production && javascript-obfuscator dist/apex-gestor/browser --output dist/apex-gestor/browser --compact true --string-array true --string-array-threshold 0.2 --target browser --ignore-imports true && node scripts/security-manifest.cjs && node scripts/electron-package.cjs",
     "build:electron:secure:dir": "ng build --configuration production && javascript-obfuscator dist/apex-gestor/browser --output dist/apex-gestor/browser --compact true --string-array true --string-array-threshold 0.2 --target browser --ignore-imports true && node scripts/security-manifest.cjs && node scripts/electron-package.cjs --dir",
     "cap:sync": "ng build --configuration production && capacitor sync",
-    "cap:run:android": "ng build --configuration production && capacitor run android",
+    "build:mobile:staff:sync": "ng build --configuration production,mobile-staff && capacitor sync android",
+    "build:mobile:client:sync": "ng build --configuration production,mobile-client && capacitor sync android",
+    "cap:run:android:staff": "npm run build:mobile:staff:sync && capacitor run android --flavor staff",
+    "cap:run:android:client": "npm run build:mobile:client:sync && capacitor run android --flavor client",
+    "cap:run:android": "npm run cap:run:android:staff",
     "cap:open:android": "capacitor open android"
   },
   "dependencies": {

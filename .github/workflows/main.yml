@@ -365,8 +365,7 @@ jobs:
         shell: bash
         run: |
           VERSION_NAME="${GITHUB_REF_NAME//\//-}"
-          npm run build:mobile:staff
-          npx capacitor sync android
+          npm run build:mobile:staff:sync
           cd android
           chmod +x gradlew
           ./gradlew assembleStaffDebug --stacktrace
@@ -388,8 +387,7 @@ jobs:
         shell: bash
         run: |
           VERSION_NAME="${GITHUB_REF_NAME//\//-}"
-          npm run build:mobile:client
-          npx capacitor sync android
+          npm run build:mobile:client:sync
           cd android
           ./gradlew assembleClientDebug --stacktrace
           cd ..

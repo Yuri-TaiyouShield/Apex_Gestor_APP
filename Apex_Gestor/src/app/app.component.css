@@ -299,7 +299,8 @@ ion-menu ion-item ion-icon {
   }
 
   ion-menu {
-    display: none;
+    display: block;
+    width: min(86vw, 320px);
   }
 }
 

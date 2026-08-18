@@ -63,10 +63,12 @@
               <ion-icon name="shield-checkmark-outline" aria-hidden="true"></ion-icon>
               <span>Privacidade ativa</span>
             </span>
-            <ion-button routerLink="/pos" aria-label="Abrir PDV" title="Abrir PDV">
-              <ion-icon name="cart-outline" aria-hidden="true"></ion-icon>
-              <span>PDV</span>
-            </ion-button>
+            @if (canOpenPdv()) {
+              <ion-button routerLink="/pos" aria-label="Abrir PDV" title="Abrir PDV">
+                <ion-icon name="cart-outline" aria-hidden="true"></ion-icon>
+                <span>PDV</span>
+              </ion-button>
+            }
             <ion-button fill="clear" routerLink="/settings" aria-label="Abrir configurações" title="Configurações">
               <ion-icon slot="icon-only" name="settings-outline" aria-hidden="true"></ion-icon>
             </ion-button>
