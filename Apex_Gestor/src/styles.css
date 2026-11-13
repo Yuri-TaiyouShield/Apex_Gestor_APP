@@ -2,12 +2,6 @@
 @import "@ionic/angular/css/normalize.css";
 @import "@ionic/angular/css/structure.css";
 @import "@ionic/angular/css/typography.css";
-@import "@ionic/angular/css/display.css";
-@import "@ionic/angular/css/padding.css";
-@import "@ionic/angular/css/float-elements.css";
-@import "@ionic/angular/css/text-alignment.css";
-@import "@ionic/angular/css/text-transformation.css";
-@import "@ionic/angular/css/flex-utils.css";
 
 :root {
   --ion-font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -47,6 +41,20 @@
   --apex-danger: #b4232b;
   --apex-shadow: 0 12px 28px rgba(16, 24, 22, 0.08);
   --apex-shadow-soft: 0 6px 16px rgba(16, 24, 22, 0.05);
+
+  --apex-radius-sm: 6px;
+  --apex-radius: 8px;
+  --apex-radius-lg: 12px;
+  --apex-font-size-2xs: 0.7rem;
+  --apex-font-size-xs: 0.75rem;
+  --apex-font-size-sm: 0.85rem;
+  --apex-font-size-md: 0.95rem;
+  --apex-font-size-lg: 1.15rem;
+  --apex-font-size-xl: 1.4rem;
+  --apex-font-size-2xl: 1.8rem;
+  --apex-duration-fast: 90ms;
+  --apex-duration: 160ms;
+  --apex-ease: cubic-bezier(0.2, 0.6, 0.2, 1);
 }
 
 * {
@@ -167,7 +175,7 @@ ion-searchbar {
 }
 
 ion-button {
-  --border-radius: 8px;
+  --border-radius: var(--apex-radius);
   align-items: center;
   background: var(--apex-primary);
   border: 1px solid var(--apex-primary);
@@ -216,7 +224,7 @@ app-root ion-router-outlet > .ion-page-invisible {
 }
 
 ion-badge {
-  border-radius: 8px;
+  border-radius: var(--apex-radius);
   font-weight: 800;
   letter-spacing: 0;
   padding: 7px 10px;
@@ -280,7 +288,7 @@ ion-badge {
 .commerce-card {
   background: var(--apex-card);
   border: 1px solid var(--apex-border);
-  border-radius: 8px;
+  border-radius: var(--apex-radius);
   box-shadow: none;
 }
 
@@ -500,5 +508,16 @@ tbody tr:hover {
   th,
   td {
     padding: 10px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
