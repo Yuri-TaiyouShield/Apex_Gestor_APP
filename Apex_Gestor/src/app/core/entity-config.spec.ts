@@ -42,6 +42,39 @@ describe('ERP operational configuration', () => {
     expect(cashier?.allowedRoles).not.toContain('ROLE_VENDEDOR');
     expect(finance?.allowedRoles).not.toContain('ROLE_VENDEDOR');
   });
+
+  it('declares required fields for the critical registration forms', () => {
+    expect(requiredFields('products')).toEqual(jasmine.arrayContaining([
+      'descricao',
+      'codigoBarras',
+      'quantidadeEstoque',
+      'estoqueMinimo',
+      'custo',
+      'valorVenda',
+      'categoria.idCategoria',
+      'fornecedor.idFornecedor'
+    ]));
+    expect(requiredFields('clients')).toEqual(jasmine.arrayContaining(['nomeRazao', 'tipoDocumento', 'cpfCnpj', 'telefone', 'endereco.cep']));
+    expect(requiredFields('suppliers')).toEqual(jasmine.arrayContaining(['razaoSocial', 'cnpj', 'telefone', 'endereco.cep']));
+    expect(requiredFields('expenses')).toEqual(['descricao', 'valor']);
+    expect(requiredFields('users')).toEqual(jasmine.arrayContaining(['nome', 'login', 'senha']));
+  });
+
+  it('builds deactivation paths per entity, keeping expenses with cancel semantics', () => {
+    expect(ENTITY_CONFIGS['products'].deactivatePath?.(7)).toBe('/api/produtos/7/desativar');
+    expect(ENTITY_CONFIGS['clients'].deactivatePath?.(4)).toBe('/api/clientes/4/desativar');
+    expect(ENTITY_CONFIGS['expenses'].deactivatePath?.(3)).toBe('/api/despesas/3/cancelar');
+    expect(ENTITY_CONFIGS['expenseTypes'].deactivatePath).toBeUndefined();
+  });
+
+  it('keeps every entity searchable by its own identity key behind an operational endpoint', () => {
+    for (const config of Object.values(ENTITY_CONFIGS)) {
+      expect(config.searchKeys).toContain(config.idKey);
+      expect(config.endpoint.startsWith('/api/')).toBeTrue();
+      expect(config.fields.length).toBeGreaterThan(0);
+      expect(config.columns.length).toBeGreaterThan(0);
+    }
+  });
 });
 
 function groups(key: keyof typeof ENTITY_CONFIGS): string[] {
@@ -51,3 +84,8 @@ function groups(key: keyof typeof ENTITY_CONFIGS): string[] {
 function columnKeys(key: keyof typeof ENTITY_CONFIGS): string[] {
   return ENTITY_CONFIGS[key].columns.map((column) => column.key);
 }
+
+function requiredFields(key: keyof typeof ENTITY_CONFIGS): string[] {
+  return ENTITY_CONFIGS[key].fields.filter((field) => field.required === true).map((field) => field.key);
+}
+

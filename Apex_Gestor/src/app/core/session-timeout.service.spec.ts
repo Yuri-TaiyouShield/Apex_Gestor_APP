@@ -55,4 +55,74 @@ describe('SessionTimeoutService', () => {
 
     expect(auth.logout).not.toHaveBeenCalled();
   }));
+
+  it('propõe continuidade 4 minutos antes do encerramento e reinicia o ciclo', fakeAsync(() => {
+    (window.confirm as jasmine.Spy).and.returnValue(true);
+    TestBed.inject(SessionTimeoutService).start();
+
+    tick(4 * 60_000);
+
+    expect(window.confirm).toHaveBeenCalledWith('Sua sessão será encerrada por inatividade. Deseja continuar conectado?');
+    expect(auth.logout).not.toHaveBeenCalled();
+
+    tick(60_000);
+
+    // ciclo reiniciado: encerramento original no quinto minuto foi descartado
+    expect(auth.logout).not.toHaveBeenCalled();
+  }));
+
+  it('não agenda encerramento enquanto não houver sessão autenticada', fakeAsync(() => {
+    auth.isAuthenticated.and.returnValue(false);
+
+    TestBed.inject(SessionTimeoutService).start();
+    tick(10 * 60_000);
+
+    expect(auth.logout).not.toHaveBeenCalled();
+    expect(router.navigate).not.toHaveBeenCalled();
+  }));
+
+  it('interrompe o encerramento silenciosamente quando a sessão já caiu', fakeAsync(() => {
+    TestBed.inject(SessionTimeoutService).start();
+    auth.isAuthenticated.and.returnValue(false);
+
+    tick(5 * 60_000);
+
+    expect(auth.logout).not.toHaveBeenCalled();
+    expect(router.navigate).not.toHaveBeenCalled();
+  }));
+
+  it('usa o prazo padrão de 30 minutos quando a configuração é inválida', fakeAsync(() => {
+    localStorage.setItem('apex.session.timeoutMinutes', 'banana');
+
+    TestBed.inject(SessionTimeoutService).start();
+
+    tick(30 * 60_000 - 1);
+    expect(auth.logout).not.toHaveBeenCalled();
+
+    tick(1);
+    expect(auth.logout).toHaveBeenCalledWith('idle');
+  }));
+
+  it('alerta imediato quando o prazo configurado é menor que a antecedência do aviso', fakeAsync(() => {
+    localStorage.setItem('apex.session.timeoutMinutes', '0.5');
+
+    TestBed.inject(SessionTimeoutService).start();
+
+    tick();
+    expect(window.confirm).toHaveBeenCalled();
+    expect(auth.logout).not.toHaveBeenCalled();
+
+    tick(30_000);
+    expect(auth.logout).toHaveBeenCalledWith('idle');
+  }));
+
+  it('registra ouvintes e agendamento apenas na primeira ativação', fakeAsync(() => {
+    const service = TestBed.inject(SessionTimeoutService);
+    service.start();
+    service.start();
+
+    tick(5 * 60_000);
+
+    expect(auth.logout).toHaveBeenCalledTimes(1);
+  }));
 });

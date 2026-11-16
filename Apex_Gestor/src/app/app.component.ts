@@ -3,7 +3,7 @@ import { Component, OnInit, computed, inject } from '@angular/core';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { filter, map, startWith } from 'rxjs';
-import { IonicModule, MenuController } from '@ionic/angular';
+import { IonApp, IonSplitPane, IonMenu, IonHeader, IonToolbar, IonTitle, IonContent, IonList, IonItem, IonIcon, IonLabel, IonMenuToggle, IonMenuButton, IonButtons, IonButton, IonRouterOutlet, MenuController } from '@ionic/angular/standalone';
 
 import { DEFAULT_HOME_ROUTE } from './core/app-variant';
 import { APEX_NAV_ITEMS, ApexNavItem } from './core/feature-menu.config';
@@ -14,7 +14,7 @@ import { TenantFeatureService } from './core/tenant-feature.service';
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, IonicModule, RouterLink, RouterLinkActive],
+  imports: [CommonModule, IonApp, IonSplitPane, IonMenu, IonHeader, IonToolbar, IonTitle, IonContent, IonList, IonItem, IonIcon, IonLabel, IonMenuToggle, IonMenuButton, IonButtons, IonButton, IonRouterOutlet, RouterLink, RouterLinkActive],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })
@@ -37,6 +37,9 @@ export class AppComponent implements OnInit {
   readonly isCommerce = computed(() => ['/store', '/cart', '/checkout'].some((path) => this.currentUrl().startsWith(path)));
 
   readonly platformLabel = computed(() => {
+    if (globalThis.window?.apexDesktop?.isDesktop) {
+      return 'Desktop';
+    }
     const protocol = globalThis.location?.protocol ?? 'http:';
     if (protocol === 'app:') {
       return 'Desktop';
