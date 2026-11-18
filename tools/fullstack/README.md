@@ -14,7 +14,9 @@ MySQL 8.4 :2705
 
 ## Subir o ambiente local
 
-Requisitos: Docker Desktop e Java não são necessários no host; a API usa a imagem Java 21 do Docker.
+Requisitos: Docker Desktop e Java não são necessários no host; a API usa a imagem Java 25 do Docker, alinhada ao `pom.xml`.
+
+Este Compose é exclusivamente local. Ele mantém `APEX_SECURITY_REQUIRE_AUTH=false` por padrão para facilitar o pacote de testes, mas não deve ser usado como configuração de homologação ou produção. O padrão `JPA_DDL_AUTO=validate` faz o ambiente falhar quando o banco não corresponde às migrations, em vez de alterar o schema silenciosamente.
 
 ```powershell
 .\start-stack.ps1
