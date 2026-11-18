@@ -33,9 +33,18 @@ jobs:
       - name: Test backend
         working-directory: Apex-Gestordemo
         run: |
-          chmod +x mvnw
-          ./mvnw -q test
+          chmod +x mvnw || true
+          if command -v mvn >/dev/null 2>&1; then
+            mvn -q test
+          else
+            ./mvnw -q test
+          fi
 
       - name: Package backend
         working-directory: Apex-Gestordemo
-        run: ./mvnw -q -DskipTests package
+        run: |
+          if command -v mvn >/dev/null 2>&1; then
+            mvn -q -DskipTests package
+          else
+            ./mvnw -q -DskipTests package
+          fi
