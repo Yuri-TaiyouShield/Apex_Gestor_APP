@@ -5,18 +5,20 @@ import DTO.UsuarioRequestDTO;
 import DTO.UsuarioResponseDTO;
 import Model.Perfil;
 import Model.Usuario;
+import Repository.PerfilRepository;
 import Service.AuditTrailService;
 import Service.AuthorizationService;
 import Service.TenantScopeService;
 import Service.UsuarioService;
 import com.Apex.Apex_Gestordemo.security.ApexPermission;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/usuarios")
@@ -26,6 +28,7 @@ public class UsuarioController {
     @Autowired private AuditTrailService auditTrailService;
     @Autowired private AuthorizationService authorizationService;
     @Autowired private TenantScopeService tenantScopeService;
+    @Autowired private PerfilRepository perfilRepository;
 
     @GetMapping
     public List<UsuarioResponseDTO> listarTodos(HttpServletRequest request) {
@@ -40,7 +43,7 @@ public class UsuarioController {
                 .map(usuario -> ResponseEntity.ok(toResponse(usuario)))
                 .orElse(ResponseEntity.notFound().build());
     }
-    
+
     @GetMapping("/login/{login}")
     public ResponseEntity<UsuarioResponseDTO> buscarPorLogin(@PathVariable String login, HttpServletRequest request) {
         authorizationService.require(request, ApexPermission.USER_VIEW, "Usuarios", "consultar usuario por login");
@@ -55,6 +58,7 @@ public class UsuarioController {
     public ResponseEntity<UsuarioResponseDTO> criar(@Valid @RequestBody UsuarioRequestDTO requestBody,
             HttpServletRequest request) {
         authorizationService.require(request, ApexPermission.USER_MANAGE, "Usuarios", "criar usuario");
+        validarHierarquiaPerfilDestino(requestBody, request);
         Usuario salvo = usuarioService.salvar(toEntity(requestBody, null), empresaId(request), filialId(request));
         auditTrailService.registrarPrivacidade(
                 "USUARIO_CRIADO",
@@ -75,6 +79,8 @@ public class UsuarioController {
         authorizationService.require(request, ApexPermission.USER_MANAGE, "Usuarios", "atualizar usuario");
         return usuarioService.buscarPorId(id, empresaId(request), filialId(request))
                 .map(existente -> {
+                    authorizationService.validateProtectedTargetUser(request, existente);
+                    validarHierarquiaPerfilDestino(requestBody, request);
                     String anterior = resumoUsuario(existente);
                     Usuario salvo = usuarioService.salvar(toEntity(requestBody, existente), empresaId(request), filialId(request));
                     auditTrailService.registrarPrivacidade(
@@ -94,20 +100,31 @@ public class UsuarioController {
     @PatchMapping("/{id}/desativar")
     public ResponseEntity<UsuarioResponseDTO> desativar(@PathVariable Long id, HttpServletRequest request) {
         authorizationService.require(request, ApexPermission.USER_MANAGE, "Usuarios", "desativar usuario");
-        try {
-            Usuario salvo = usuarioService.desativar(id, empresaId(request), filialId(request));
-            auditTrailService.registrarPrivacidade(
-                    "USUARIO_DESATIVADO",
-                    "Usuario",
-                    salvo.getIdUsuario(),
-                    "Usuarios",
-                    null,
-                    resumoUsuario(salvo),
-                    request,
-                    "Usuario desativado sem remocao fisica.");
-            return ResponseEntity.ok(toResponse(salvo));
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
+        return usuarioService.buscarPorId(id, empresaId(request), filialId(request))
+                .map(existente -> {
+                    authorizationService.validateProtectedTargetUser(request, existente);
+                    Usuario salvo = usuarioService.desativar(id, empresaId(request), filialId(request));
+                    auditTrailService.registrarPrivacidade(
+                            "USUARIO_DESATIVADO",
+                            "Usuario",
+                            salvo.getIdUsuario(),
+                            "Usuarios",
+                            null,
+                            resumoUsuario(salvo),
+                            request,
+                            "Usuario desativado sem remocao fisica.");
+                    return ResponseEntity.ok(toResponse(salvo));
+                })
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    private void validarHierarquiaPerfilDestino(UsuarioRequestDTO requestBody, HttpServletRequest request) {
+        if (requestBody.perfil() != null && requestBody.perfil().idPerfil() != null) {
+            Perfil targetPerfil = perfilRepository.findById(requestBody.perfil().idPerfil())
+                    .orElseThrow(() -> new EntityNotFoundException("Perfil informado nao encontrado."));
+            authorizationService.validatePerfilAssignment(request, targetPerfil.getNome());
+        } else {
+            authorizationService.validatePerfilAssignment(request, "VENDEDOR");
         }
     }
 

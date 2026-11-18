@@ -39,7 +39,14 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
           session.setAccessIssue('Sessão expirada. Entre novamente para continuar.');
           void router.navigate(['/login'], { queryParams: { reason: 'session-expired', redirect: router.url } });
         } else if (error?.status === 403) {
-          session.setAccessIssue('Acesso negado para este perfil.');
+          const code = error?.error?.code;
+          if (code === 'FEATURE_NOT_LICENSED') {
+            session.setAccessIssue('Funcionalidade não contratada para o plano desta empresa.');
+          } else if (code === 'SOD_VIOLATION') {
+            session.setAccessIssue(error?.error?.detail ?? 'Operação bloqueada por segregação de funções (SoD).');
+          } else {
+            session.setAccessIssue('Acesso negado para este perfil.');
+          }
         }
         return throwError(() => error);
       })

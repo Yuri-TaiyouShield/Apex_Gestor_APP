@@ -30,7 +30,7 @@ public class FinancialDocumentWorkflowService {
     public static final String STATUS_SENT = "SENT";
 
     private static final Set<String> EXECUTIVE_SIGNER_ROLES = Set.of(
-            "SYSADMIN", "DONO_GERENTE", "DONO", "ADMIN", "ADMIN_MASTER", "ADMINISTRACAO", "GERENTE", "GESTOR");
+            "SYSADMIN", "DONO_GERENTE", "DONO", "ADMIN", "ADMINISTRACAO", "GERENTE", "GESTOR");
 
     private final FinancialDigitalDocumentRepository repository;
     private final FinancialAuditTrailService auditTrailService;

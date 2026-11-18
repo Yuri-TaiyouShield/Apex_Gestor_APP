@@ -778,24 +778,24 @@ export class EntityListPage {
   canManageEntity(): boolean {
     const key = this.config().key;
     if (key === 'products') {
-      return this.session.hasAnyRole(['ROLE_SYSADMIN', 'ROLE_DONO_GERENTE', 'ROLE_ADMIN', 'ROLE_GERENTE']);
+      return this.session.hasAnyRole(['ROLE_SYSADMIN', 'ROLE_DONO', 'ROLE_DONO_GERENTE', 'ROLE_ADMIN', 'ROLE_GERENTE']);
     }
     if (key === 'clients' || key === 'suppliers') {
-      return this.session.hasAnyRole(['ROLE_SYSADMIN', 'ROLE_DONO_GERENTE', 'ROLE_ADMIN', 'ROLE_GERENTE']);
+      return this.session.hasAnyRole(['ROLE_SYSADMIN', 'ROLE_DONO', 'ROLE_DONO_GERENTE', 'ROLE_ADMIN', 'ROLE_GERENTE']);
     }
     if (key === 'users' || key === 'profiles' || key === 'menus') {
-      return this.session.hasAnyRole(['ROLE_SYSADMIN', 'ROLE_DONO_GERENTE', 'ROLE_ADMIN', 'ROLE_GERENTE']);
+      return this.session.hasAnyRole(['ROLE_SYSADMIN', 'ROLE_DONO', 'ROLE_DONO_GERENTE', 'ROLE_ADMIN', 'ROLE_ADMIN_MASTER', 'ROLE_GERENTE']);
     }
     if (key === 'expenseTypes') {
-      return this.session.hasAnyRole(['ROLE_SYSADMIN', 'ROLE_DONO_GERENTE', 'ROLE_FINANCEIRO', 'ROLE_CONTADOR', 'ROLE_ADMIN', 'ROLE_GERENTE']);
+      return this.session.hasAnyRole(['ROLE_SYSADMIN', 'ROLE_DONO', 'ROLE_DONO_GERENTE', 'ROLE_FINANCEIRO', 'ROLE_CONTADOR', 'ROLE_ADMIN', 'ROLE_GERENTE']);
     }
     if (key === 'expenses') {
-      return this.session.hasAnyRole(['ROLE_SYSADMIN', 'ROLE_DONO_GERENTE', 'ROLE_FINANCEIRO', 'ROLE_ADMIN', 'ROLE_GERENTE']);
+      return this.session.hasAnyRole(['ROLE_SYSADMIN', 'ROLE_DONO', 'ROLE_DONO_GERENTE', 'ROLE_FINANCEIRO', 'ROLE_ADMIN', 'ROLE_GERENTE']);
     }
     if (key === 'paymentMethods') {
-      return this.session.hasAnyRole(['ROLE_SYSADMIN', 'ROLE_DONO_GERENTE', 'ROLE_ADMIN', 'ROLE_GERENTE']);
+      return this.session.hasAnyRole(['ROLE_SYSADMIN', 'ROLE_DONO', 'ROLE_DONO_GERENTE', 'ROLE_ADMIN', 'ROLE_GERENTE']);
     }
-    return this.session.hasAnyRole(['ROLE_SYSADMIN', 'ROLE_DONO_GERENTE', 'ROLE_ADMIN', 'ROLE_GERENTE']);
+    return this.session.hasAnyRole(['ROLE_SYSADMIN', 'ROLE_DONO', 'ROLE_DONO_GERENTE', 'ROLE_ADMIN', 'ROLE_GERENTE']);
   }
 
   fieldValue(key: string): unknown {

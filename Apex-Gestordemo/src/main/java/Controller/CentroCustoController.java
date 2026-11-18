@@ -5,11 +5,14 @@ import DTO.CentroCustoResponseDTO;
 import Model.TipoCentroCusto;
 import Service.AuthorizationService;
 import Service.CentroCustoService;
+import Service.TenantFeatureGuardService;
 import Service.TenantScopeService;
+import com.Apex.Apex_Gestordemo.security.ApexFeature;
 import com.Apex.Apex_Gestordemo.security.ApexPermission;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.util.List;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -30,6 +33,9 @@ public class CentroCustoController {
     private final AuthorizationService authorizationService;
     private final TenantScopeService tenantScopeService;
 
+    @Autowired(required = false)
+    private TenantFeatureGuardService tenantFeatureGuardService;
+
     public CentroCustoController(
             CentroCustoService centroCustoService,
             AuthorizationService authorizationService,
@@ -44,6 +50,7 @@ public class CentroCustoController {
             @RequestParam(required = false) Boolean somenteAtivos,
             @RequestParam(required = false) TipoCentroCusto tipoOperacional,
             HttpServletRequest request) {
+        requireCoreLicense(request, "listar centros de custo");
         authorizationService.require(request, ApexPermission.FINANCE_VIEW,
                 "Financeiro", "listar centros de custo");
         return centroCustoService.listar(somenteAtivos, tipoOperacional,
@@ -52,6 +59,7 @@ public class CentroCustoController {
 
     @GetMapping("/{id}")
     public ResponseEntity<CentroCustoResponseDTO> buscarPorId(@PathVariable Long id, HttpServletRequest request) {
+        requireCoreLicense(request, "consultar centro de custo");
         authorizationService.require(request, ApexPermission.FINANCE_VIEW,
                 "Financeiro", "consultar centro de custo");
         return ResponseEntity.ok(centroCustoService.buscarPorId(
@@ -60,6 +68,7 @@ public class CentroCustoController {
 
     @PostMapping("/inicializar-padrao")
     public ResponseEntity<List<CentroCustoResponseDTO>> inicializarPadrao(HttpServletRequest request) {
+        requireCoreLicense(request, "gerenciar centro de custo");
         authorizationService.require(request, ApexPermission.FINANCE_CLASSIFICATION_MANAGE,
                 "Financeiro", "inicializar centros de custo padrao");
         return ResponseEntity.ok(centroCustoService.inicializarPadrao(
@@ -70,6 +79,7 @@ public class CentroCustoController {
     public ResponseEntity<CentroCustoResponseDTO> criar(
             @Valid @RequestBody CentroCustoRequestDTO body,
             HttpServletRequest request) {
+        requireCoreLicense(request, "gerenciar centro de custo");
         authorizationService.require(request, ApexPermission.FINANCE_CLASSIFICATION_MANAGE,
                 "Financeiro", "criar centro de custo");
         return ResponseEntity.status(HttpStatus.CREATED).body(centroCustoService.criar(
@@ -81,6 +91,7 @@ public class CentroCustoController {
             @PathVariable Long id,
             @Valid @RequestBody CentroCustoRequestDTO body,
             HttpServletRequest request) {
+        requireCoreLicense(request, "gerenciar centro de custo");
         authorizationService.require(request, ApexPermission.FINANCE_CLASSIFICATION_MANAGE,
                 "Financeiro", "atualizar centro de custo");
         return ResponseEntity.ok(centroCustoService.atualizar(
@@ -92,9 +103,16 @@ public class CentroCustoController {
             @PathVariable Long id,
             @RequestParam boolean ativo,
             HttpServletRequest request) {
+        requireCoreLicense(request, "gerenciar centro de custo");
         authorizationService.require(request, ApexPermission.FINANCE_CLASSIFICATION_MANAGE,
                 "Financeiro", "alterar status do centro de custo");
         return ResponseEntity.ok(centroCustoService.alterarStatus(
                 id, ativo, tenantScopeService.empresaId(request), tenantScopeService.filialId(request), request));
+    }
+
+    private void requireCoreLicense(HttpServletRequest request, String acao) {
+        if (tenantFeatureGuardService != null) {
+            tenantFeatureGuardService.requireFeature(request, ApexFeature.FINANCIAL_CORE, "Financeiro", acao);
+        }
     }
 }

@@ -138,4 +138,26 @@ describe('TenantFeatureService', () => {
     expect(service.isWhiteLabelB2C()).toBeFalse();
     expect(document.documentElement.style.getPropertyValue('--apex-primary')).toBe('');
   });
+
+  it('sincroniza entitlement autenticado com ADVANCED_FINANCE e flag de contingencia', () => {
+    TestBed.configureTestingModule({});
+    const service = freshService();
+
+    service.updateFromEntitlement({
+      empresaId: 10,
+      tenantCode: 'grupo-alfa',
+      tenantName: 'Grupo Alfa',
+      subscriptionTier: 'PREMIUM',
+      features: ['BASIC_PRICING', 'FINANCIAL_CORE', 'ADVANCED_FINANCE'],
+      status: 'CONTINGENCIA',
+      gracePeriodHoras: 72,
+      emGracePeriod: true
+    });
+
+    expect(service.hasFeature('ADVANCED_FINANCE')).toBeTrue();
+    expect(service.context().tenantCode).toBe('grupo-alfa');
+    expect(service.context().subscriptionTier).toBe('PREMIUM');
+    expect(service.context().status).toBe('CONTINGENCIA');
+    expect(service.context().degradedMode).toBeTrue();
+  });
 });

@@ -68,9 +68,16 @@ public class SecurityConfig {
             "FINANCEIRO", "FINANCAS", "AUDITOR", "CONTADOR",
             "GESTOR", "GERENTE", "ADMIN", "ADMINISTRACAO", "ADMIN_MASTER", "DONO", "DONO_GERENTE", "SYSADMIN"
     };
-    private static final String[] FINANCE_ACCESS_ROLES = {
+    private static final String[] FINANCE_COMPLIANCE_ROLES = {
             "FINANCEIRO", "FINANCAS", "AUDITOR", "CONTADOR", "ADVOGADO",
             "GESTOR", "GERENTE", "ADMIN", "ADMINISTRACAO", "ADMIN_MASTER", "DONO", "DONO_GERENTE", "SYSADMIN"
+    };
+    private static final String[] PRIVACY_OWNER_ROLES = {
+            "SYSADMIN", "DONO_GERENTE", "DONO"
+    };
+    private static final String[] AUDIT_VIEW_ROLES = {
+            "SYSADMIN", "DONO_GERENTE", "DONO", "ADMIN_MASTER", "ADMIN", "ADMINISTRACAO",
+            "GESTOR", "GERENTE", "AUDITOR", "FINANCEIRO", "FINANCAS"
     };
     private static final String[] STAFF_READ_ROLES = {
             "VENDEDOR", "CAIXA", "FINANCEIRO", "FINANCAS", "ESTOQUISTA", "DESPACHANTE",
@@ -121,9 +128,11 @@ public class SecurityConfig {
                                 "/api/licenses/validate").permitAll()
                         .requestMatchers("/api/privacy/admin/**", "/api/privacy/requests", "/api/privacy/export/**",
                                 "/api/privacy/clientes/**")
-                        .hasAnyRole(ADMIN_ROLES)
+                        .hasAnyRole(PRIVACY_OWNER_ROLES)
+                        .requestMatchers("/api/financeiro/documentos/**")
+                        .hasAnyRole(FINANCE_COMPLIANCE_ROLES)
                         .requestMatchers("/api/financeiro/**")
-                        .hasAnyRole(FINANCE_ACCESS_ROLES)
+                        .hasAnyRole(FINANCE_READ_ROLES)
                         .requestMatchers(HttpMethod.GET, "/api/formaspagamento/**", "/api/condicoes-pagamento/**",
                                 "/api/categorias/**", "/api/grupos-produtos/**")
                         .hasAnyRole(STAFF_READ_ROLES)
@@ -145,7 +154,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/usuarios/**", "/api/perfis/**", "/api/menus/**")
                         .hasAnyRole(ADMIN_ROLES)
                         .requestMatchers("/api/auditoria/**")
-                        .hasAnyRole(ADMIN_ROLES)
+                        .hasAnyRole(AUDIT_VIEW_ROLES)
                         .requestMatchers(HttpMethod.GET, "/api/nfs/**")
                         .hasAnyRole(NF_ROLES)
                         .requestMatchers(HttpMethod.POST, "/api/nfs/**")

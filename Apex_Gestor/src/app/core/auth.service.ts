@@ -86,10 +86,27 @@ export class AuthService {
 
   personaFromRoles(roles: string[]): Persona {
     const normalized = roles.map((role) => this.session.normalizeRole(role));
-    if (normalized.some((role) => ['ROLE_SYSADMIN', 'ROLE_ADMIN'].includes(role))) {
+    if (normalized.some((role) => [
+      'ROLE_SYSADMIN',
+      'ROLE_ADMIN',
+      'ROLE_ADMIN_MASTER',
+      'ROLE_ADMINISTRACAO'
+    ].includes(role))) {
       return 'admin';
     }
-    if (normalized.some((role) => ['ROLE_DONO_GERENTE', 'ROLE_GERENTE', 'ROLE_GESTOR', 'ROLE_FINANCEIRO', 'ROLE_CAIXA', 'ROLE_DESPACHANTE'].includes(role))) {
+    if (normalized.some((role) => [
+      'ROLE_DONO',
+      'ROLE_DONO_GERENTE',
+      'ROLE_GERENTE',
+      'ROLE_GESTOR',
+      'ROLE_FINANCEIRO',
+      'ROLE_FINANCAS',
+      'ROLE_CAIXA',
+      'ROLE_DESPACHANTE',
+      'ROLE_AUDITOR',
+      'ROLE_CONTADOR',
+      'ROLE_ADVOGADO'
+    ].includes(role))) {
       return 'gerente';
     }
     if (normalized.includes('ROLE_VENDEDOR')) {

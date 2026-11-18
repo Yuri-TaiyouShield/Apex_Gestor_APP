@@ -331,12 +331,12 @@ export class DashboardPage {
   });
   readonly apiOffline = signal(false);
   readonly money = currency;
-  readonly canOpenPdv = computed(() => this.session.hasAnyRole(['ROLE_SYSADMIN', 'ROLE_DONO_GERENTE', 'ROLE_VENDEDOR', 'ROLE_CAIXA', 'ROLE_ADMIN', 'ROLE_GERENTE']));
-  readonly canOpenCashier = computed(() => this.session.hasAnyRole(['ROLE_SYSADMIN', 'ROLE_DONO_GERENTE', 'ROLE_CAIXA', 'ROLE_ADMIN', 'ROLE_GERENTE']));
-  readonly canViewStock = computed(() => this.session.hasAnyRole(['ROLE_SYSADMIN', 'ROLE_DONO_GERENTE', 'ROLE_FINANCEIRO', 'ROLE_VENDEDOR', 'ROLE_CAIXA', 'ROLE_ADMIN', 'ROLE_GERENTE']));
-  readonly canViewFinance = computed(() => this.session.hasAnyRole(['ROLE_SYSADMIN', 'ROLE_DONO_GERENTE', 'ROLE_FINANCEIRO', 'ROLE_ADMIN', 'ROLE_GERENTE']));
-  readonly canViewReports = computed(() => this.session.hasAnyRole(['ROLE_SYSADMIN', 'ROLE_DONO_GERENTE', 'ROLE_FINANCEIRO', 'ROLE_ADMIN', 'ROLE_GERENTE', 'ROLE_GESTOR']));
-  readonly isSellerDashboard = computed(() => this.session.hasAnyRole(['ROLE_VENDEDOR']) && !this.session.hasAnyRole(['ROLE_CAIXA', 'ROLE_GERENTE', 'ROLE_DONO_GERENTE', 'ROLE_SYSADMIN', 'ROLE_ADMIN']));
+  readonly canOpenPdv = computed(() => this.session.hasAnyRole(['ROLE_SYSADMIN', 'ROLE_DONO', 'ROLE_DONO_GERENTE', 'ROLE_VENDEDOR', 'ROLE_CAIXA', 'ROLE_ADMIN', 'ROLE_GERENTE']));
+  readonly canOpenCashier = computed(() => this.session.hasAnyRole(['ROLE_SYSADMIN', 'ROLE_DONO', 'ROLE_DONO_GERENTE', 'ROLE_CAIXA', 'ROLE_ADMIN', 'ROLE_GERENTE']));
+  readonly canViewStock = computed(() => this.session.hasAnyRole(['ROLE_SYSADMIN', 'ROLE_DONO', 'ROLE_DONO_GERENTE', 'ROLE_FINANCEIRO', 'ROLE_VENDEDOR', 'ROLE_CAIXA', 'ROLE_ADMIN', 'ROLE_GERENTE']));
+  readonly canViewFinance = computed(() => this.session.hasAnyRole(['ROLE_SYSADMIN', 'ROLE_DONO', 'ROLE_DONO_GERENTE', 'ROLE_FINANCEIRO', 'ROLE_ADMIN', 'ROLE_GERENTE']));
+  readonly canViewReports = computed(() => this.session.hasAnyRole(['ROLE_SYSADMIN', 'ROLE_DONO', 'ROLE_DONO_GERENTE', 'ROLE_FINANCEIRO', 'ROLE_ADMIN', 'ROLE_GERENTE', 'ROLE_GESTOR']));
+  readonly isSellerDashboard = computed(() => this.session.hasAnyRole(['ROLE_VENDEDOR']) && !this.session.hasAnyRole(['ROLE_CAIXA', 'ROLE_GERENTE', 'ROLE_DONO', 'ROLE_DONO_GERENTE', 'ROLE_SYSADMIN', 'ROLE_ADMIN']));
   readonly isCashierDashboard = computed(() => this.session.hasAnyRole(['ROLE_CAIXA']) && !this.canViewFinance());
   readonly dashboardTitle = computed(() => {
     if (this.isSellerDashboard()) {

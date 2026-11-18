@@ -317,4 +317,21 @@ describe('AuthService session lifecycle', () => {
       expect(session.setRoles).not.toHaveBeenCalled();
     });
   });
+
+  describe('personaFromRoles', () => {
+    it('mapeia ROLE_DONO, ROLE_ADMIN_MASTER, ROLE_ADVOGADO, ROLE_AUDITOR e ROLE_CONTADOR para personas staff', () => {
+      const { service } = configureAuthService();
+
+      expect(service.personaFromRoles(['ROLE_ADMIN_MASTER'])).toBe('admin');
+      expect(service.personaFromRoles(['ROLE_ADMINISTRACAO'])).toBe('admin');
+      expect(service.personaFromRoles(['ROLE_DONO'])).toBe('gerente');
+      expect(service.personaFromRoles(['ROLE_DONO_GERENTE'])).toBe('gerente');
+      expect(service.personaFromRoles(['ROLE_ADVOGADO'])).toBe('gerente');
+      expect(service.personaFromRoles(['ROLE_AUDITOR'])).toBe('gerente');
+      expect(service.personaFromRoles(['ROLE_CONTADOR'])).toBe('gerente');
+      expect(service.personaFromRoles(['ROLE_FINANCAS'])).toBe('gerente');
+      expect(service.personaFromRoles(['ROLE_VENDEDOR'])).toBe('vendedor');
+      expect(service.personaFromRoles(['ROLE_CLIENTE_B2C'])).toBe('cliente');
+    });
+  });
 });

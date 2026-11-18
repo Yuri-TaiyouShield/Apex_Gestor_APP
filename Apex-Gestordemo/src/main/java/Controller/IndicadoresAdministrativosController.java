@@ -12,11 +12,14 @@ import DTO.SimulacaoPrecificacaoRequestDTO;
 import DTO.SimulacaoPrecificacaoResponseDTO;
 import Service.AuthorizationService;
 import Service.IndicadoresAdministrativosService;
+import Service.TenantFeatureGuardService;
 import Service.TenantScopeService;
+import com.Apex.Apex_Gestordemo.security.ApexFeature;
 import com.Apex.Apex_Gestordemo.security.ApexPermission;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.time.LocalDate;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -34,6 +37,9 @@ public class IndicadoresAdministrativosController {
     private final IndicadoresAdministrativosService indicadoresService;
     private final AuthorizationService authorizationService;
     private final TenantScopeService tenantScopeService;
+
+    @Autowired(required = false)
+    private TenantFeatureGuardService tenantFeatureGuardService;
 
     public IndicadoresAdministrativosController(
             IndicadoresAdministrativosService indicadoresService,
@@ -143,14 +149,18 @@ public class IndicadoresAdministrativosController {
     }
 
     private void requireReadPermission(HttpServletRequest request) {
-        if (!authorizationService.can(request, ApexPermission.FINANCE_VIEW)
-                && !authorizationService.can(request, ApexPermission.FINANCE_DRE_VIEW)) {
-            authorizationService.require(request, ApexPermission.FINANCE_VIEW,
+        if (tenantFeatureGuardService != null) {
+            tenantFeatureGuardService.requireFeature(request, ApexFeature.FINANCIAL_CORE,
                     "Financeiro", "consultar motor de indicadores administrativos");
         }
+        authorizationService.require(request, ApexPermission.FINANCIAL_INTELLIGENCE_VIEW,
+                "Financeiro", "consultar motor de indicadores administrativos");
     }
 
     private void requireManagePermission(HttpServletRequest request, String acao) {
+        if (tenantFeatureGuardService != null) {
+            tenantFeatureGuardService.requireFeature(request, ApexFeature.FINANCIAL_CORE, "Financeiro", acao);
+        }
         authorizationService.require(request, ApexPermission.FINANCE_MANAGE, "Financeiro", acao);
     }
 }

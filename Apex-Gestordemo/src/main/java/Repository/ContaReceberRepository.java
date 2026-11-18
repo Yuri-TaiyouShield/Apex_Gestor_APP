@@ -43,4 +43,7 @@ public interface ContaReceberRepository
             Long empresaId, Long filialId, LocalDate inicio, LocalDate fim, List<FinanceiroStatus> statuses);
 
     List<ContaReceber> findByEmpresaIdAndFilialIdAndPlanoContaIdIsNull(Long empresaId, Long filialId);
+
+    long countByClienteIdAndEmpresaIdAndFilialIdAndStatusIn(
+            Long clienteId, Long empresaId, Long filialId, List<FinanceiroStatus> statuses);
 }

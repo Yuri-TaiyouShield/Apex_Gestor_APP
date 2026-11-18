@@ -56,10 +56,23 @@ public class AuthorizationService {
                 ApexPermission.FINANCE_DRE_VIEW,
                 ApexPermission.FINANCE_CASHFLOW_VIEW,
                 ApexPermission.FINANCE_CLASSIFICATION_MANAGE,
+                ApexPermission.FINANCE_COMPLIANCE_VIEW,
                 ApexPermission.PAYABLE_SETTLE,
                 ApexPermission.RECEIVABLE_SETTLE,
                 ApexPermission.PRICING_MANAGE,
+                ApexPermission.BUDGET_VIEW,
                 ApexPermission.BUDGET_MANAGE,
+                ApexPermission.BUDGET_APPROVE,
+                ApexPermission.FORECAST_VIEW,
+                ApexPermission.FORECAST_MANAGE,
+                ApexPermission.GOALS_VIEW,
+                ApexPermission.GOALS_MANAGE,
+                ApexPermission.SCENARIO_SIMULATE,
+                ApexPermission.INVESTMENT_VIEW,
+                ApexPermission.INVESTMENT_MANAGE,
+                ApexPermission.INVESTMENT_APPROVE,
+                ApexPermission.ADMIN_DIAGNOSTICS_VIEW,
+                ApexPermission.ADMIN_CONSULTANT_USE,
                 ApexPermission.REPORT_EXPORT,
                 ApexPermission.FINANCIAL_INTELLIGENCE_VIEW,
                 ApexPermission.PAYMENT_CONDITION_VIEW,
@@ -69,6 +82,28 @@ public class AuthorizationService {
                 ApexPermission.USER_VIEW,
                 ApexPermission.PERSONAL_DATA_VIEW,
                 ApexPermission.AUDIT_LOG_VIEW));
+        // ADMIN_MASTER: administrador tecnico sem acesso irrestrito a dados pessoais ou operacao financeira livre
+        ROLE_PERMISSIONS.put(Role.ADMIN_MASTER, EnumSet.of(
+                ApexPermission.PRODUCT_VIEW,
+                ApexPermission.STOCK_VIEW,
+                ApexPermission.SUPPLIER_VIEW,
+                ApexPermission.PAYMENT_CONDITION_VIEW,
+                ApexPermission.SETTINGS_GLOBAL_MANAGE,
+                ApexPermission.SETTINGS_PERSONAL_MANAGE,
+                ApexPermission.ROLE_MANAGE,
+                ApexPermission.USER_VIEW,
+                ApexPermission.USER_MANAGE,
+                ApexPermission.AUDIT_LOG_VIEW,
+                ApexPermission.FINANCE_VIEW,
+                ApexPermission.FINANCE_DRE_VIEW,
+                ApexPermission.FINANCE_CASHFLOW_VIEW,
+                ApexPermission.FINANCIAL_INTELLIGENCE_VIEW,
+                ApexPermission.FINANCE_COMPLIANCE_VIEW,
+                ApexPermission.BUDGET_VIEW,
+                ApexPermission.FORECAST_VIEW,
+                ApexPermission.GOALS_VIEW,
+                ApexPermission.INVESTMENT_VIEW,
+                ApexPermission.ADMIN_DIAGNOSTICS_VIEW));
         ROLE_PERMISSIONS.put(Role.CAIXA, EnumSet.of(
                 ApexPermission.PRODUCT_VIEW,
                 ApexPermission.CUSTOMER_VIEW,
@@ -107,10 +142,20 @@ public class AuthorizationService {
                 ApexPermission.FINANCE_DRE_VIEW,
                 ApexPermission.FINANCE_CASHFLOW_VIEW,
                 ApexPermission.FINANCE_CLASSIFICATION_MANAGE,
+                ApexPermission.FINANCE_COMPLIANCE_VIEW,
                 ApexPermission.PAYABLE_SETTLE,
                 ApexPermission.RECEIVABLE_SETTLE,
                 ApexPermission.PRICING_MANAGE,
+                ApexPermission.BUDGET_VIEW,
                 ApexPermission.BUDGET_MANAGE,
+                ApexPermission.FORECAST_VIEW,
+                ApexPermission.FORECAST_MANAGE,
+                ApexPermission.GOALS_VIEW,
+                ApexPermission.SCENARIO_SIMULATE,
+                ApexPermission.INVESTMENT_VIEW,
+                ApexPermission.INVESTMENT_MANAGE,
+                ApexPermission.ADMIN_DIAGNOSTICS_VIEW,
+                ApexPermission.ADMIN_CONSULTANT_USE,
                 ApexPermission.REPORT_EXPORT,
                 ApexPermission.FINANCIAL_INTELLIGENCE_VIEW,
                 ApexPermission.PAYMENT_CONDITION_VIEW,
@@ -123,6 +168,12 @@ public class AuthorizationService {
                 ApexPermission.FINANCE_DRE_VIEW,
                 ApexPermission.FINANCE_CASHFLOW_VIEW,
                 ApexPermission.FINANCIAL_INTELLIGENCE_VIEW,
+                ApexPermission.FINANCE_COMPLIANCE_VIEW,
+                ApexPermission.BUDGET_VIEW,
+                ApexPermission.FORECAST_VIEW,
+                ApexPermission.GOALS_VIEW,
+                ApexPermission.INVESTMENT_VIEW,
+                ApexPermission.ADMIN_DIAGNOSTICS_VIEW,
                 ApexPermission.AUDIT_LOG_VIEW,
                 ApexPermission.SALE_HISTORY_VIEW,
                 ApexPermission.PRODUCT_VIEW,
@@ -145,12 +196,20 @@ public class AuthorizationService {
                 ApexPermission.FINANCE_DRE_VIEW,
                 ApexPermission.FINANCE_CASHFLOW_VIEW,
                 ApexPermission.FINANCE_CLASSIFICATION_MANAGE,
+                ApexPermission.FINANCE_COMPLIANCE_VIEW,
+                ApexPermission.FINANCE_COMPLIANCE_SIGN,
                 ApexPermission.FINANCIAL_INTELLIGENCE_VIEW,
+                ApexPermission.BUDGET_VIEW,
+                ApexPermission.FORECAST_VIEW,
+                ApexPermission.GOALS_VIEW,
+                ApexPermission.INVESTMENT_VIEW,
+                ApexPermission.ADMIN_DIAGNOSTICS_VIEW,
                 ApexPermission.REPORT_EXPORT,
                 ApexPermission.SETTINGS_PERSONAL_MANAGE));
+        // ADVOGADO: restrito ao escopo juridico/compliance, sem leitura financeira generica (DRE/Caixa/Indicadores)
         ROLE_PERMISSIONS.put(Role.ADVOGADO, EnumSet.of(
-                ApexPermission.FINANCE_VIEW,
-                ApexPermission.PERSONAL_DATA_VIEW,
+                ApexPermission.FINANCE_COMPLIANCE_VIEW,
+                ApexPermission.FINANCE_COMPLIANCE_SIGN,
                 ApexPermission.SETTINGS_PERSONAL_MANAGE));
         ROLE_PERMISSIONS.put(Role.SUPERVISOR, EnumSet.of(
                 ApexPermission.PRODUCT_VIEW,
@@ -225,6 +284,93 @@ public class AuthorizationService {
         return privacyGuardService.currentRoles(request).contains("ROLE_SYSADMIN");
     }
 
+    public boolean isOwnerOrSysadmin(HttpServletRequest request) {
+        return privacyGuardService.isPrivacyOwner(request);
+    }
+
+    public boolean roleHasPermission(String roleName, ApexPermission permission) {
+        if (roleName == null || permission == null) {
+            return false;
+        }
+        return ROLE_PERMISSIONS.getOrDefault(resolve(canonicalRole(roleName)), Set.of()).contains(permission);
+    }
+
+    public boolean isOwnerOrSysadminRole(String roleName) {
+        if (roleName == null) {
+            return false;
+        }
+        Role resolved = resolve(canonicalRole(roleName));
+        return resolved == Role.SYSADMIN || resolved == Role.DONO;
+    }
+
+    public void validatePerfilAssignment(HttpServletRequest request, String targetRoleName) {
+        if (targetRoleName == null || targetRoleName.isBlank()) {
+            return;
+        }
+        String canonical = canonicalRole(targetRoleName);
+        Role target = resolveWithCompactFallback(canonical);
+        if (target == Role.SYSADMIN && !isSysadmin(request)) {
+            auditTrailService.registrarPrivacidade(
+                    "ESCALACAO_PRIVILEGIO_BLOQUEADA",
+                    "Perfil",
+                    null,
+                    "Usuarios",
+                    null,
+                    "targetRole=" + canonical,
+                    request,
+                    "Tentativa bloqueada de gerenciar ou atribuir perfil SYSADMIN.");
+            throw new AccessDeniedException("Apenas SYSADMIN pode gerenciar ou atribuir o perfil SYSADMIN.");
+        }
+        if ((target == Role.DONO || target == Role.ADMIN_MASTER) && !isOwnerOrSysadmin(request)) {
+            auditTrailService.registrarPrivacidade(
+                    "ESCALACAO_PRIVILEGIO_BLOQUEADA",
+                    "Perfil",
+                    null,
+                    "Usuarios",
+                    null,
+                    "targetRole=" + canonical,
+                    request,
+                    "Tentativa bloqueada de gerenciar ou atribuir perfil superior (" + canonical + ").");
+            throw new AccessDeniedException(
+                    "Apenas proprietario (DONO/DONO_GERENTE) ou SYSADMIN pode gerenciar ou atribuir o perfil "
+                            + targetRoleName + ".");
+        }
+    }
+
+    public void validateProtectedTargetUser(HttpServletRequest request, Model.Usuario targetUser) {
+        if (targetUser != null && targetUser.getPerfil() != null && targetUser.getPerfil().getNome() != null) {
+            validatePerfilAssignment(request, targetUser.getPerfil().getNome());
+        }
+    }
+
+    public static String canonicalRole(String rawRole) {
+        if (rawRole == null || rawRole.isBlank()) {
+            return "ROLE_PUBLICO";
+        }
+        String ascii = java.text.Normalizer.normalize(rawRole.trim(), java.text.Normalizer.Form.NFD)
+                .replaceAll("\\p{M}", "")
+                .replaceAll("[^A-Za-z0-9]", "_")
+                .toUpperCase(java.util.Locale.ROOT);
+        if (ascii.isBlank()) {
+            return "ROLE_PUBLICO";
+        }
+        return ascii.startsWith("ROLE_") ? ascii : "ROLE_" + ascii;
+    }
+
+    private Role resolveWithCompactFallback(String canonical) {
+        Role direct = resolve(canonical);
+        if (direct != Role.PUBLICO) {
+            return direct;
+        }
+        String compact = canonical.replaceFirst("^ROLE_", "").replace("_", "");
+        return switch (compact) {
+            case "SYSADMIN" -> Role.SYSADMIN;
+            case "DONO", "DONOGERENTE" -> Role.DONO;
+            case "ADMINMASTER" -> Role.ADMIN_MASTER;
+            default -> Role.PUBLICO;
+        };
+    }
+
     private static Set<ApexPermission> withoutSysadminOnly(EnumSet<ApexPermission> permissions) {
         permissions.remove(ApexPermission.PERMISSION_MANAGE);
         return permissions;
@@ -234,10 +380,11 @@ public class AuthorizationService {
         if (role == null) {
             return Role.PUBLICO;
         }
-        return switch (role) {
+        return switch (canonicalRole(role)) {
             case "ROLE_SYSADMIN" -> Role.SYSADMIN;
             case "ROLE_DONO_GERENTE", "ROLE_DONO" -> Role.DONO;
-            case "ROLE_ADMIN", "ROLE_ADMIN_MASTER", "ROLE_ADMINISTRACAO", "ROLE_GERENTE", "ROLE_GESTOR" -> Role.GERENTE;
+            case "ROLE_ADMIN_MASTER" -> Role.ADMIN_MASTER;
+            case "ROLE_ADMIN", "ROLE_ADMINISTRACAO", "ROLE_GERENTE", "ROLE_GESTOR" -> Role.GERENTE;
             case "ROLE_SUPERVISOR" -> Role.SUPERVISOR;
             case "ROLE_CAIXA" -> Role.CAIXA;
             case "ROLE_VENDEDOR" -> Role.VENDEDOR;
@@ -255,6 +402,7 @@ public class AuthorizationService {
     private enum Role {
         SYSADMIN,
         DONO,
+        ADMIN_MASTER,
         GERENTE,
         SUPERVISOR,
         CAIXA,

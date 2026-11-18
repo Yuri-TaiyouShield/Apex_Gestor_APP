@@ -7,6 +7,7 @@ import { catchError, of, switchMap } from 'rxjs';
 
 import { AuthService } from '../core/auth.service';
 import { DEMO_MODE, DEMO_PASSWORD } from '../core/app-variant';
+import { LicenseService } from '../core/license.service';
 import { SessionService } from '../core/session.service';
 
 interface LoginPreset {
@@ -27,6 +28,7 @@ const CLIENT_ROLES = new Set(['ROLE_CLIENTE_B2C', 'ROLE_CLIENTE']);
 export class LoginPage {
   private readonly session = inject(SessionService);
   private readonly auth = inject(AuthService);
+  private readonly licenseService = inject(LicenseService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
 
@@ -106,9 +108,11 @@ export class LoginPage {
         this.message.set('Acesso de login para perfil cliente foi desativado.');
         return;
       }
-      this.messageColor.set('primary');
-      this.message.set('Autenticado com sucesso.');
-      void this.router.navigateByUrl(this.redirectUrl());
+      this.licenseService.loadEntitlement().pipe(catchError(() => of(null))).subscribe(() => {
+        this.messageColor.set('primary');
+        this.message.set('Autenticado com sucesso.');
+        void this.router.navigateByUrl(this.redirectUrl());
+      });
     });
   }
 

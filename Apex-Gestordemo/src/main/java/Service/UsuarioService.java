@@ -118,11 +118,11 @@ public class UsuarioService {
     }
 
     private Perfil resolvePerfilPadrao() {
-        return perfilRepository.findAll().stream()
-                .findFirst()
+        return perfilRepository.findByNome("VENDEDOR")
+                .or(() -> perfilRepository.findByNome("Operador"))
                 .orElseGet(() -> {
                     Perfil perfil = new Perfil();
-                    perfil.setNome("Operador");
+                    perfil.setNome("VENDEDOR");
                     perfil.setStatus(1);
                     return perfilRepository.save(perfil);
                 });

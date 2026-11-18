@@ -3,7 +3,7 @@ import { Injectable, computed, effect, signal } from '@angular/core';
 import { APP_VARIANT } from './app-variant';
 import { ApexFeatureKey } from './feature-menu.config';
 import { LICENSE_STATUS_KEY } from './license-context.service';
-import { LicenseValidationResponse, TenantBranding } from './models';
+import { LicenseValidationResponse, TenantBranding, TenantEntitlementResponse } from './models';
 
 interface TenantFeatureState {
   tenantCode: string;
@@ -11,6 +11,9 @@ interface TenantFeatureState {
   subscriptionTier: string;
   features: ApexFeatureKey[];
   branding: TenantBranding | null;
+  status?: string;
+  contingenciaAte?: string;
+  degradedMode?: boolean;
 }
 
 const ESSENTIAL_STATE: TenantFeatureState = {
@@ -22,7 +25,9 @@ const ESSENTIAL_STATE: TenantFeatureState = {
     primaryColor: '#0b3a42',
     secondaryColor: '#1e3a8a',
     storefrontName: 'Apex Store'
-  }
+  },
+  status: 'COMPAT_ESSENTIAL',
+  degradedMode: false
 };
 
 @Injectable({ providedIn: 'root' })
@@ -44,6 +49,21 @@ export class TenantFeatureService {
 
   updateFromLicense(response: LicenseValidationResponse): void {
     this.state.set(this.fromLicense(response));
+  }
+
+  updateFromEntitlement(entitlement: TenantEntitlementResponse): void {
+    const features = (entitlement.features ?? ESSENTIAL_STATE.features)
+      .filter((feature): feature is ApexFeatureKey => isApexFeature(feature));
+    this.state.set({
+      tenantCode: entitlement.tenantCode || ESSENTIAL_STATE.tenantCode,
+      tenantName: entitlement.tenantName || ESSENTIAL_STATE.tenantName,
+      subscriptionTier: entitlement.subscriptionTier || ESSENTIAL_STATE.subscriptionTier,
+      features,
+      branding: this.state().branding ?? ESSENTIAL_STATE.branding,
+      status: entitlement.status,
+      contingenciaAte: entitlement.contingenciaAte,
+      degradedMode: entitlement.emGracePeriod
+    });
   }
 
   refreshFromCache(): void {
@@ -79,7 +99,10 @@ export class TenantFeatureService {
       tenantName: response.tenantName ?? ESSENTIAL_STATE.tenantName,
       subscriptionTier: response.subscriptionTier ?? response.licensePlan ?? ESSENTIAL_STATE.subscriptionTier,
       features,
-      branding: response.branding ?? ESSENTIAL_STATE.branding
+      branding: response.branding ?? ESSENTIAL_STATE.branding,
+      status: response.status,
+      contingenciaAte: response.contingenciaAte,
+      degradedMode: Boolean(response.degradedMode)
     };
   }
 

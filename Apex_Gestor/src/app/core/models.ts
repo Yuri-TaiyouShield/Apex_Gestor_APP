@@ -622,7 +622,32 @@ export interface ConsentRequest {
 
 export interface PrivacyRequestPayload {
   titularId: string;
-  tipo: 'EXPORTACAO' | 'EXCLUSAO';
+  tipoTitular?: string;
+  tipo: 'EXPORTACAO' | 'EXCLUSAO' | 'ANONIMIZACAO';
+  justificativa: string;
+}
+
+export interface LgpdSimulacaoAnonimizacao {
+  clienteId: number;
+  elegivelAnonimizacaoPessoal: boolean;
+  bloqueioOperacionalAtivo: boolean;
+  bloqueioExclusaoFisicaPorRetencaoLegal: boolean;
+  vendasVinculadas: number;
+  contasReceberEmAberto: number;
+  creditosAtivos: number;
+  obrigacoesRetencao: string[];
+  camposAnonimizados: string[];
+  camposPreservadosPorObrigacaoLegal: string[];
+  exigeAprovacaoSegundoResponsavel: boolean;
+  responsaveisElegiveisEmpresa: number;
+  simulacaoHash: string;
+}
+
+export interface LgpdConfirmacaoAnonimizacaoRequest {
+  confirmadoExplicito: boolean;
+  justificativa: string;
+  simulacaoHash: string;
+  solicitacaoId?: number;
 }
 
 export interface LicenseValidationRequest {
@@ -658,6 +683,22 @@ export interface LicenseValidationResponse {
   subscriptionTier?: string;
   features?: string[];
   branding?: TenantBranding | null;
+  contingenciaAte?: string;
+  degradedMode?: boolean;
+}
+
+export interface TenantEntitlementResponse {
+  empresaId: number;
+  tenantCode: string;
+  tenantName: string;
+  subscriptionTier: string;
+  features: string[];
+  status: string;
+  validoAte?: string;
+  ultimaValidacaoEm?: string;
+  contingenciaAte?: string;
+  gracePeriodHoras: number;
+  emGracePeriod: boolean;
 }
 
 export type TipoContaGerencial =

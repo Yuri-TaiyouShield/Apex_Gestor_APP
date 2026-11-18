@@ -14,4 +14,6 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
     List<Usuario> findByEmpresaIdAndFilialIdOrderByNomeAsc(Long empresaId, Long filialId);
 
     Optional<Usuario> findByIdUsuarioAndEmpresaIdAndFilialId(Long idUsuario, Long empresaId, Long filialId);
+
+    List<Usuario> findByEmpresaIdAndStatus(Long empresaId, int status);
 }

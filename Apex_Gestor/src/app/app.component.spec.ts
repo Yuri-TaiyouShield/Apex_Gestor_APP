@@ -21,9 +21,11 @@ import {
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { MenuController } from '@ionic/angular/standalone';
-import { Subject } from 'rxjs';
+import { Subject, of } from 'rxjs';
 
 import { AppComponent } from './app.component';
+import { AuthService } from './core/auth.service';
+import { LicenseService } from './core/license.service';
 import { SessionService } from './core/session.service';
 import { SessionTimeoutService } from './core/session-timeout.service';
 import { TenantFeatureService } from './core/tenant-feature.service';
@@ -111,6 +113,8 @@ describe('AppComponent shell', () => {
         { provide: ActivatedRoute, useValue: {} },
         { provide: Router, useValue: routerMock },
         { provide: MenuController, useValue: menu },
+        { provide: AuthService, useValue: { isAuthenticated: () => false } },
+        { provide: LicenseService, useValue: { loadEntitlement: () => of(null) } },
         { provide: SessionService, useValue: session },
         { provide: SessionTimeoutService, useValue: sessionTimeout },
         { provide: TenantFeatureService, useValue: tenantFeatures }

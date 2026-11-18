@@ -51,4 +51,6 @@ public interface VendaRepository extends JpaRepository<Venda, Long>, JpaSpecific
             int status);
 
     List<Venda> findByEmpresaIdAndFilialIdAndPlanoContaIdIsNull(Long empresaId, Long filialId);
+
+    long countByClienteIdClienteAndEmpresaIdAndFilialId(Long idCliente, Long empresaId, Long filialId);
 }

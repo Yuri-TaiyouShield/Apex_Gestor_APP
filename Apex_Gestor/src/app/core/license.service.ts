@@ -5,7 +5,7 @@ import { Observable, from, switchMap, tap } from 'rxjs';
 import { ApiConfigService } from './api-config.service';
 import { ApiReadinessService } from './api-readiness.service';
 import { LicenseContextService, LICENSE_STATUS_KEY } from './license-context.service';
-import { LicenseValidationResponse } from './models';
+import { LicenseValidationResponse, TenantEntitlementResponse } from './models';
 import { TenantFeatureService } from './tenant-feature.service';
 
 @Injectable({ providedIn: 'root' })
@@ -36,6 +36,27 @@ export class LicenseService {
         if (response.valid) {
           void this.context.storeLicenseKey(licenseKey);
         }
+      })
+    );
+  }
+
+  loadEntitlement(): Observable<TenantEntitlementResponse> {
+    return this.readiness.waitForApi().pipe(
+      switchMap(() => this.http.get<TenantEntitlementResponse>(this.apiConfig.apiUrl('/api/licenses/entitlement'))),
+      tap((entitlement) => {
+        this.context.storeTenantCode(entitlement.tenantCode ?? this.context.tenantCode());
+        this.tenantFeatures.updateFromEntitlement(entitlement);
+        const cached = this.readCachedStatus();
+        const syncedCache: LicenseValidationResponse = {
+          ...(cached ?? { valid: true, status: entitlement.status, message: 'Entitlement sincronizado.' }),
+          tenantCode: entitlement.tenantCode,
+          tenantName: entitlement.tenantName,
+          subscriptionTier: entitlement.subscriptionTier,
+          features: entitlement.features,
+          contingenciaAte: entitlement.contingenciaAte,
+          degradedMode: entitlement.emGracePeriod
+        };
+        localStorage.setItem(LICENSE_STATUS_KEY, JSON.stringify(syncedCache));
       })
     );
   }

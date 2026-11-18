@@ -4,6 +4,7 @@ import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
 
 import { AuthService } from '../core/auth.service';
+import { LicenseService } from '../core/license.service';
 import { AuthResponse, Persona } from '../core/models';
 import { SessionService } from '../core/session.service';
 import { LoginPage } from './login.page';
@@ -62,6 +63,7 @@ describe('LoginPage', () => {
       imports: [LoginPage],
       providers: [
         { provide: AuthService, useValue: auth },
+        { provide: LicenseService, useValue: { loadEntitlement: () => of(null) } },
         { provide: Router, useValue: router },
         { provide: SessionService, useValue: session },
         {

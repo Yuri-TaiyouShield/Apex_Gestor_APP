@@ -3,8 +3,9 @@ import { TestBed } from '@angular/core/testing';
 import { ActivatedRouteSnapshot, CanActivateFn, Router, RouterStateSnapshot, UrlTree } from '@angular/router';
 
 import { AuthService } from './auth.service';
-import { requireAuthGuard, roleGuard } from './auth.guard';
+import { featureGuard, requireAuthGuard, roleGuard } from './auth.guard';
 import { SessionService } from './session.service';
+import { TenantFeatureService } from './tenant-feature.service';
 
 type GuardOutcome = ReturnType<CanActivateFn>;
 
@@ -98,5 +99,73 @@ describe('roleGuard', () => {
     configure({ authenticated: true });
 
     expect(run({}, '/store')).toBeTrue();
+  });
+});
+
+describe('featureGuard', () => {
+  function configure(options: {
+    authenticated: boolean;
+    enabledFeatures?: string[];
+  }): { router: jasmine.SpyObj<Router>; setAccessIssue: jasmine.Spy } {
+    const router = jasmine.createSpyObj<Router>('Router', ['createUrlTree']);
+    router.createUrlTree.and.returnValue({} as UrlTree);
+    const setAccessIssue = jasmine.createSpy('setAccessIssue');
+    const enabled = new Set(options.enabledFeatures ?? []);
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: AuthService, useValue: { isAuthenticated: () => options.authenticated } },
+        {
+          provide: TenantFeatureService,
+          useValue: { hasAll: (required: string[] = []) => required.every((f) => enabled.has(f)) }
+        },
+        { provide: SessionService, useValue: { setAccessIssue } },
+        { provide: Router, useValue: router }
+      ]
+    });
+    return { router, setAccessIssue };
+  }
+
+  function run(data: Record<string, unknown>, url: string): GuardOutcome {
+    const route = { data } as ActivatedRouteSnapshot;
+    const state = { url } as RouterStateSnapshot;
+    return runInInjectionContext(TestBed.inject(EnvironmentInjector), () => featureGuard(route, state));
+  }
+
+  it('permite rota com FINANCIAL_CORE habilitada para tenant Essential', () => {
+    configure({ authenticated: true, enabledFeatures: ['BASIC_PRICING', 'FINANCIAL_CORE'] });
+
+    expect(run({ features: ['FINANCIAL_CORE'] }, '/finance/dre')).toBeTrue();
+  });
+
+  it('bloqueia ADVANCED_FINANCE quando o tenant possui apenas plano Essential', () => {
+    const { router, setAccessIssue } = configure({
+      authenticated: true,
+      enabledFeatures: ['BASIC_PRICING', 'FINANCIAL_CORE']
+    });
+
+    const result = run({ features: ['ADVANCED_FINANCE'] }, '/finance/advanced-feature');
+
+    expect(result).toEqual({} as UrlTree);
+    expect(setAccessIssue).toHaveBeenCalledWith('Funcionalidade não contratada para o plano desta empresa.');
+    expect(router.createUrlTree).toHaveBeenCalledWith(['/login'], {
+      queryParams: { redirect: '/finance/advanced-feature', reason: 'feature-not-licensed' }
+    });
+  });
+
+  it('permite ADVANCED_FINANCE quando contratada no entitlement do tenant', () => {
+    configure({ authenticated: true, enabledFeatures: ['FINANCIAL_CORE', 'ADVANCED_FINANCE'] });
+
+    expect(run({ features: ['ADVANCED_FINANCE'] }, '/finance/advanced-feature')).toBeTrue();
+  });
+
+  it('redireciona para login quando usuario nao esta autenticado', () => {
+    const { router } = configure({ authenticated: false, enabledFeatures: ['ADVANCED_FINANCE'] });
+
+    const result = run({ features: ['ADVANCED_FINANCE'] }, '/finance/advanced-feature');
+
+    expect(result).toEqual({} as UrlTree);
+    expect(router.createUrlTree).toHaveBeenCalledWith(['/login'], {
+      queryParams: { redirect: '/finance/advanced-feature' }
+    });
   });
 });

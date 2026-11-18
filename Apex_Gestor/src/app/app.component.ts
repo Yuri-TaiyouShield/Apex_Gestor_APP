@@ -2,11 +2,13 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit, computed, inject } from '@angular/core';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { filter, map, startWith } from 'rxjs';
+import { catchError, filter, map, of, startWith } from 'rxjs';
 import { IonApp, IonSplitPane, IonMenu, IonHeader, IonToolbar, IonTitle, IonContent, IonList, IonItem, IonIcon, IonLabel, IonMenuToggle, IonMenuButton, IonButtons, IonButton, IonRouterOutlet, MenuController } from '@ionic/angular/standalone';
 
 import { DEFAULT_HOME_ROUTE } from './core/app-variant';
+import { AuthService } from './core/auth.service';
 import { APEX_NAV_ITEMS, ApexNavItem } from './core/feature-menu.config';
+import { LicenseService } from './core/license.service';
 import { SessionService } from './core/session.service';
 import { SessionTimeoutService } from './core/session-timeout.service';
 import { TenantFeatureService } from './core/tenant-feature.service';
@@ -24,6 +26,8 @@ export class AppComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly menu = inject(MenuController);
   private readonly sessionTimeout = inject(SessionTimeoutService);
+  private readonly auth = inject(AuthService, { optional: true });
+  private readonly licenseService = inject(LicenseService, { optional: true });
   readonly session = inject(SessionService);
   readonly tenantFeatures = inject(TenantFeatureService);
   readonly theme = inject(ThemeService);
@@ -90,6 +94,9 @@ export class AppComponent implements OnInit {
   ngOnInit(): void {
     this.tenantFeatures.refreshFromCache();
     this.sessionTimeout.start();
+    if (this.auth?.isAuthenticated() && this.licenseService) {
+      this.licenseService.loadEntitlement().pipe(catchError(() => of(null))).subscribe();
+    }
     if (DEFAULT_HOME_ROUTE !== '/' && this.router.url === '/') {
       this.router.navigateByUrl(DEFAULT_HOME_ROUTE, { replaceUrl: true });
     }

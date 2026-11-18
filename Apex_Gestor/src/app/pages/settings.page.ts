@@ -178,7 +178,7 @@ export class SettingsPage {
   private readonly destroyRef = inject(DestroyRef);
 
   readonly mode = signal<'personal' | 'admin'>('personal');
-  readonly adminMode = computed(() => this.mode() === 'admin' && this.session.hasAnyRole(['ROLE_SYSADMIN', 'ROLE_DONO_GERENTE', 'ROLE_ADMIN', 'ROLE_GERENTE']));
+  readonly adminMode = computed(() => this.mode() === 'admin' && this.session.hasAnyRole(['ROLE_SYSADMIN', 'ROLE_DONO', 'ROLE_DONO_GERENTE', 'ROLE_ADMIN', 'ROLE_ADMIN_MASTER', 'ROLE_GERENTE']));
   readonly preferenceMessage = signal('');
   readonly licenseStatus = signal<LicenseValidationResponse | null>(this.license.readCachedStatus());
   readonly deviceFingerprintShort = signal('Carregando...');

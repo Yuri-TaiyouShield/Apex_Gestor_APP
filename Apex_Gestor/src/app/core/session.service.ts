@@ -16,10 +16,15 @@ export class SessionService {
     const roleLabels: Partial<Record<ApexRole, string>> = {
       ROLE_SYSADMIN: 'Sysadmin',
       ROLE_DONO_GERENTE: 'Dono/Gerente',
+      ROLE_DONO: 'Dono',
       ROLE_FINANCEIRO: 'Financeiro',
       ROLE_VENDEDOR: 'Vendedor',
       ROLE_CAIXA: 'Caixa',
       ROLE_GERENTE: 'Gerente',
+      ROLE_ADMIN_MASTER: 'Admin Master',
+      ROLE_ADVOGADO: 'Advogado',
+      ROLE_CONTADOR: 'Contador',
+      ROLE_AUDITOR: 'Auditor',
       ROLE_DESPACHANTE: 'Despachante',
       ROLE_CLIENTE_B2C: 'Cliente'
     };

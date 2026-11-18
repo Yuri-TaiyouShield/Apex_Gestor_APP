@@ -18,13 +18,16 @@ import DTO.TransferenciaInternaRequestDTO;
 import Model.StatusConciliacaoFinanceira;
 import Service.AuthorizationService;
 import Service.FluxoCaixaService;
+import Service.TenantFeatureGuardService;
 import Service.TenantScopeService;
+import com.Apex.Apex_Gestordemo.security.ApexFeature;
 import com.Apex.Apex_Gestordemo.security.ApexPermission;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Locale;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -45,6 +48,9 @@ public class FluxoCaixaController {
     private final FluxoCaixaService fluxoCaixaService;
     private final AuthorizationService authorizationService;
     private final TenantScopeService tenantScopeService;
+
+    @Autowired(required = false)
+    private TenantFeatureGuardService tenantFeatureGuardService;
 
     public FluxoCaixaController(
             FluxoCaixaService fluxoCaixaService,
@@ -268,14 +274,18 @@ public class FluxoCaixaController {
     }
 
     private void requireReadPermission(HttpServletRequest request) {
-        if (!authorizationService.can(request, ApexPermission.FINANCE_VIEW)
-                && !authorizationService.can(request, ApexPermission.FINANCE_DRE_VIEW)) {
-            authorizationService.require(request, ApexPermission.FINANCE_VIEW,
+        if (tenantFeatureGuardService != null) {
+            tenantFeatureGuardService.requireFeature(request, ApexFeature.FINANCIAL_CORE,
                     "Financeiro", "consultar fluxo de caixa e conciliacao");
         }
+        authorizationService.require(request, ApexPermission.FINANCE_CASHFLOW_VIEW,
+                "Financeiro", "consultar fluxo de caixa e conciliacao");
     }
 
     private void requireManagePermission(HttpServletRequest request, String acao) {
+        if (tenantFeatureGuardService != null) {
+            tenantFeatureGuardService.requireFeature(request, ApexFeature.FINANCIAL_CORE, "Financeiro", acao);
+        }
         authorizationService.require(request, ApexPermission.FINANCE_MANAGE, "Financeiro", acao);
     }
 

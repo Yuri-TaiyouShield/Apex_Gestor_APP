@@ -77,8 +77,7 @@ const FOUNDATION_MUTATION_ROLES: readonly ApexRole[] = [
   'ROLE_GERENTE',
   'ROLE_GESTOR',
   'ROLE_ADMIN',
-  'ROLE_ADMINISTRACAO',
-  'ROLE_ADMIN_MASTER'
+  'ROLE_ADMINISTRACAO'
 ];
 
 export const TIPO_CONTA_OPTIONS: Array<{ value: TipoContaGerencial; label: string }> = [

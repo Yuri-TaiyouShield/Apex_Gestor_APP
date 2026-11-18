@@ -6,14 +6,14 @@ import Model.ContaReceber;
 import Model.CreditoCliente;
 import Repository.*;
 import Service.*;
+import com.Apex.Apex_Gestordemo.security.ApexFeature;
 import com.Apex.Apex_Gestordemo.security.ApexPermission;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.time.LocalDate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -24,6 +24,7 @@ public class FinanceiroOperacionalController {
     @Autowired private FinanceiroOperacionalService service;
     @Autowired private AuthorizationService authorizationService;
     @Autowired private TenantScopeService tenantScopeService;
+    @Autowired(required = false) private TenantFeatureGuardService tenantFeatureGuardService;
     @Autowired private CreditoClienteService creditoClienteService;
     @Autowired private ClienteRepository clienteRepository;
     @Autowired private VendaRepository vendaRepository;
@@ -38,6 +39,7 @@ public class FinanceiroOperacionalController {
             @RequestParam(required = false) LocalDate vencimentoInicio,
             @RequestParam(required = false) LocalDate vencimentoFim,
             HttpServletRequest request) {
+        requireCoreLicense(request, "listar contas a receber");
         authorizationService.require(request, ApexPermission.FINANCE_VIEW, "Financeiro", "listar contas a receber");
         Long empresaId = empresa(request);
         Long filialId = filial(request);
@@ -65,6 +67,7 @@ public class FinanceiroOperacionalController {
 
     @GetMapping("/contas-pagar")
     public List<ContaPagarResponseDTO> pagar(HttpServletRequest request) {
+        requireCoreLicense(request, "listar contas a pagar");
         authorizationService.require(request, ApexPermission.FINANCE_VIEW, "Financeiro", "listar contas a pagar");
         Long empresaId = empresa(request);
         Long filialId = filial(request);
@@ -87,15 +90,23 @@ public class FinanceiroOperacionalController {
     @PostMapping("/contas-pagar")
     @ResponseStatus(HttpStatus.CREATED)
     public ContaPagarResponseDTO criar(@Valid @RequestBody ContaPagarRequestDTO body, HttpServletRequest request) {
+        requireCoreLicense(request, "criar conta a pagar");
         authorizationService.require(request, ApexPermission.FINANCE_MANAGE, "Financeiro", "criar conta a pagar");
         return toResponse(service.criarContaPagar(body, empresa(request), filial(request), request));
     }
 
     @GetMapping("/creditos")
     public List<CreditoClienteResponseDTO> creditos(@RequestParam Long clienteId, HttpServletRequest request) {
+        requireCoreLicense(request, "listar creditos do cliente");
         authorizationService.require(request, ApexPermission.FINANCE_VIEW, "Financeiro", "listar creditos do cliente");
         return creditoClienteService.listarDisponiveis(clienteId, empresa(request), filial(request)).stream()
                 .map(this::toResponse).toList();
+    }
+
+    private void requireCoreLicense(HttpServletRequest request, String acao) {
+        if (tenantFeatureGuardService != null) {
+            tenantFeatureGuardService.requireFeature(request, ApexFeature.FINANCIAL_CORE, "Financeiro", acao);
+        }
     }
 
     private ContaReceberResponseDTO toResponse(

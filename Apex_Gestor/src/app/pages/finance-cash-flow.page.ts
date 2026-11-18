@@ -1812,7 +1812,6 @@ export class FinanceCashFlowPage implements OnInit {
       [
         'ROLE_SYSADMIN',
         'ROLE_ADMIN',
-        'ROLE_ADMIN_MASTER',
         'ROLE_ADMINISTRACAO',
         'ROLE_DONO',
         'ROLE_DONO_GERENTE',

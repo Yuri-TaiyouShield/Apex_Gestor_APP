@@ -1438,8 +1438,7 @@ export class FinanceDrePage implements OnInit {
         'ROLE_FINANCAS',
         'ROLE_CONTADOR',
         'ROLE_ADMIN',
-        'ROLE_ADMINISTRACAO',
-        'ROLE_ADMIN_MASTER'
+        'ROLE_ADMINISTRACAO'
       ].includes(r)
     );
   });

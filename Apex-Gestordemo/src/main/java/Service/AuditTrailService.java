@@ -6,6 +6,8 @@ import com.Apex.Apex_Gestordemo.web.RequestTraceFilter;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class AuditTrailService {
@@ -17,6 +19,7 @@ public class AuditTrailService {
     @Autowired(required = false)
     private DataProtectionService dataProtectionService;
 
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public AuditLog registrarSistema(String acao, String entidade, Long entidadeId, String valorAnterior, String valorNovo) {
         AuditLog log = new AuditLog();
         log.setAcao(acao);
@@ -29,6 +32,7 @@ public class AuditTrailService {
         return auditLogRepository.save(log);
     }
 
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public AuditLog registrarPrivacidade(
             String acao,
             String entidade,

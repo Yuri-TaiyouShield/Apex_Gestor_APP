@@ -26,7 +26,9 @@ class LegacyControllerDtoContractTests {
                 ConsolidacaoCompetenciaController.class,
                 DreGerencialController.class,
                 FluxoCaixaController.class,
-                IndicadoresAdministrativosController.class);
+                IndicadoresAdministrativosController.class,
+                LicenseController.class,
+                GovernancaSegregacaoController.class);
         for (Class<?> controller : controllers) {
             for (Method method : controller.getDeclaredMethods()) {
                 if (isEndpoint(method)) {
@@ -48,7 +50,9 @@ class LegacyControllerDtoContractTests {
                 ConsolidacaoCompetenciaController.class,
                 DreGerencialController.class,
                 FluxoCaixaController.class,
-                IndicadoresAdministrativosController.class);
+                IndicadoresAdministrativosController.class,
+                LicenseController.class,
+                GovernancaSegregacaoController.class);
         for (Class<?> controller : financialControllers) {
             for (Method method : controller.getDeclaredMethods()) {
                 if (isEndpoint(method)) {

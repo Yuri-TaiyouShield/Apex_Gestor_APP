@@ -8,6 +8,7 @@ import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.util.List;
 import java.util.Set;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -40,6 +41,9 @@ public class HomologacaoDataSeeder implements ApplicationRunner {
     private final ContaPagarRepository contaPagarRepository;
     private final PasswordEncoder passwordEncoder;
     private final Environment environment;
+
+    @Autowired(required = false)
+    private EmpresaPlanoLicencaRepository empresaPlanoLicencaRepository;
 
     public HomologacaoDataSeeder(EmpresaRepository empresaRepository, FilialRepository filialRepository,
             PerfilRepository perfilRepository, UsuarioRepository usuarioRepository,
@@ -96,6 +100,30 @@ public class HomologacaoDataSeeder implements ApplicationRunner {
         produtos(empresa, filial, categoria, fornecedor);
         meta(vendedorHml, empresa, filial);
         contaPagar(empresa, filial, fornecedor, categoria);
+        garantirPlanoLicencaHomologacao(empresa);
+    }
+
+    private void garantirPlanoLicencaHomologacao(Empresa empresa) {
+        if (empresaPlanoLicencaRepository == null || empresa == null || empresa.getIdEmpresa() == null) {
+            return;
+        }
+        if (empresaPlanoLicencaRepository.findByEmpresaId(empresa.getIdEmpresa()).isPresent()) {
+            return;
+        }
+        LocalDateTime now = LocalDateTime.now();
+        EmpresaPlanoLicenca plano = new EmpresaPlanoLicenca();
+        plano.setEmpresaId(empresa.getIdEmpresa());
+        plano.setTenantCode("hml-" + empresa.getIdEmpresa());
+        plano.setTenantName(empresa.getNomeFantasia() != null ? empresa.getNomeFantasia() : empresa.getRazaoSocial());
+        plano.setSubscriptionTier("PREMIUM");
+        plano.setFeaturesHabilitadas("BASIC_PRICING,FINANCIAL_CORE,ADVANCED_FINANCE,HIERARCHICAL_REPORTS");
+        plano.setStatus("ATIVO");
+        plano.setValidoAte(now.plusYears(1));
+        plano.setUltimaValidacaoEm(now);
+        plano.setGracePeriodHoras(72);
+        plano.setContingenciaAte(now.plusHours(72));
+        plano.setAtualizadoPor("HOMOLOGACAO_SEEDER");
+        empresaPlanoLicencaRepository.save(plano);
     }
 
     private Empresa criarEmpresa() {

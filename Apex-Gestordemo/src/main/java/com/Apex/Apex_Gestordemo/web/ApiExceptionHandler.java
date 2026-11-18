@@ -5,6 +5,8 @@ import java.time.OffsetDateTime;
 import java.util.NoSuchElementException;
 
 import Service.DataProtectionService;
+import com.Apex.Apex_Gestordemo.security.FeatureNotLicensedException;
+import com.Apex.Apex_Gestordemo.security.SegregationOfDutiesViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -86,6 +88,27 @@ public class ApiExceptionHandler {
             HttpServletRequest request) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(createProblem(HttpStatus.BAD_REQUEST,
                 "Requisicao invalida", safeBusinessMessage(ex.getMessage()), request));
+    }
+
+    @ExceptionHandler(FeatureNotLicensedException.class)
+    public ResponseEntity<ProblemDetail> handleFeatureNotLicensed(FeatureNotLicensedException ex,
+            HttpServletRequest request) {
+        ProblemDetail problem = createProblem(HttpStatus.FORBIDDEN,
+                "Funcionalidade nao contratada", safeBusinessMessage(ex.getMessage()), request);
+        problem.setProperty("code", "FEATURE_NOT_LICENSED");
+        problem.setProperty("feature", ex.getFeature() == null ? null : ex.getFeature().name());
+        problem.setProperty("licenseStatus", ex.getLicenseStatus());
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(problem);
+    }
+
+    @ExceptionHandler(SegregationOfDutiesViolationException.class)
+    public ResponseEntity<ProblemDetail> handleSodViolation(SegregationOfDutiesViolationException ex,
+            HttpServletRequest request) {
+        ProblemDetail problem = createProblem(HttpStatus.FORBIDDEN,
+                "Segregacao de funcoes violada", safeBusinessMessage(ex.getMessage()), request);
+        problem.setProperty("code", "SOD_VIOLATION");
+        problem.setProperty("dominioOperacao", ex.getDominioOperacao());
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(problem);
     }
 
     @ExceptionHandler(AccessDeniedException.class)

@@ -8,12 +8,15 @@ import Model.GrupoDreGerencial;
 import Service.AuthorizationService;
 import Service.DreGerencialService;
 import Service.DreGerencialService.FiltroDreRequest;
+import Service.TenantFeatureGuardService;
 import Service.TenantScopeService;
+import com.Apex.Apex_Gestordemo.security.ApexFeature;
 import com.Apex.Apex_Gestordemo.security.ApexPermission;
 import jakarta.servlet.http.HttpServletRequest;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.Locale;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
@@ -32,6 +35,9 @@ public class DreGerencialController {
     private final DreGerencialService dreGerencialService;
     private final AuthorizationService authorizationService;
     private final TenantScopeService tenantScopeService;
+
+    @Autowired(required = false)
+    private TenantFeatureGuardService tenantFeatureGuardService;
 
     public DreGerencialController(
             DreGerencialService dreGerencialService,
@@ -60,11 +66,7 @@ public class DreGerencialController {
             @RequestParam(required = false) Boolean consolidarFiliais,
             Authentication authentication,
             HttpServletRequest request) {
-        if (!authorizationService.can(request, ApexPermission.FINANCE_DRE_VIEW)
-                && !authorizationService.can(request, ApexPermission.FINANCE_VIEW)) {
-            authorizationService.require(request, ApexPermission.FINANCE_DRE_VIEW,
-                    "Financeiro", "consultar DRE gerencial");
-        }
+        requireDreRead(request);
         FiltroDreRequest filtro = new FiltroDreRequest(
                 tipoPeriodo,
                 competencia,
@@ -104,11 +106,7 @@ public class DreGerencialController {
             @RequestParam(required = false) Long planoContaId,
             Authentication authentication,
             HttpServletRequest request) {
-        if (!authorizationService.can(request, ApexPermission.FINANCE_DRE_VIEW)
-                && !authorizationService.can(request, ApexPermission.FINANCE_VIEW)) {
-            authorizationService.require(request, ApexPermission.FINANCE_DRE_VIEW,
-                    "Financeiro", "consultar DRE gerencial");
-        }
+        requireDreRead(request);
         GrupoDreGerencial grupoEnum = parseGrupoDre(grupoDre);
         FiltroDreRequest filtro = new FiltroDreRequest(
                 tipoPeriodo,
@@ -145,11 +143,7 @@ public class DreGerencialController {
             @RequestParam(required = false) Boolean consolidarFiliais,
             Authentication authentication,
             HttpServletRequest request) {
-        if (!authorizationService.can(request, ApexPermission.FINANCE_DRE_VIEW)
-                && !authorizationService.can(request, ApexPermission.FINANCE_VIEW)) {
-            authorizationService.require(request, ApexPermission.FINANCE_DRE_VIEW,
-                    "Financeiro", "consultar DRE gerencial");
-        }
+        requireDreRead(request);
         return ResponseEntity.ok(dreGerencialService.evoluirDre(
                 competenciaInicio,
                 competenciaFim,
@@ -173,11 +167,7 @@ public class DreGerencialController {
             @RequestParam(required = false) Long centroCustoId,
             Authentication authentication,
             HttpServletRequest request) {
-        if (!authorizationService.can(request, ApexPermission.FINANCE_DRE_VIEW)
-                && !authorizationService.can(request, ApexPermission.FINANCE_VIEW)) {
-            authorizationService.require(request, ApexPermission.FINANCE_DRE_VIEW,
-                    "Financeiro", "consultar DRE gerencial");
-        }
+        requireDreRead(request);
         FiltroDreRequest filtro = new FiltroDreRequest(
                 tipoPeriodo,
                 competencia,
@@ -218,6 +208,10 @@ public class DreGerencialController {
             @RequestParam(required = false) Boolean consolidarFiliais,
             Authentication authentication,
             HttpServletRequest request) {
+        if (tenantFeatureGuardService != null) {
+            tenantFeatureGuardService.requireFeature(request, ApexFeature.FINANCIAL_CORE,
+                    "Financeiro", "exportar DRE gerencial");
+        }
         if (!authorizationService.can(request, ApexPermission.REPORT_EXPORT)
                 && !authorizationService.can(request, ApexPermission.FINANCE_MANAGE)) {
             authorizationService.require(request, ApexPermission.REPORT_EXPORT,
@@ -267,6 +261,15 @@ public class DreGerencialController {
         headers.setContentType(new MediaType("text", "csv", StandardCharsets.UTF_8));
         headers.setContentDisposition(ContentDisposition.attachment().filename("dre-gerencial.csv").build());
         return ResponseEntity.ok().headers(headers).body(csv);
+    }
+
+    private void requireDreRead(HttpServletRequest request) {
+        if (tenantFeatureGuardService != null) {
+            tenantFeatureGuardService.requireFeature(request, ApexFeature.FINANCIAL_CORE,
+                    "Financeiro", "consultar DRE gerencial");
+        }
+        authorizationService.require(request, ApexPermission.FINANCE_DRE_VIEW,
+                "Financeiro", "consultar DRE gerencial");
     }
 
     private GrupoDreGerencial parseGrupoDre(String raw) {

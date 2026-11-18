@@ -64,9 +64,9 @@ class MySqlOperationalFlowTests {
     @Test
     void mysqlValidaFlywayTenantRbacVendaCaixaFinanceiroEstoqueDevolucaoELgpd() throws Exception {
         Integer migrations = jdbc.queryForObject(
-                "SELECT COUNT(*) FROM flyway_schema_history WHERE success = 1 AND version IN ('2','3','4','5','6','7','8','9','10','11','12','13','14','15','16')",
+                "SELECT COUNT(*) FROM flyway_schema_history WHERE success = 1 AND version IN ('2','3','4','5','6','7','8','9','10','11','12','13','14','15','16','17')",
                 Integer.class);
-        assertThat(migrations).isEqualTo(15);
+        assertThat(migrations).isEqualTo(16);
 
         mvc.perform(get("/api/caixa/atual"))
                 .andExpect(status().isUnauthorized());

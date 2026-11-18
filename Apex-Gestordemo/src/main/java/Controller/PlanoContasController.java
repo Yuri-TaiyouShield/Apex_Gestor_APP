@@ -7,11 +7,14 @@ import Model.GrupoDreGerencial;
 import Model.TipoContaGerencial;
 import Service.AuthorizationService;
 import Service.PlanoContasService;
+import Service.TenantFeatureGuardService;
 import Service.TenantScopeService;
+import com.Apex.Apex_Gestordemo.security.ApexFeature;
 import com.Apex.Apex_Gestordemo.security.ApexPermission;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.util.List;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -32,6 +35,9 @@ public class PlanoContasController {
     private final AuthorizationService authorizationService;
     private final TenantScopeService tenantScopeService;
 
+    @Autowired(required = false)
+    private TenantFeatureGuardService tenantFeatureGuardService;
+
     public PlanoContasController(
             PlanoContasService planoContasService,
             AuthorizationService authorizationService,
@@ -47,6 +53,7 @@ public class PlanoContasController {
             @RequestParam(required = false) GrupoDreGerencial grupoDre,
             @RequestParam(required = false) TipoContaGerencial tipoConta,
             HttpServletRequest request) {
+        requireCoreLicense(request, "listar plano de contas");
         authorizationService.require(request, ApexPermission.FINANCE_VIEW,
                 "Financeiro", "listar plano de contas");
         return planoContasService.listar(somenteAtivos, grupoDre, tipoConta,
@@ -57,6 +64,7 @@ public class PlanoContasController {
     public List<PlanoContasResponseDTO> arvore(
             @RequestParam(required = false) Boolean somenteAtivos,
             HttpServletRequest request) {
+        requireCoreLicense(request, "consultar arvore do plano de contas");
         authorizationService.require(request, ApexPermission.FINANCE_VIEW,
                 "Financeiro", "consultar arvore do plano de contas");
         return planoContasService.arvore(somenteAtivos,
@@ -65,6 +73,7 @@ public class PlanoContasController {
 
     @GetMapping("/{id}")
     public ResponseEntity<PlanoContasResponseDTO> buscarPorId(@PathVariable Long id, HttpServletRequest request) {
+        requireCoreLicense(request, "consultar conta gerencial");
         authorizationService.require(request, ApexPermission.FINANCE_VIEW,
                 "Financeiro", "consultar conta gerencial");
         return ResponseEntity.ok(planoContasService.buscarPorId(
@@ -73,6 +82,7 @@ public class PlanoContasController {
 
     @PostMapping("/inicializar-padrao")
     public ResponseEntity<PlanoContasBootstrapResponseDTO> inicializarPadrao(HttpServletRequest request) {
+        requireCoreLicense(request, "gerenciar plano de contas");
         authorizationService.require(request, ApexPermission.FINANCE_CLASSIFICATION_MANAGE,
                 "Financeiro", "inicializar plano de contas padrao");
         return ResponseEntity.ok(planoContasService.inicializarPadrao(
@@ -83,6 +93,7 @@ public class PlanoContasController {
     public ResponseEntity<PlanoContasResponseDTO> criar(
             @Valid @RequestBody PlanoContasRequestDTO body,
             HttpServletRequest request) {
+        requireCoreLicense(request, "gerenciar plano de contas");
         authorizationService.require(request, ApexPermission.FINANCE_CLASSIFICATION_MANAGE,
                 "Financeiro", "criar conta gerencial");
         return ResponseEntity.status(HttpStatus.CREATED).body(planoContasService.criar(
@@ -94,6 +105,7 @@ public class PlanoContasController {
             @PathVariable Long id,
             @Valid @RequestBody PlanoContasRequestDTO body,
             HttpServletRequest request) {
+        requireCoreLicense(request, "gerenciar plano de contas");
         authorizationService.require(request, ApexPermission.FINANCE_CLASSIFICATION_MANAGE,
                 "Financeiro", "atualizar conta gerencial");
         return ResponseEntity.ok(planoContasService.atualizar(
@@ -105,9 +117,16 @@ public class PlanoContasController {
             @PathVariable Long id,
             @RequestParam boolean ativo,
             HttpServletRequest request) {
+        requireCoreLicense(request, "gerenciar plano de contas");
         authorizationService.require(request, ApexPermission.FINANCE_CLASSIFICATION_MANAGE,
                 "Financeiro", "alterar status da conta gerencial");
         return ResponseEntity.ok(planoContasService.alterarStatus(
                 id, ativo, tenantScopeService.empresaId(request), tenantScopeService.filialId(request), request));
+    }
+
+    private void requireCoreLicense(HttpServletRequest request, String acao) {
+        if (tenantFeatureGuardService != null) {
+            tenantFeatureGuardService.requireFeature(request, ApexFeature.FINANCIAL_CORE, "Financeiro", acao);
+        }
     }
 }

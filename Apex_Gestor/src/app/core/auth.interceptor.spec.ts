@@ -1,7 +1,8 @@
 import { HttpErrorResponse, HttpEvent, HttpRequest } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { EnvironmentInjector, runInInjectionContext } from '@angular/core';
-import { TestBed } from '@angular/core/testing';import { Observable, of, throwError } from 'rxjs';
+import { TestBed } from '@angular/core/testing';
+import { Observable, of, throwError } from 'rxjs';
 
 import { authInterceptor } from './auth.interceptor';
 import { AuthService } from './auth.service';
@@ -12,9 +13,25 @@ describe('authInterceptor', () => {
   let captured: HttpRequest<unknown> | undefined;
   let backend: Observable<HttpEvent<unknown>>;
 
-  function configureBackend(behavior: 'ok' | 'unauthorized' | 'forbidden'): Observable<HttpEvent<unknown>> {
+  function configureBackend(
+    behavior: 'ok' | 'unauthorized' | 'forbidden' | 'featureNotLicensed' | 'sodViolation'
+  ): Observable<HttpEvent<unknown>> {
     if (behavior === 'ok') {
       backend = of({ body: [] } as HttpEvent<unknown>);
+      return backend;
+    }
+    if (behavior === 'featureNotLicensed') {
+      backend = throwError(() => new HttpErrorResponse({
+        status: 403,
+        error: { code: 'FEATURE_NOT_LICENSED', detail: 'Funcionalidade nao contratada.' }
+      }));
+      return backend;
+    }
+    if (behavior === 'sodViolation') {
+      backend = throwError(() => new HttpErrorResponse({
+        status: 403,
+        error: { code: 'SOD_VIOLATION', detail: 'Autoaprovacao bloqueada por SoD.' }
+      }));
       return backend;
     }
     const failing = throwError(() => new HttpErrorResponse({ status: behavior === 'forbidden' ? 403 : 401 }));
@@ -48,7 +65,9 @@ describe('authInterceptor', () => {
       ]
     });
     return { logout, setAccessIssue, navigate };
-  }  it('anexa plataforma, licença e Authorization nas chamadas da API', async () => {
+  }
+
+  it('anexa plataforma, licença e Authorization nas chamadas da API', async () => {
     configureTestBed({ accessToken: 'token-secret' });
     configureBackend('ok');
 
@@ -103,6 +122,33 @@ describe('authInterceptor', () => {
     expect(spies.logout).not.toHaveBeenCalled();
     expect(spies.navigate).not.toHaveBeenCalled();
     expect(capturedError).toBeInstanceOf(HttpErrorResponse);
+  });
+
+  it('diferencia 403 FEATURE_NOT_LICENSED de erro de perfil RBAC', async () => {
+    const spies = configureTestBed({ accessToken: 'token-secret' });
+    configureBackend('featureNotLicensed');
+
+    try {
+      await runInterceptor(new HttpRequest('GET', 'http://127.0.0.1:8080/api/financeiro/governanca/politicas-sod')).toPromise();
+    } catch {
+      // esperado
+    }
+
+    expect(spies.setAccessIssue).toHaveBeenCalledWith('Funcionalidade não contratada para o plano desta empresa.');
+    expect(spies.logout).not.toHaveBeenCalled();
+  });
+
+  it('diferencia 403 SOD_VIOLATION na mensagem de acesso', async () => {
+    const spies = configureTestBed({ accessToken: 'token-secret' });
+    configureBackend('sodViolation');
+
+    try {
+      await runInterceptor(new HttpRequest('POST', 'http://127.0.0.1:8080/api/financeiro/governanca/validacao-aprovacao', {})).toPromise();
+    } catch {
+      // esperado
+    }
+
+    expect(spies.setAccessIssue).toHaveBeenCalledWith('Autoaprovacao bloqueada por SoD.');
   });
 
   it('declara X-Client-Platform electron quando executando dentro do Electron', async () => {

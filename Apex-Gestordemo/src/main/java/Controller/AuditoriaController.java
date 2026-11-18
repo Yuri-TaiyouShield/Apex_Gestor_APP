@@ -4,6 +4,7 @@ import DTO.AuditLogResponseDTO;
 import Model.AuditLog;
 import Repository.AuditLogRepository;
 import Service.AuthorizationService;
+import Service.DataProtectionService;
 import Service.PrivacyGuardService;
 import Service.TenantScopeService;
 import com.Apex.Apex_Gestordemo.security.ApexPermission;
@@ -26,32 +27,43 @@ public class AuditoriaController {
     private AuthorizationService authorizationService;
     @Autowired
     private TenantScopeService tenantScopeService;
+    @Autowired(required = false)
+    private DataProtectionService dataProtectionService;
 
     @GetMapping
     public List<AuditLogResponseDTO> listarTodos(HttpServletRequest request) {
         authorizationService.require(request, ApexPermission.AUDIT_LOG_VIEW, "Auditoria", "listar logs");
-        privacyGuardService.requirePrivacyAdmin(request, "acessar logs de auditoria");
+        privacyGuardService.requireAuditView(request, "acessar logs de auditoria");
+        boolean unmasked = privacyGuardService.canViewUnmaskedAudit(request);
         return auditLogRepository.findByEmpresaIdAndFilialIdOrderByCriadoEmDesc(
-                tenantScopeService.empresaId(request),
-                tenantScopeService.filialId(request)).stream()
-                .map(this::toResponse)
+                        tenantScopeService.empresaId(request),
+                        tenantScopeService.filialId(request)).stream()
+                .map(log -> toResponse(log, unmasked))
                 .toList();
     }
 
-    private AuditLogResponseDTO toResponse(AuditLog log) {
+    private AuditLogResponseDTO toResponse(AuditLog log, boolean unmasked) {
+        String login = unmasked ? log.getUsuarioLogin() : privacyGuardService.maskIdentifier(log.getUsuarioLogin());
+        String ip = unmasked ? log.getIp() : privacyGuardService.maskIp(log.getIp());
+        String dispositivo = unmasked ? log.getDispositivo() : "Protegido (PII)";
+        String justificativa = unmasked
+                ? log.getJustificativa()
+                : (dataProtectionService != null
+                        ? dataProtectionService.maskSensitiveText(log.getJustificativa())
+                        : "***");
         return new AuditLogResponseDTO(
                 log.getIdAuditoria(),
-                log.getUsuarioLogin(),
+                login,
                 log.getEmpresaId(),
                 log.getFilialId(),
                 log.getModulo(),
                 log.getAcao(),
                 log.getEntidade(),
                 log.getEntidadeId(),
-                log.getIp(),
-                log.getDispositivo(),
+                ip,
+                dispositivo,
                 log.getTraceId(),
-                log.getJustificativa(),
+                justificativa,
                 log.getCriadoEm());
     }
 }

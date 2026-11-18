@@ -33,7 +33,7 @@ class FlywayRuntimeTests {
                 SELECT COUNT(*)
                 FROM flyway_schema_history
                 WHERE success = TRUE
-                  AND version IN ('2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16')
+                  AND version IN ('2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17')
                 """, Integer.class);
         Integer caixaSessao = jdbcTemplate.queryForObject("""
                 SELECT COUNT(*)
@@ -80,9 +80,15 @@ class FlywayRuntimeTests {
                 SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
                 WHERE TABLE_NAME = 'conta_receber' AND COLUMN_NAME = 'saldo'
                 """, Integer.class);
+        Integer empresaPlanoLicenca = jdbcTemplate.queryForObject("""
+                SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'empresa_plano_licenca'
+                """, Integer.class);
+        Integer politicaSod = jdbcTemplate.queryForObject("""
+                SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'politica_segregacao_aprovacao'
+                """, Integer.class);
 
         assertThat(historico).isEqualTo(1);
-        assertThat(migrations).isEqualTo(15);
+        assertThat(migrations).isEqualTo(16);
         assertThat(caixaSessao).isEqualTo(1);
         assertThat(condicoesPagamento).isEqualTo(1);
         assertThat(categoriaEmpresa).isEqualTo(1);
@@ -93,5 +99,7 @@ class FlywayRuntimeTests {
         assertThat(devolucao).isEqualTo(1);
         assertThat(credito).isEqualTo(1);
         assertThat(saldoReceber).isEqualTo(1);
+        assertThat(empresaPlanoLicenca).isEqualTo(1);
+        assertThat(politicaSod).isEqualTo(1);
     }
 }

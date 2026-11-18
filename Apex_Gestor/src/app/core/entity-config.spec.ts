@@ -1,5 +1,7 @@
+import { routes } from '../app.routes';
 import { ENTITY_CONFIGS } from './entity-config';
 import { APEX_NAV_ITEMS } from './feature-menu.config';
+import { ApexRole } from './models';
 
 describe('ERP operational configuration', () => {
   it('keeps LGPD as a transversal layer outside the operational menu', () => {
@@ -107,6 +109,21 @@ describe('ERP operational configuration', () => {
       'planoContaNome',
       'tipoDespesa.nome'
     ]));
+  });
+
+  it('keeps ROLE_DONO synchronized between visible menu items and corresponding router role guards', () => {
+    const donoItems = APEX_NAV_ITEMS.filter((item) => item.allowedRoles?.includes('ROLE_DONO'));
+
+    expect(donoItems.length).toBeGreaterThan(0);
+    for (const item of donoItems) {
+      const routePath = item.path.startsWith('/') ? item.path.slice(1) : item.path;
+      const route = routes.find((r) => (r.path ?? '') === routePath);
+      expect(route).withContext(`Route for ${item.path}`).toBeDefined();
+      const routeRoles = route?.data?.['roles'] as ApexRole[] | undefined;
+      if (routeRoles) {
+        expect(routeRoles).withContext(`Route roles for ${item.path}`).toContain('ROLE_DONO');
+      }
+    }
   });
 });
 

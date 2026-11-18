@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 import lombok.Data;
 
 @Entity
-@Table(name = "Solicitacao_Titular_Dados")
+@Table(name = "solicitacao_titular_dados")
 @Data
 public class SolicitacaoTitularDados {
 
@@ -38,8 +38,23 @@ public class SolicitacaoTitularDados {
     @Column(name = "solicitado_por", length = 80)
     private String solicitadoPor;
 
+    @Column(name = "solicitado_por_usuario_id")
+    private Long solicitadoPorUsuarioId;
+
+    @Column(name = "aprovado_por_usuario_id")
+    private Long aprovadoPorUsuarioId;
+
+    @Column(name = "aprovado_por", length = 80)
+    private String aprovadoPor;
+
+    @Column(name = "aprovado_em")
+    private LocalDateTime aprovadoEm;
+
     @Column(name = "executado_por", length = 80)
     private String executadoPor;
+
+    @Column(name = "executado_por_usuario_id")
+    private Long executadoPorUsuarioId;
 
     @Column(name = "solicitado_em", nullable = false)
     private LocalDateTime solicitadoEm;
@@ -47,8 +62,24 @@ public class SolicitacaoTitularDados {
     @Column(name = "executado_em")
     private LocalDateTime executadoEm;
 
+    @Column(name = "retencao_legal_validada", nullable = false)
+    private boolean retencaoLegalValidada = false;
+
+    @Column(name = "impedimento_retencao", length = 500)
+    private String impedimentoRetencao;
+
+    @Column(name = "simulacao_hash", length = 128)
+    private String simulacaoHash;
+
+    @Column(name = "confirmado_explicito", nullable = false)
+    private boolean confirmadoExplicito = false;
+
     private Long empresaId;
     private Long filialId;
+
+    @jakarta.persistence.Version
+    @Column(nullable = false)
+    private Long version = 0L;
 
     @PrePersist
     public void prePersist() {
@@ -57,6 +88,9 @@ public class SolicitacaoTitularDados {
         }
         if (status == null || status.isBlank()) {
             status = "RECEBIDA";
+        }
+        if (version == null) {
+            version = 0L;
         }
     }
 }
