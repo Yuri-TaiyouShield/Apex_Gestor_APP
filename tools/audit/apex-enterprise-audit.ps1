@@ -13,7 +13,7 @@ function Write-Section($title) {
 }
 
 function Get-RepositoryTextFiles {
-    git -C $repoRoot ls-files --cached --others --exclude-standard |
+    git -C $repoRoot -c core.quotePath=false ls-files --cached --others --exclude-standard |
         Where-Object {
             $path = $_
             $normalizedPath = "/" + ($path -replace "\\", "/")

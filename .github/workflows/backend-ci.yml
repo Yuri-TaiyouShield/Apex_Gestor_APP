@@ -32,7 +32,9 @@ jobs:
 
       - name: Test backend
         working-directory: Apex-Gestordemo
-        run: ./mvnw -q test
+        run: |
+          chmod +x mvnw
+          ./mvnw -q test
 
       - name: Package backend
         working-directory: Apex-Gestordemo

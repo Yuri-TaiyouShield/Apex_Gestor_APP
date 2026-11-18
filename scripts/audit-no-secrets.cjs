@@ -1,10 +1,10 @@
 const { execFileSync } = require('node:child_process');
 const fs = require('node:fs');
 
-const files = execFileSync('git', ['ls-files'], { encoding: 'utf8' })
-  .split(/\r?\n/)
+const files = execFileSync('git', ['-c', 'core.quotePath=false', 'ls-files', '-z'], { encoding: 'utf8' })
+  .split('\0')
   .filter(Boolean)
-  .filter((file) => !/(package-lock\.json|\.png|\.jpg|\.jpeg|\.pdf|\.ico)$/i.test(file));
+  .filter((file) => !/(package-lock\.json|\.png|\.jpg|\.jpeg|\.pdf|\.ico|\.woff2?|\.ttf|\.eot|\.jar)$/i.test(file));
 
 const detectors = [
   { label: 'private key', regex: /-----BEGIN [A-Z ]*PRIVATE KEY-----/ },
@@ -16,6 +16,9 @@ const detectors = [
 const findings = [];
 
 for (const file of files) {
+  if (!fs.existsSync(file) || !fs.statSync(file).isFile()) {
+    continue;
+  }
   const content = fs.readFileSync(file, 'utf8');
   for (const detector of detectors) {
     if (detector.regex.test(content)) {
