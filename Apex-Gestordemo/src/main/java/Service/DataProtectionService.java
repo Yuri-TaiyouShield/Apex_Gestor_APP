@@ -17,7 +17,7 @@ import java.util.regex.Pattern;
 public class DataProtectionService {
 
     private static final String DEFAULT_LOCAL_PEPPER = "local-only-non-secret-pepper";
-    private static final Pattern EMAIL = Pattern.compile("([A-Za-z0-9._%+-])[A-Za-z0-9._%+-]*(@[A-Za-z0-9.-]+)");
+    private static final Pattern EMAIL = Pattern.compile("\\b([a-zA-Z0-9])[a-zA-Z0-9._%+-]*+(@[a-zA-Z0-9.-]+)");
     private static final Pattern DOCUMENT = Pattern.compile("\\b\\d{3}\\.?\\d{3}\\.?\\d{3}-?\\d{2}\\b|\\b\\d{2}\\.?\\d{3}\\.?\\d{3}/?\\d{4}-?\\d{2}\\b");
     private static final Pattern PHONE = Pattern.compile("\\b(?:\\+?55\\s?)?(?:\\(?\\d{2}\\)?\\s?)?\\d{4,5}-?\\d{4}\\b");
     private static final Pattern BEARER = Pattern.compile("Bearer\\s+[A-Za-z0-9._~+/-]+=*", Pattern.CASE_INSENSITIVE);

@@ -36,6 +36,19 @@ function normalizeBaseUrl(value) {
   return String(value || 'http://localhost:8080').trim().replace(/\/$/, '');
 }
 
+function validateTargetUrl(rawUrl) {
+  const parsed = new URL(rawUrl);
+  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+    throw new Error(`Invalid protocol: ${parsed.protocol}`);
+  }
+  const hostname = parsed.hostname;
+  const isLoopback = hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1';
+  if (!isLoopback && !hostname.endsWith('.local') && !/^[\w.-]+$/.test(hostname)) {
+    throw new Error(`Untrusted host: ${hostname}`);
+  }
+  return parsed.href;
+}
+
 loadLocalEnv();
 
 const apiBaseUrl = normalizeBaseUrl(
@@ -44,7 +57,7 @@ const apiBaseUrl = normalizeBaseUrl(
     || process.env.ELECTRON_API_URL
     || process.env.API_BASE_URL
 );
-const healthUrl = process.env.APEX_API_HEALTH_URL || `${apiBaseUrl}/actuator/health`;
+const healthUrl = validateTargetUrl(process.env.APEX_API_HEALTH_URL || `${apiBaseUrl}/actuator/health`);
 const timeoutMs = 120000;
 const intervalMs = 1500;
 const deadline = Date.now() + timeoutMs;
