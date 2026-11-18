@@ -12,6 +12,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import lombok.Data;
 
@@ -62,6 +63,18 @@ public class EstoqueMovimentacao {
 
     @Column(name = "criado_em", nullable = false)
     private LocalDateTime criadoEm;
+
+    @Column(name = "custo_unitario", precision = 15, scale = 4)
+    private BigDecimal custoUnitario;
+
+    @Column(name = "custo_medio_anterior", precision = 15, scale = 4)
+    private BigDecimal custoMedioAnterior;
+
+    @Column(name = "custo_medio_posterior", precision = 15, scale = 4)
+    private BigDecimal custoMedioPosterior;
+
+    @Column(name = "valor_total_custo", precision = 15, scale = 2)
+    private BigDecimal valorTotalCusto;
 
     @PrePersist
     void prePersist() {

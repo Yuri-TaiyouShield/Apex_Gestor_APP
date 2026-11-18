@@ -4,14 +4,20 @@ import java.net.URI;
 import java.time.OffsetDateTime;
 import java.util.NoSuchElementException;
 
+import Service.DataProtectionService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.server.ResponseStatusException;
 
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -19,13 +25,24 @@ import jakarta.servlet.http.HttpServletRequest;
 @RestControllerAdvice(basePackages = {"Controller", "com.Apex.Apex_Gestordemo"})
 public class ApiExceptionHandler {
 
+    private final DataProtectionService dataProtectionService;
+
+    @Autowired
+    public ApiExceptionHandler(DataProtectionService dataProtectionService) {
+        this.dataProtectionService = dataProtectionService;
+    }
+
+    public ApiExceptionHandler() {
+        this(new DataProtectionService());
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ProblemDetail> handleValidation(MethodArgumentNotValidException ex,
             HttpServletRequest request) {
         ProblemDetail problem = createProblem(HttpStatus.BAD_REQUEST, "Dados invalidos",
                 "Revise os campos destacados e tente novamente.", request);
         problem.setProperty("violations", ex.getBindingResult().getFieldErrors().stream()
-                .map(error -> error.getField() + ": " + error.getDefaultMessage())
+                .map(error -> error.getField() + ": " + dataProtectionService.maskSensitiveText(error.getDefaultMessage()))
                 .toList());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(problem);
     }
@@ -43,6 +60,27 @@ public class ApiExceptionHandler {
                 "Conflito de dados", "A operacao viola uma regra de integridade do banco de dados.", request));
     }
 
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<ProblemDetail> handleResponseStatus(ResponseStatusException ex,
+            HttpServletRequest request) {
+        HttpStatus status = HttpStatus.valueOf(ex.getStatusCode().value());
+        return ResponseEntity.status(status).body(createProblem(status, "Operacao nao concluida",
+                safeBusinessMessage(ex.getReason()), request));
+    }
+
+    @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
+    public ResponseEntity<ProblemDetail> handleOptimisticLock(ObjectOptimisticLockingFailureException ex,
+            HttpServletRequest request) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(createProblem(HttpStatus.CONFLICT,
+                "Conflito de concorrencia", "O registro foi alterado por outra operacao. Recarregue e tente novamente.", request));
+    }
+
+    @ExceptionHandler(DataAccessException.class)
+    public ResponseEntity<ProblemDetail> handleDataAccess(DataAccessException ex, HttpServletRequest request) {
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(createProblem(HttpStatus.SERVICE_UNAVAILABLE,
+                "Dependencia indisponivel", "O armazenamento nao esta disponivel no momento. Tente novamente.", request));
+    }
+
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ProblemDetail> handleIllegalArgument(IllegalArgumentException ex,
             HttpServletRequest request) {
@@ -57,8 +95,15 @@ public class ApiExceptionHandler {
                 "Acesso negado", safeBusinessMessage(ex.getMessage()), request));
     }
 
-    @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<ProblemDetail> handleBusiness(RuntimeException ex, HttpServletRequest request) {
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ProblemDetail> handleAuthentication(AuthenticationException ex,
+            HttpServletRequest request) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(createProblem(HttpStatus.UNAUTHORIZED,
+                "Nao autenticado", "Credenciais invalidas ou sessao expirada.", request));
+    }
+
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<ProblemDetail> handleBusiness(IllegalStateException ex, HttpServletRequest request) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(createProblem(HttpStatus.BAD_REQUEST,
                 "Regra de negocio nao atendida", safeBusinessMessage(ex.getMessage()), request));
     }
@@ -86,6 +131,7 @@ public class ApiExceptionHandler {
         if (message == null || message.isBlank()) {
             return "A operacao nao pode ser concluida com os dados informados.";
         }
-        return message.length() > 240 ? message.substring(0, 240) : message;
+        String masked = dataProtectionService.maskSensitiveText(message);
+        return masked.length() > 240 ? masked.substring(0, 240) : masked;
     }
 }

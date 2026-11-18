@@ -18,16 +18,17 @@ class PrivacyGuardServiceTests {
     }
 
     @Test
-    void grantsSensitiveDataOnlyToAuthorizedRoles() {
-        MockHttpServletRequest sysadmin = new MockHttpServletRequest();
-        sysadmin.addHeader("Authorization", "Bearer demo-access-v5_sysadmin-abc");
+    void ignoresClientSuppliedIdentityHeaders() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addHeader("X-Apex-Roles", "ROLE_SYSADMIN");
+        request.addHeader("X-Apex-User-Id", "1");
+        request.addHeader("X-Apex-Empresa-Id", "1");
+        request.addHeader("X-Apex-Filial-Id", "1");
 
-        MockHttpServletRequest cashier = new MockHttpServletRequest();
-        cashier.addHeader("Authorization", "Bearer demo-access-v5_caixa-abc");
-
-        assertThat(privacyGuardService.canViewSensitiveData(sysadmin)).isTrue();
-        assertThat(privacyGuardService.canAdminPrivacy(sysadmin)).isTrue();
-        assertThat(privacyGuardService.canViewSensitiveData(cashier)).isFalse();
-        assertThat(privacyGuardService.canAdminPrivacy(cashier)).isFalse();
+        assertThat(privacyGuardService.canViewSensitiveData(request)).isFalse();
+        assertThat(privacyGuardService.canAdminPrivacy(request)).isFalse();
+        assertThat(privacyGuardService.currentUserId(request)).isNull();
+        assertThat(privacyGuardService.currentEmpresaId(request)).isNull();
+        assertThat(privacyGuardService.currentFilialId(request)).isNull();
     }
 }

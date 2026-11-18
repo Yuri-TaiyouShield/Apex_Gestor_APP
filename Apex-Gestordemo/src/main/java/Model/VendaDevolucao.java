@@ -23,6 +23,10 @@ public class VendaDevolucao {
     private Long empresaId;
     @Column(name = "filial_id", nullable = false)
     private Long filialId;
+    @Column(name = "idempotency_key", length = 128)
+    private String idempotencyKey;
+    @Column(name = "idempotency_payload_hash", length = 64)
+    private String idempotencyPayloadHash;
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 16)
     private TipoDevolucao tipo;

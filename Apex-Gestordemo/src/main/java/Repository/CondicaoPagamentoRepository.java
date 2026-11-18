@@ -11,4 +11,6 @@ public interface CondicaoPagamentoRepository extends JpaRepository<CondicaoPagam
 
     List<CondicaoPagamento> findByEmpresaIdAndFilialIdOrderByNomeAsc(Long empresaId, Long filialId);
     Optional<CondicaoPagamento> findByNomeAndEmpresaIdAndFilialId(String nome, Long empresaId, Long filialId);
+    Optional<CondicaoPagamento> findByIdCondicaoPagamentoAndEmpresaIdAndFilialId(
+            Long idCondicaoPagamento, Long empresaId, Long filialId);
 }

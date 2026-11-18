@@ -6,12 +6,13 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
 import java.util.HexFormat;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -56,36 +57,8 @@ public class PrivacyGuardService {
         if (claims != null && claims.login() != null && !claims.login().isBlank()) {
             return claims.login();
         }
-        if (hasJwtValidatorAndToken(request)) {
-            return "publico";
-        }
-        String explicit = header(request, "X-Apex-User-Login");
-        if (explicit != null && !explicit.isBlank()) {
-            return explicit.trim();
-        }
-        String token = authorizationToken(request);
-        if (token == null || token.isBlank()) {
-            return "publico";
-        }
-        if (token.contains("v5_sysadmin")) {
-            return "v5_sysadmin";
-        }
-        if (token.contains("v5_dono")) {
-            return "v5_dono";
-        }
-        if (token.contains("v5_caixa")) {
-            return "v5_caixa";
-        }
-        if (token.contains("v5_gerente")) {
-            return "v5_gerente";
-        }
-        if (token.contains("v5_vendedor")) {
-            return "v5_vendedor";
-        }
-        if (token.contains("v5_cliente")) {
-            return "v5_cliente";
-        }
-        return "autenticado";
+        Authentication authentication = authentication();
+        return authentication == null ? "publico" : authentication.getName();
     }
 
     public Long currentUserId(HttpServletRequest request) {
@@ -93,34 +66,21 @@ public class PrivacyGuardService {
         if (claims != null && claims.userId() != null) {
             return claims.userId();
         }
-        if (hasJwtValidatorAndToken(request)) {
-            return null;
+        Authentication authentication = authentication();
+        if (authentication != null && authentication.getDetails() instanceof JwtTokenService.JwtClaims details) {
+            return details.userId();
         }
-        String value = header(request, "X-Apex-User-Id");
-        if (value == null || value.isBlank()) {
-            return null;
-        }
-        try {
-            return Long.valueOf(value.trim());
-        } catch (NumberFormatException ex) {
-            return null;
-        }
+        return claims == null ? null : claims.userId();
     }
 
     public Long currentEmpresaId(HttpServletRequest request) {
         JwtTokenService.JwtClaims claims = jwtClaims(request);
-        if (claims == null && hasJwtValidatorAndToken(request)) {
-            return null;
-        }
-        return claims != null && claims.empresaId() != null ? claims.empresaId() : headerLong(request, "X-Apex-Empresa-Id");
+        return claims == null ? null : claims.empresaId();
     }
 
     public Long currentFilialId(HttpServletRequest request) {
         JwtTokenService.JwtClaims claims = jwtClaims(request);
-        if (claims == null && hasJwtValidatorAndToken(request)) {
-            return null;
-        }
-        return claims != null && claims.filialId() != null ? claims.filialId() : headerLong(request, "X-Apex-Filial-Id");
+        return claims == null ? null : claims.filialId();
     }
 
     public Set<String> currentRoles(HttpServletRequest request) {
@@ -130,40 +90,13 @@ public class PrivacyGuardService {
                     .map(this::normalizeRole)
                     .collect(Collectors.toSet());
         }
-        if (hasJwtValidatorAndToken(request)) {
-            return Set.of("ROLE_PUBLICO");
-        }
-        String explicitRoles = header(request, "X-Apex-Roles");
-        if (explicitRoles != null && !explicitRoles.isBlank()) {
-            return Arrays.stream(explicitRoles.split(","))
-                    .map(String::trim)
-                    .filter(role -> !role.isBlank())
-                    .map(this::normalizeRole)
+        Authentication authentication = authentication();
+        if (authentication != null) {
+            return authentication.getAuthorities().stream()
+                    .map(authority -> normalizeRole(authority.getAuthority()))
                     .collect(Collectors.toSet());
         }
-        String token = authorizationToken(request);
-        if (token == null || token.isBlank()) {
-            return Set.of("ROLE_PUBLICO");
-        }
-        if (token.contains("v5_sysadmin")) {
-            return Set.of("ROLE_SYSADMIN");
-        }
-        if (token.contains("v5_dono")) {
-            return Set.of("ROLE_DONO_GERENTE");
-        }
-        if (token.contains("v5_caixa")) {
-            return Set.of("ROLE_CAIXA");
-        }
-        if (token.contains("v5_gerente")) {
-            return Set.of("ROLE_GERENTE");
-        }
-        if (token.contains("v5_vendedor")) {
-            return Set.of("ROLE_VENDEDOR");
-        }
-        if (token.contains("v5_cliente")) {
-            return Set.of("ROLE_CLIENTE_B2C");
-        }
-        return Set.of("ROLE_AUTENTICADO");
+        return Set.of("ROLE_PUBLICO");
     }
 
     public String maskDocument(String value) {
@@ -255,15 +188,6 @@ public class PrivacyGuardService {
         return authorization.replaceFirst("(?i)^Bearer\\s+", "").trim();
     }
 
-    private boolean hasAuthorizationToken(HttpServletRequest request) {
-        String token = authorizationToken(request);
-        return token != null && !token.isBlank();
-    }
-
-    private boolean hasJwtValidatorAndToken(HttpServletRequest request) {
-        return jwtTokenService != null && hasAuthorizationToken(request);
-    }
-
     private JwtTokenService.JwtClaims jwtClaims(HttpServletRequest request) {
         if (jwtTokenService == null) {
             return null;
@@ -279,16 +203,9 @@ public class PrivacyGuardService {
         }
     }
 
-    private Long headerLong(HttpServletRequest request, String name) {
-        String value = header(request, name);
-        if (value == null || value.isBlank()) {
-            return null;
-        }
-        try {
-            return Long.valueOf(value.trim());
-        } catch (NumberFormatException ex) {
-            return null;
-        }
+    private Authentication authentication() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        return authentication == null || !authentication.isAuthenticated() ? null : authentication;
     }
 
     private String header(HttpServletRequest request, String name) {

@@ -9,15 +9,20 @@ import DTO.FinancialDocumentRequestDTO;
 import DTO.LaborCalculationRequestDTO;
 import DTO.SignFinancialDocumentRequestDTO;
 import DTO.TaxCalculationRequestDTO;
+import Service.AuthorizationService;
 import Service.FinancialAuditTrailService;
 import Service.FinancialCalculationService;
 import Service.FinancialDocumentWorkflowService;
+import Service.PrivacyGuardService;
+import Service.TenantScopeService;
+import com.Apex.Apex_Gestordemo.security.ApexPermission;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -27,77 +32,171 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Locale;
 
 @RestController
 @RequestMapping("/api/financeiro")
-@CrossOrigin(originPatterns = {"http://localhost:*", "capacitor://localhost", "ionic://localhost", "app://localhost"})
 public class FinancialComplianceController {
 
     private final FinancialCalculationService calculationService;
     private final FinancialDocumentWorkflowService documentWorkflowService;
     private final FinancialAuditTrailService auditTrailService;
+    private final TenantScopeService tenantScopeService;
+    private final AuthorizationService authorizationService;
+    private final PrivacyGuardService privacyGuardService;
 
     public FinancialComplianceController(
             FinancialCalculationService calculationService,
             FinancialDocumentWorkflowService documentWorkflowService,
-            FinancialAuditTrailService auditTrailService
+            FinancialAuditTrailService auditTrailService,
+            TenantScopeService tenantScopeService,
+            AuthorizationService authorizationService
+    ) {
+        this(calculationService, documentWorkflowService, auditTrailService,
+                tenantScopeService, authorizationService, null);
+    }
+
+    @Autowired
+    public FinancialComplianceController(
+            FinancialCalculationService calculationService,
+            FinancialDocumentWorkflowService documentWorkflowService,
+            FinancialAuditTrailService auditTrailService,
+            TenantScopeService tenantScopeService,
+            AuthorizationService authorizationService,
+            PrivacyGuardService privacyGuardService
     ) {
         this.calculationService = calculationService;
         this.documentWorkflowService = documentWorkflowService;
         this.auditTrailService = auditTrailService;
+        this.tenantScopeService = tenantScopeService;
+        this.authorizationService = authorizationService;
+        this.privacyGuardService = privacyGuardService != null ? privacyGuardService : new PrivacyGuardService();
     }
 
     @PostMapping("/calculos/trabalhista")
-    @PreAuthorize("hasAnyRole('ADMIN','ADMINISTRACAO','FINANCEIRO','FINANCAS','GESTOR')")
-    public ResponseEntity<FinancialCalculationResponseDTO> calculateLabor(@Valid @RequestBody LaborCalculationRequestDTO request, Authentication authentication) {
-        return ResponseEntity.ok(calculationService.calculateLabor(request, authentication.getName()));
+    public ResponseEntity<FinancialCalculationResponseDTO> calculateLabor(
+            @Valid @RequestBody LaborCalculationRequestDTO request,
+            Authentication authentication,
+            HttpServletRequest servletRequest) {
+        authorizationService.require(servletRequest, ApexPermission.FINANCE_MANAGE,
+                "Financeiro", "calcular folha trabalhista");
+        return ResponseEntity.ok(calculationService.calculateLabor(request, actor(authentication),
+                tenantScopeService.empresaId(servletRequest), tenantScopeService.filialId(servletRequest)));
     }
 
     @PostMapping("/calculos/tributario")
-    @PreAuthorize("hasAnyRole('ADMIN','ADMINISTRACAO','FINANCEIRO','FINANCAS','GESTOR')")
-    public ResponseEntity<FinancialCalculationResponseDTO> calculateTaxes(@RequestBody TaxCalculationRequestDTO request, Authentication authentication) {
-        return ResponseEntity.ok(calculationService.calculateTaxes(request, authentication.getName()));
+    public ResponseEntity<FinancialCalculationResponseDTO> calculateTaxes(
+            @Valid @RequestBody TaxCalculationRequestDTO request,
+            Authentication authentication,
+            HttpServletRequest servletRequest) {
+        authorizationService.require(servletRequest, ApexPermission.FINANCE_MANAGE,
+                "Financeiro", "calcular tributos");
+        return ResponseEntity.ok(calculationService.calculateTaxes(request, actor(authentication),
+                tenantScopeService.empresaId(servletRequest), tenantScopeService.filialId(servletRequest)));
     }
 
     @PostMapping("/calculos/admcalc")
-    @PreAuthorize("hasAnyRole('ADMIN','ADMINISTRACAO','FINANCEIRO','FINANCAS','GESTOR')")
-    public ResponseEntity<FinancialCalculationResponseDTO> calculateAdmCalc(@RequestBody AdmCalcRequestDTO request, Authentication authentication) {
-        return ResponseEntity.ok(calculationService.calculateAdmCalc(request, authentication.getName()));
+    public ResponseEntity<FinancialCalculationResponseDTO> calculateAdmCalc(
+            @Valid @RequestBody AdmCalcRequestDTO request,
+            Authentication authentication,
+            HttpServletRequest servletRequest) {
+        authorizationService.require(servletRequest, ApexPermission.FINANCE_MANAGE,
+                "Financeiro", "calcular indicadores admcalc");
+        return ResponseEntity.ok(calculationService.calculateAdmCalc(request, actor(authentication),
+                tenantScopeService.empresaId(servletRequest), tenantScopeService.filialId(servletRequest)));
     }
 
     @GetMapping("/calculos")
-    @PreAuthorize("hasAnyRole('ADMIN','ADMINISTRACAO','FINANCEIRO','FINANCAS','GESTOR','AUDITOR')")
-    public List<FinancialCalculationResponseDTO> listCalculations(@RequestParam(defaultValue = "50") int limit) {
-        return calculationService.listRecent(limit);
+    public List<FinancialCalculationResponseDTO> listCalculations(
+            @RequestParam(defaultValue = "50") int limit,
+            HttpServletRequest servletRequest) {
+        authorizationService.require(servletRequest, ApexPermission.FINANCE_VIEW,
+                "Financeiro", "listar calculos financeiros");
+        int boundedLimit = Math.min(Math.max(limit, 1), 200);
+        return calculationService.listRecent(boundedLimit, tenantScopeService.empresaId(servletRequest),
+                tenantScopeService.filialId(servletRequest));
     }
 
     @PostMapping("/documentos")
-    @PreAuthorize("hasAnyRole('ADMIN','ADMINISTRACAO','FINANCEIRO','FINANCAS','GESTOR')")
-    public ResponseEntity<FinancialDocumentDTO> createDocument(@Valid @RequestBody FinancialDocumentRequestDTO request, Authentication authentication) {
-        return new ResponseEntity<>(documentWorkflowService.create(request, authentication), HttpStatus.CREATED);
+    public ResponseEntity<FinancialDocumentDTO> createDocument(
+            @Valid @RequestBody FinancialDocumentRequestDTO request,
+            Authentication authentication,
+            HttpServletRequest servletRequest) {
+        authorizationService.require(servletRequest, ApexPermission.FINANCE_MANAGE,
+                "Financeiro", "criar documento financeiro");
+        return new ResponseEntity<>(documentWorkflowService.create(request, resolvedAuth(authentication),
+                tenantScopeService.empresaId(servletRequest), tenantScopeService.filialId(servletRequest)), HttpStatus.CREATED);
     }
 
     @GetMapping("/documentos")
-    @PreAuthorize("hasAnyRole('ADMIN','ADMINISTRACAO','FINANCEIRO','FINANCAS','GESTOR','AUDITOR','CONTADOR','ADVOGADO')")
-    public List<FinancialDocumentDTO> listDocuments(@RequestParam(defaultValue = "50") int limit) {
-        return documentWorkflowService.listRecent(limit);
+    public List<FinancialDocumentDTO> listDocuments(
+            @RequestParam(defaultValue = "50") int limit,
+            HttpServletRequest servletRequest) {
+        authorizationService.require(servletRequest, ApexPermission.FINANCE_VIEW,
+                "Financeiro", "listar documentos financeiros");
+        int boundedLimit = Math.min(Math.max(limit, 1), 200);
+        boolean revealPii = authorizationService.can(servletRequest, ApexPermission.PERSONAL_DATA_VIEW)
+                && privacyGuardService.canViewSensitiveData(servletRequest);
+        return documentWorkflowService.listRecent(boundedLimit, tenantScopeService.empresaId(servletRequest),
+                tenantScopeService.filialId(servletRequest), revealPii);
     }
 
     @PostMapping("/documentos/{id}/rascunho-email")
-    @PreAuthorize("hasAnyRole('ADMIN','ADMINISTRACAO','FINANCEIRO','FINANCAS','GESTOR')")
-    public ResponseEntity<FinancialDocumentDTO> createEmailDraft(@PathVariable Long id, @Valid @RequestBody EmailDraftRequestDTO request, Authentication authentication) {
-        return ResponseEntity.ok(documentWorkflowService.createDraft(id, request, authentication));
+    public ResponseEntity<FinancialDocumentDTO> createEmailDraft(
+            @PathVariable Long id,
+            @Valid @RequestBody EmailDraftRequestDTO request,
+            Authentication authentication,
+            HttpServletRequest servletRequest) {
+        authorizationService.require(servletRequest, ApexPermission.FINANCE_MANAGE,
+                "Financeiro", "criar rascunho de email financeiro");
+        return ResponseEntity.ok(documentWorkflowService.createDraft(id, request, resolvedAuth(authentication),
+                tenantScopeService.empresaId(servletRequest), tenantScopeService.filialId(servletRequest)));
     }
 
     @PostMapping("/documentos/{id}/assinaturas")
-    @PreAuthorize("hasAnyRole('ADMIN','ADMINISTRACAO','FINANCEIRO','FINANCAS','GESTOR','CONTADOR','ADVOGADO')")
-    public ResponseEntity<FinancialDocumentDTO> signDocument(@PathVariable Long id, @Valid @RequestBody SignFinancialDocumentRequestDTO request, Authentication authentication) {
-        return ResponseEntity.ok(documentWorkflowService.sign(id, request, authentication));
+    public ResponseEntity<FinancialDocumentDTO> signDocument(
+            @PathVariable Long id,
+            @Valid @RequestBody SignFinancialDocumentRequestDTO request,
+            Authentication authentication,
+            HttpServletRequest servletRequest) {
+        Authentication resolved = resolvedAuth(authentication);
+        if (!authorizationService.can(servletRequest, ApexPermission.FINANCE_MANAGE)
+                && !hasComplianceSignerRole(resolved)) {
+            authorizationService.require(servletRequest, ApexPermission.FINANCE_MANAGE,
+                    "Financeiro", "assinar documento financeiro");
+        }
+        return ResponseEntity.ok(documentWorkflowService.sign(id, request, resolved,
+                tenantScopeService.empresaId(servletRequest), tenantScopeService.filialId(servletRequest)));
     }
 
     @GetMapping("/auditoria")
-    @PreAuthorize("hasAnyRole('ADMIN','ADMINISTRACAO','FINANCEIRO','FINANCAS','GESTOR','AUDITOR')")
-    public List<FinancialAuditEventDTO> listAudit(@RequestParam(defaultValue = "100") int limit) {
-        return auditTrailService.listRecent(limit);
+    public List<FinancialAuditEventDTO> listAudit(
+            @RequestParam(defaultValue = "100") int limit,
+            HttpServletRequest servletRequest) {
+        authorizationService.require(servletRequest, ApexPermission.FINANCE_VIEW,
+                "Financeiro", "listar auditoria financeira");
+        authorizationService.require(servletRequest, ApexPermission.AUDIT_LOG_VIEW,
+                "Financeiro", "listar auditoria financeira");
+        int boundedLimit = Math.min(Math.max(limit, 1), 200);
+        return auditTrailService.listRecent(boundedLimit, tenantScopeService.empresaId(servletRequest),
+                tenantScopeService.filialId(servletRequest));
+    }
+
+    private Authentication resolvedAuth(Authentication authentication) {
+        return authentication != null ? authentication : SecurityContextHolder.getContext().getAuthentication();
+    }
+
+    private String actor(Authentication authentication) {
+        Authentication resolved = resolvedAuth(authentication);
+        return resolved == null || resolved.getName() == null ? "anonymous" : resolved.getName();
+    }
+
+    private boolean hasComplianceSignerRole(Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return false;
+        }
+        return authentication.getAuthorities().stream()
+                .map(authority -> authority.getAuthority().toUpperCase(Locale.ROOT))
+                .anyMatch(role -> "ROLE_CONTADOR".equals(role) || "ROLE_ADVOGADO".equals(role));
     }
 }

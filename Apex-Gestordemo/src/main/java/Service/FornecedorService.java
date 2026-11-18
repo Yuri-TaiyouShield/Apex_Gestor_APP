@@ -2,6 +2,7 @@ package Service;
 
 import Model.Fornecedor;
 import Repository.FornecedorRepository;
+import jakarta.persistence.EntityNotFoundException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -61,7 +62,7 @@ public class FornecedorService {
         }
         if (fornecedor.getIdFornecedor() != null
                 && buscarPorId(fornecedor.getIdFornecedor(), empresaAtual, filialAtual).isEmpty()) {
-            throw new RuntimeException("Fornecedor nao encontrado no escopo da empresa/filial.");
+            throw new EntityNotFoundException("Fornecedor nao encontrado no escopo da empresa/filial.");
         }
         fornecedor.setEmpresaId(empresaAtual);
         fornecedor.setFilialId(filialAtual);
@@ -70,13 +71,13 @@ public class FornecedorService {
 
     public Fornecedor desativar(Long id) {
         Fornecedor fornecedor = fornecedorRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Fornecedor nao encontrado"));
+                .orElseThrow(() -> new EntityNotFoundException("Fornecedor nao encontrado"));
         return desativar(fornecedor, fornecedor.getEmpresaId(), fornecedor.getFilialId());
     }
 
     public Fornecedor desativar(Long id, Long empresaId, Long filialId) {
         Fornecedor fornecedor = buscarPorId(id, empresaId, filialId)
-                .orElseThrow(() -> new RuntimeException("Fornecedor nao encontrado"));
+                .orElseThrow(() -> new EntityNotFoundException("Fornecedor nao encontrado"));
         return desativar(fornecedor, empresaId, filialId);
     }
 

@@ -45,12 +45,10 @@ public class AuditLog {
     @Column(name = "entidade_id")
     private Long entidadeId;
 
-    @Lob
-    @Column(name = "valor_anterior")
+    @Column(name = "valor_anterior", columnDefinition = "TEXT")
     private String valorAnterior;
 
-    @Lob
-    @Column(name = "valor_novo")
+    @Column(name = "valor_novo", columnDefinition = "TEXT")
     private String valorNovo;
 
     @Column(length = 45)

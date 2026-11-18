@@ -53,6 +53,15 @@ public class AuthorizationService {
                 ApexPermission.FINANCE_VIEW,
                 ApexPermission.FINANCE_MANAGE,
                 ApexPermission.FINANCE_CHANGE,
+                ApexPermission.FINANCE_DRE_VIEW,
+                ApexPermission.FINANCE_CASHFLOW_VIEW,
+                ApexPermission.FINANCE_CLASSIFICATION_MANAGE,
+                ApexPermission.PAYABLE_SETTLE,
+                ApexPermission.RECEIVABLE_SETTLE,
+                ApexPermission.PRICING_MANAGE,
+                ApexPermission.BUDGET_MANAGE,
+                ApexPermission.REPORT_EXPORT,
+                ApexPermission.FINANCIAL_INTELLIGENCE_VIEW,
                 ApexPermission.PAYMENT_CONDITION_VIEW,
                 ApexPermission.PAYMENT_CONDITION_MANAGE,
                 ApexPermission.SETTINGS_PERSONAL_MANAGE,
@@ -91,14 +100,91 @@ public class AuthorizationService {
                 ApexPermission.STOCK_VIEW,
                 ApexPermission.STOCK_CHANGE,
                 ApexPermission.SALE_HISTORY_VIEW,
+                ApexPermission.CASHIER_VIEW,
                 ApexPermission.FINANCE_VIEW,
                 ApexPermission.FINANCE_MANAGE,
                 ApexPermission.FINANCE_CHANGE,
+                ApexPermission.FINANCE_DRE_VIEW,
+                ApexPermission.FINANCE_CASHFLOW_VIEW,
+                ApexPermission.FINANCE_CLASSIFICATION_MANAGE,
+                ApexPermission.PAYABLE_SETTLE,
+                ApexPermission.RECEIVABLE_SETTLE,
+                ApexPermission.PRICING_MANAGE,
+                ApexPermission.BUDGET_MANAGE,
+                ApexPermission.REPORT_EXPORT,
+                ApexPermission.FINANCIAL_INTELLIGENCE_VIEW,
                 ApexPermission.PAYMENT_CONDITION_VIEW,
                 ApexPermission.PAYMENT_CONDITION_MANAGE,
                 ApexPermission.PERSONAL_DATA_VIEW,
                 ApexPermission.AUDIT_LOG_VIEW,
                 ApexPermission.SETTINGS_PERSONAL_MANAGE));
+        ROLE_PERMISSIONS.put(Role.AUDITOR, EnumSet.of(
+                ApexPermission.FINANCE_VIEW,
+                ApexPermission.FINANCE_DRE_VIEW,
+                ApexPermission.FINANCE_CASHFLOW_VIEW,
+                ApexPermission.FINANCIAL_INTELLIGENCE_VIEW,
+                ApexPermission.AUDIT_LOG_VIEW,
+                ApexPermission.SALE_HISTORY_VIEW,
+                ApexPermission.PRODUCT_VIEW,
+                ApexPermission.STOCK_VIEW,
+                ApexPermission.SUPPLIER_VIEW,
+                ApexPermission.CUSTOMER_VIEW,
+                ApexPermission.PAYMENT_CONDITION_VIEW,
+                ApexPermission.CASHIER_VIEW,
+                ApexPermission.PERSONAL_DATA_VIEW));
+        ROLE_PERMISSIONS.put(Role.CONTADOR, EnumSet.of(
+                ApexPermission.PRODUCT_VIEW,
+                ApexPermission.SUPPLIER_VIEW,
+                ApexPermission.CUSTOMER_VIEW,
+                ApexPermission.STOCK_VIEW,
+                ApexPermission.SALE_HISTORY_VIEW,
+                ApexPermission.PAYMENT_CONDITION_VIEW,
+                ApexPermission.CASHIER_VIEW,
+                ApexPermission.PERSONAL_DATA_VIEW,
+                ApexPermission.FINANCE_VIEW,
+                ApexPermission.FINANCE_DRE_VIEW,
+                ApexPermission.FINANCE_CASHFLOW_VIEW,
+                ApexPermission.FINANCE_CLASSIFICATION_MANAGE,
+                ApexPermission.FINANCIAL_INTELLIGENCE_VIEW,
+                ApexPermission.REPORT_EXPORT,
+                ApexPermission.SETTINGS_PERSONAL_MANAGE));
+        ROLE_PERMISSIONS.put(Role.ADVOGADO, EnumSet.of(
+                ApexPermission.FINANCE_VIEW,
+                ApexPermission.PERSONAL_DATA_VIEW,
+                ApexPermission.SETTINGS_PERSONAL_MANAGE));
+        ROLE_PERMISSIONS.put(Role.SUPERVISOR, EnumSet.of(
+                ApexPermission.PRODUCT_VIEW,
+                ApexPermission.PRODUCT_CREATE,
+                ApexPermission.PRODUCT_UPDATE,
+                ApexPermission.CUSTOMER_VIEW,
+                ApexPermission.CUSTOMER_CREATE,
+                ApexPermission.CUSTOMER_UPDATE,
+                ApexPermission.SUPPLIER_VIEW,
+                ApexPermission.STOCK_VIEW,
+                ApexPermission.STOCK_ADJUST,
+                ApexPermission.STOCK_CHANGE,
+                ApexPermission.STOCK_TRANSFER,
+                ApexPermission.SALE_CREATE,
+                ApexPermission.SALE_RECEIVE,
+                ApexPermission.SALE_HISTORY_VIEW,
+                ApexPermission.SALE_RETURN,
+                ApexPermission.SALE_CANCEL,
+                ApexPermission.SALE_DISCOUNT_APPLY,
+                ApexPermission.DISCOUNT_APPROVE,
+                ApexPermission.CASHIER_VIEW,
+                ApexPermission.PAYMENT_CONDITION_VIEW,
+                ApexPermission.SETTINGS_PERSONAL_MANAGE));
+        ROLE_PERMISSIONS.put(Role.DESPACHANTE, EnumSet.of(
+                ApexPermission.STOCK_VIEW,
+                ApexPermission.STOCK_CHANGE,
+                ApexPermission.PRODUCT_VIEW,
+                ApexPermission.SUPPLIER_VIEW));
+        ROLE_PERMISSIONS.put(Role.ESTOQUISTA, EnumSet.of(
+                ApexPermission.PRODUCT_VIEW,
+                ApexPermission.STOCK_VIEW,
+                ApexPermission.STOCK_ADJUST,
+                ApexPermission.STOCK_CHANGE,
+                ApexPermission.STOCK_TRANSFER));
         ROLE_PERMISSIONS.put(Role.CLIENTE, EnumSet.of(ApexPermission.SETTINGS_PERSONAL_MANAGE));
         ROLE_PERMISSIONS.put(Role.PUBLICO, EnumSet.noneOf(ApexPermission.class));
     }
@@ -145,14 +231,23 @@ public class AuthorizationService {
     }
 
     private Role resolve(String role) {
+        if (role == null) {
+            return Role.PUBLICO;
+        }
         return switch (role) {
             case "ROLE_SYSADMIN" -> Role.SYSADMIN;
             case "ROLE_DONO_GERENTE", "ROLE_DONO" -> Role.DONO;
-            case "ROLE_ADMIN", "ROLE_ADMIN_MASTER", "ROLE_GERENTE", "ROLE_GESTOR", "ROLE_SUPERVISOR" -> Role.GERENTE;
+            case "ROLE_ADMIN", "ROLE_ADMIN_MASTER", "ROLE_ADMINISTRACAO", "ROLE_GERENTE", "ROLE_GESTOR" -> Role.GERENTE;
+            case "ROLE_SUPERVISOR" -> Role.SUPERVISOR;
             case "ROLE_CAIXA" -> Role.CAIXA;
             case "ROLE_VENDEDOR" -> Role.VENDEDOR;
-            case "ROLE_FINANCEIRO", "ROLE_CONTADOR", "ROLE_AUDITOR" -> Role.FINANCEIRO;
-            case "ROLE_CLIENTE_B2C" -> Role.CLIENTE;
+            case "ROLE_FINANCEIRO", "ROLE_FINANCAS" -> Role.FINANCEIRO;
+            case "ROLE_AUDITOR" -> Role.AUDITOR;
+            case "ROLE_CONTADOR" -> Role.CONTADOR;
+            case "ROLE_ADVOGADO" -> Role.ADVOGADO;
+            case "ROLE_DESPACHANTE" -> Role.DESPACHANTE;
+            case "ROLE_ESTOQUISTA" -> Role.ESTOQUISTA;
+            case "ROLE_CLIENTE_B2C", "ROLE_CLIENTE" -> Role.CLIENTE;
             default -> Role.PUBLICO;
         };
     }
@@ -161,9 +256,15 @@ public class AuthorizationService {
         SYSADMIN,
         DONO,
         GERENTE,
+        SUPERVISOR,
         CAIXA,
         VENDEDOR,
         FINANCEIRO,
+        AUDITOR,
+        CONTADOR,
+        ADVOGADO,
+        DESPACHANTE,
+        ESTOQUISTA,
         CLIENTE,
         PUBLICO
     }

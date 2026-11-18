@@ -4,26 +4,24 @@ import Model.GrupoProduto;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 @Repository
 public interface GrupoProdutoRepository extends JpaRepository<GrupoProduto, Long> {
 
-    @Query("""
-            select g from GrupoProduto g
-            where (g.empresaId = :empresaId and g.filialId = :filialId)
-               or g.empresaId is null
-            order by g.nome asc
-            """)
-    List<GrupoProduto> findVisibleToTenant(@Param("empresaId") Long empresaId, @Param("filialId") Long filialId);
+    List<GrupoProduto> findByEmpresaIdAndFilialIdOrderByNomeAsc(Long empresaId, Long filialId);
+    List<GrupoProduto> findByEmpresaIdIsNullOrderByNomeAsc();
+    Optional<GrupoProduto> findByIdGrupoProdutoAndEmpresaIdAndFilialId(Long id, Long empresaId, Long filialId);
+    Optional<GrupoProduto> findByIdGrupoProdutoAndEmpresaIdIsNull(Long id);
 
-    @Query("""
-            select g from GrupoProduto g
-            where g.idGrupoProduto = :id
-              and ((g.empresaId = :empresaId and g.filialId = :filialId) or g.empresaId is null)
-            """)
-    Optional<GrupoProduto> findVisibleById(@Param("id") Long id, @Param("empresaId") Long empresaId,
-            @Param("filialId") Long filialId);
+    default List<GrupoProduto> findVisibleToTenant(Long empresaId, Long filialId) {
+        List<GrupoProduto> result = new java.util.ArrayList<>(findByEmpresaIdAndFilialIdOrderByNomeAsc(empresaId, filialId));
+        result.addAll(findByEmpresaIdIsNullOrderByNomeAsc());
+        return result;
+    }
+
+    default Optional<GrupoProduto> findVisibleById(Long id, Long empresaId, Long filialId) {
+        return findByIdGrupoProdutoAndEmpresaIdAndFilialId(id, empresaId, filialId)
+                .or(() -> findByIdGrupoProdutoAndEmpresaIdIsNull(id));
+    }
 }

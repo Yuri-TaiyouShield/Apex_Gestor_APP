@@ -24,6 +24,9 @@ public class CaixaSessao {
     @Column(name = "filial_id")
     private Long filialId;
 
+    @Column(name = "caixa_aberto_unico")
+    private Integer caixaAbertoUnico;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 16)
     private CaixaStatus status;
@@ -54,4 +57,8 @@ public class CaixaSessao {
 
     @Column(name = "fechado_em")
     private LocalDateTime fechadoEm;
+
+    @Version
+    @Column(nullable = false)
+    private Long version;
 }

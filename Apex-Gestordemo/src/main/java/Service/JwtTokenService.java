@@ -27,7 +27,18 @@ public class JwtTokenService {
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final byte[] secret;
 
-    public JwtTokenService(@Value("${apex.jwt.secret:apex-dev-secret-change-me}") String secret) {
+    @Value("${apex.jwt.issuer:apex-gestor}")
+    private String issuer = "apex-gestor";
+
+    @Value("${apex.jwt.audience:apex-api}")
+    private String audience = "apex-api";
+
+    public JwtTokenService(@Value("${apex.jwt.secret}") String secret) {
+        if (secret == null || secret.isBlank() || secret.length() < 32
+                || secret.chars().anyMatch(Character::isWhitespace)) {
+            throw new IllegalStateException(
+                    "apex.jwt.secret deve existir, ter ao menos 32 caracteres e nao conter espacos.");
+        }
         this.secret = secret.getBytes(StandardCharsets.UTF_8);
     }
 
@@ -47,6 +58,8 @@ public class JwtTokenService {
         payload.put("roles", roles);
         payload.put("empresaId", empresaId);
         payload.put("filialId", filialId);
+        payload.put("iss", issuer);
+        payload.put("aud", audience);
         payload.put("iat", now.getEpochSecond());
         payload.put("exp", now.plus(ttl).getEpochSecond());
         payload.put("sid", java.util.UUID.randomUUID().toString());
@@ -66,10 +79,20 @@ public class JwtTokenService {
         if (!constantTimeEquals(expected, parts[2])) {
             throw new IllegalArgumentException("Assinatura JWT invalida.");
         }
+        Map<String, Object> header = readJson(parts[0]);
+        if (!"HS256".equals(header.get("alg")) || !"JWT".equals(header.get("typ"))) {
+            throw new IllegalArgumentException("Algoritmo JWT nao permitido.");
+        }
         Map<String, Object> payload = readJson(parts[1]);
         long exp = number(payload.get("exp"));
+        long iat = number(payload.get("iat"));
         if (exp <= Instant.now().getEpochSecond()) {
             throw new IllegalArgumentException("Token expirado.");
+        }
+        if (iat <= 0 || iat > Instant.now().plusSeconds(60).getEpochSecond()
+                || !issuer.equals(string(payload.get("iss")))
+                || !audience.equals(string(payload.get("aud")))) {
+            throw new IllegalArgumentException("Claims JWT invalidas.");
         }
         return new JwtClaims(
                 string(payload.get("login")),
@@ -95,7 +118,8 @@ public class JwtTokenService {
                 .replaceAll("\\p{M}", "")
                 .replaceAll("[^A-Za-z0-9]", "_")
                 .toUpperCase(Locale.ROOT);
-        return List.of(normalized.isBlank() ? "VENDEDOR" : normalized);
+        String role = normalized.isBlank() ? "VENDEDOR" : normalized;
+        return List.of(role.startsWith("ROLE_") ? role : "ROLE_" + role);
     }
 
     private String sign(Map<String, Object> payload) {

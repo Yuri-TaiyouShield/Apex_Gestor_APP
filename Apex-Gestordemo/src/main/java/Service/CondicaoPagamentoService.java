@@ -4,6 +4,7 @@ import DTO.CondicaoPagamentoRequestDTO;
 import DTO.CondicaoPagamentoResponseDTO;
 import Model.CondicaoPagamento;
 import Repository.CondicaoPagamentoRepository;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,7 +16,7 @@ public class CondicaoPagamentoService {
     @Autowired
     private CondicaoPagamentoRepository repository;
     @Autowired
-    private PrivacyGuardService privacyGuardService;
+    private TenantScopeService tenantScopeService;
     @Autowired
     private AuditTrailService auditTrailService;
 
@@ -36,9 +37,9 @@ public class CondicaoPagamentoService {
 
     public CondicaoPagamentoResponseDTO atualizar(Long id, CondicaoPagamentoRequestDTO requestBody,
             HttpServletRequest request) {
-        CondicaoPagamento existente = repository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Condicao de pagamento nao encontrada."));
-        validarEscopo(existente, request);
+        CondicaoPagamento existente = repository
+                .findByIdCondicaoPagamentoAndEmpresaIdAndFilialId(id, empresaId(request), filialId(request))
+                .orElseThrow(() -> new EntityNotFoundException("Condicao de pagamento nao encontrada."));
         String anterior = resumo(existente);
         CondicaoPagamento salva = repository.save(toEntity(requestBody, existente, request));
         auditTrailService.registrarPrivacidade("CONDICAO_PAGAMENTO_ATUALIZADA", "CondicaoPagamento",
@@ -48,9 +49,9 @@ public class CondicaoPagamentoService {
     }
 
     public CondicaoPagamentoResponseDTO inativar(Long id, HttpServletRequest request) {
-        CondicaoPagamento existente = repository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Condicao de pagamento nao encontrada."));
-        validarEscopo(existente, request);
+        CondicaoPagamento existente = repository
+                .findByIdCondicaoPagamentoAndEmpresaIdAndFilialId(id, empresaId(request), filialId(request))
+                .orElseThrow(() -> new EntityNotFoundException("Condicao de pagamento nao encontrada."));
         String anterior = resumo(existente);
         existente.setStatus(0);
         CondicaoPagamento salva = repository.save(existente);
@@ -98,13 +99,11 @@ public class CondicaoPagamentoService {
     }
 
     private Long empresaId(HttpServletRequest request) {
-        Long value = privacyGuardService.currentEmpresaId(request);
-        return value == null ? 1L : value;
+        return tenantScopeService.empresaId(request);
     }
 
     private Long filialId(HttpServletRequest request) {
-        Long value = privacyGuardService.currentFilialId(request);
-        return value == null ? 1L : value;
+        return tenantScopeService.filialId(request);
     }
 
     private String resumo(CondicaoPagamento condicao) {

@@ -1,6 +1,7 @@
 package com.Apex.Apex_Gestordemo;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import Service.JwtTokenService;
 import Service.PrivacyGuardService;
@@ -11,6 +12,14 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.test.util.ReflectionTestUtils;
 
 class JwtTokenServiceTests {
+
+    @Test
+    void rejeitaSecretJwtAusenteOuPrevisivel() {
+        assertThatThrownBy(() -> new JwtTokenService("apex-dev-secret-change-me"))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> new JwtTokenService("curto"))
+                .isInstanceOf(IllegalStateException.class);
+    }
 
     @Test
     void emiteJwtAssinadoComClaimsOperacionais() {
@@ -45,6 +54,6 @@ class JwtTokenServiceTests {
     }
 
     private JwtTokenService tokenService() {
-        return new JwtTokenService("unit-test-secret");
+        return new JwtTokenService("unit-test-jwt-secret-with-32-chars");
     }
 }

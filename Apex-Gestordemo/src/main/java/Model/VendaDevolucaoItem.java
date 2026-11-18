@@ -23,4 +23,6 @@ public class VendaDevolucaoItem {
     private Integer quantidade;
     @Column(name = "valor_unitario", nullable = false, precision = 12, scale = 2)
     private BigDecimal valorUnitario;
+    @Column(name = "custo_unitario", precision = 15, scale = 4)
+    private BigDecimal custoUnitario;
 }

@@ -2,6 +2,7 @@ package Service;
 
 import Model.Endereco;
 import Repository.EnderecoRepository;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.util.List;
@@ -27,7 +28,7 @@ public class EnderecoService {
 
     public void deletar(Long id) {
         if (!enderecoRepository.existsById(id)) {
-            throw new RuntimeException("Endereço não encontrado");
+            throw new EntityNotFoundException("Endereço não encontrado");
         }
         enderecoRepository.deleteById(id);
     }

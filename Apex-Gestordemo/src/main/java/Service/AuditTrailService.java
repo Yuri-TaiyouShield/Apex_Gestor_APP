@@ -14,14 +14,16 @@ public class AuditTrailService {
     private AuditLogRepository auditLogRepository;
     @Autowired
     private PrivacyGuardService privacyGuardService;
+    @Autowired(required = false)
+    private DataProtectionService dataProtectionService;
 
     public AuditLog registrarSistema(String acao, String entidade, Long entidadeId, String valorAnterior, String valorNovo) {
         AuditLog log = new AuditLog();
         log.setAcao(acao);
         log.setEntidade(entidade);
         log.setEntidadeId(entidadeId);
-        log.setValorAnterior(valorAnterior);
-        log.setValorNovo(valorNovo);
+        log.setValorAnterior(maskText(valorAnterior, 0));
+        log.setValorNovo(maskText(valorNovo, 0));
         log.setIp("system");
         log.setDispositivo("backend");
         return auditLogRepository.save(log);
@@ -45,12 +47,12 @@ public class AuditTrailService {
         log.setAcao(acao);
         log.setEntidade(entidade);
         log.setEntidadeId(entidadeId);
-        log.setValorAnterior(valorAnterior);
-        log.setValorNovo(valorNovo);
+        log.setValorAnterior(maskText(valorAnterior, 0));
+        log.setValorNovo(maskText(valorNovo, 0));
         log.setIp(resolveIp(request));
         log.setDispositivo(resolveUserAgent(request));
         log.setTraceId(resolveTraceId(request));
-        log.setJustificativa(justificativa);
+        log.setJustificativa(maskText(justificativa, 255));
         return auditLogRepository.save(log);
     }
 
@@ -58,11 +60,18 @@ public class AuditTrailService {
         if (request == null) {
             return "system";
         }
-        String forwardedFor = request.getHeader("X-Forwarded-For");
-        if (forwardedFor != null && !forwardedFor.isBlank()) {
-            return forwardedFor.split(",")[0].trim();
-        }
         return request.getRemoteAddr();
+    }
+
+    private String maskText(String value, int maxLen) {
+        if (value == null) {
+            return null;
+        }
+        String masked = dataProtectionService != null ? dataProtectionService.maskSensitiveText(value) : value;
+        if (maxLen > 0 && masked.length() > maxLen) {
+            return masked.substring(0, maxLen);
+        }
+        return masked;
     }
 
     private String resolveUserAgent(HttpServletRequest request) {

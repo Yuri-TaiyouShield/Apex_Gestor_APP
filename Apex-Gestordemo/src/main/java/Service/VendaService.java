@@ -6,6 +6,7 @@ import Model.*;
 import Repository.*;
 import jakarta.servlet.http.HttpServletRequest;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -14,10 +15,15 @@ import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 import java.text.Normalizer;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class VendaService {
@@ -80,8 +86,28 @@ public class VendaService {
 
     @Transactional
     public Venda realizarVenda(Venda venda, Long empresaId, Long filialId, HttpServletRequest request) {
+        return realizarVenda(venda, empresaId, filialId, request, null);
+    }
+
+    @Transactional
+    public Venda realizarVenda(Venda venda, Long empresaId, Long filialId, HttpServletRequest request,
+            String idempotencyKey) {
         if (empresaId == null || filialId == null) {
             throw new IllegalArgumentException("Empresa e filial ativas sao obrigatorias.");
+        }
+        String normalizedIdempotencyKey = normalizeIdempotencyKey(idempotencyKey);
+        String payloadHash = salePayloadHash(venda);
+        if (normalizedIdempotencyKey != null) {
+            Optional<Venda> previous = vendaRepository.findByIdempotencyKeyAndEmpresaIdAndFilialId(
+                    normalizedIdempotencyKey, empresaId, filialId);
+            if (previous.isPresent()) {
+                if (!payloadHash.equals(previous.get().getIdempotencyPayloadHash())) {
+                    throw new ResponseStatusException(HttpStatus.CONFLICT,
+                            "Idempotency-Key ja utilizada com outro payload.");
+                }
+                initialize(previous.get());
+                return previous.get();
+            }
         }
         if (venda.getItens() == null || venda.getItens().isEmpty()) {
             throw new IllegalArgumentException("Venda sem itens.");
@@ -100,11 +126,9 @@ public class VendaService {
                 venda.getUsuario().getIdUsuario(), empresaId, filialId)
                 .orElseThrow(() -> new IllegalArgumentException("Vendedor nao encontrado no escopo da empresa/filial."));
         if (venda.getCondicaoPagamentoId() != null) {
-            CondicaoPagamento condicao = condicaoPagamentoRepository.findById(venda.getCondicaoPagamentoId())
+            CondicaoPagamento condicao = condicaoPagamentoRepository
+                    .findByIdCondicaoPagamentoAndEmpresaIdAndFilialId(venda.getCondicaoPagamentoId(), empresaId, filialId)
                     .orElseThrow(() -> new IllegalArgumentException("Condicao de pagamento nao encontrada."));
-            if (!empresaId.equals(condicao.getEmpresaId()) || !filialId.equals(condicao.getFilialId())) {
-                throw new IllegalArgumentException("Condicao de pagamento pertence a outro tenant.");
-            }
         }
 
         List<ProdutoVenda> itensRecebidos = new ArrayList<>(venda.getItens());
@@ -114,11 +138,16 @@ public class VendaService {
         venda.setUsuario(vendedor);
         venda.setEmpresaId(empresaId);
         venda.setFilialId(filialId);
-        venda.setDataVenda(LocalDateTime.now());
+        LocalDateTime agoraVenda = LocalDateTime.now();
+        venda.setDataVenda(agoraVenda);
+        venda.setDataEmissao(agoraVenda.toLocalDate());
+        venda.setDataCompetencia(agoraVenda.toLocalDate());
         venda.setEnviadoCaixaEm(LocalDateTime.now());
         venda.setStatus(1);
         venda.setStatusOperacional(VendaStatus.AGUARDANDO_CAIXA);
         venda.setEstoqueMovimentado(false);
+        venda.setIdempotencyKey(normalizedIdempotencyKey);
+        venda.setIdempotencyPayloadHash(normalizedIdempotencyKey == null ? null : payloadHash);
         venda.setDesconto(nvl(venda.getDesconto()));
         // A venda precisa existir para compor as chaves dos itens, mas valor_total e obrigatorio no schema.
         venda.setValorTotal(BigDecimal.ZERO);
@@ -176,7 +205,34 @@ public class VendaService {
     @Transactional
     public Venda receberNoCaixa(Long id, RecebimentoVendaRequestDTO body,
             Long empresaId, Long filialId, HttpServletRequest request) {
+        return receberNoCaixa(id, body, empresaId, filialId, request, null);
+    }
+
+    @Transactional
+    public Venda receberNoCaixa(Long id, RecebimentoVendaRequestDTO body,
+            Long empresaId, Long filialId, HttpServletRequest request, String idempotencyKey) {
         Venda venda = getScoped(id, empresaId, filialId);
+        String normalizedIdempotencyKey = normalizeIdempotencyKey(idempotencyKey);
+        String payloadHash = paymentPayloadHash(body);
+        if (normalizedIdempotencyKey != null) {
+            Optional<Venda> previous = vendaRepository.findByRecebimentoIdempotencyKeyAndEmpresaIdAndFilialId(
+                    normalizedIdempotencyKey, empresaId, filialId);
+            if (previous.isPresent() && !previous.get().getIdVenda().equals(id)) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT,
+                        "Idempotency-Key ja utilizada em outra finalizacao.");
+            }
+            if (normalizedIdempotencyKey.equals(venda.getRecebimentoIdempotencyKey())) {
+                if (!payloadHash.equals(venda.getRecebimentoIdempotencyPayloadHash())) {
+                    throw new ResponseStatusException(HttpStatus.CONFLICT,
+                            "Idempotency-Key ja utilizada com outro payload.");
+                }
+                if (venda.getStatusOperacional() == VendaStatus.FINALIZADA) {
+                    return venda;
+                }
+            }
+            venda.setRecebimentoIdempotencyKey(normalizedIdempotencyKey);
+            venda.setRecebimentoIdempotencyPayloadHash(payloadHash);
+        }
         if (venda.getStatusOperacional() != VendaStatus.AGUARDANDO_CAIXA) {
             throw new IllegalArgumentException("Venda nao esta aguardando caixa.");
         }
@@ -243,7 +299,12 @@ public class VendaService {
         caixaService.registrarVenda(venda.getValorTotal(), venda.getIdVenda(), request);
         financeiroOperacionalService.registrarVendaFinalizada(venda, request);
         transicionar(venda, VendaStatus.PAGA, "PAGAMENTO_CONFIRMADO", null, request);
-        venda.setFinalizadoEm(LocalDateTime.now());
+        LocalDateTime finalizadoAgora = LocalDateTime.now();
+        venda.setFinalizadoEm(finalizadoAgora);
+        if (venda.getDataEmissao() == null) {
+            venda.setDataEmissao(finalizadoAgora.toLocalDate());
+        }
+        venda.setDataCompetencia(finalizadoAgora.toLocalDate());
         venda.setEstoqueMovimentado(true);
         transicionar(venda, VendaStatus.FINALIZADA, "VENDA_FINALIZADA", null, request);
         Venda finalizada = vendaRepository.save(venda);
@@ -301,7 +362,32 @@ public class VendaService {
     @Transactional
     public VendaDevolucao registrarDevolucao(Long vendaId, VendaDevolucaoRequestDTO body,
             Long empresaId, Long filialId, HttpServletRequest request) {
+        return registrarDevolucao(vendaId, body, empresaId, filialId, request, null);
+    }
+
+    @Transactional
+    public VendaDevolucao registrarDevolucao(Long vendaId, VendaDevolucaoRequestDTO body,
+            Long empresaId, Long filialId, HttpServletRequest request, String idempotencyKey) {
+        validateDevolucaoBody(body);
+        String normalizedIdempotencyKey = normalizeIdempotencyKey(idempotencyKey);
+        String payloadHash = devolucaoPayloadHash(vendaId, body);
+        // O lock pessimista da venda deve ser adquirido antes do lookup da chave.
+        // Assim, dois replays concorrentes se serializam na mesma venda e o segundo
+        // enxerga o registro persistido pelo primeiro.
         Venda venda = getScoped(vendaId, empresaId, filialId);
+        if (normalizedIdempotencyKey != null) {
+            Optional<VendaDevolucao> previous = vendaDevolucaoRepository
+                    .findByIdempotencyKeyAndEmpresaIdAndFilialId(normalizedIdempotencyKey, empresaId, filialId);
+            if (previous.isPresent()) {
+                if (!java.util.Objects.equals(vendaId, previous.get().getVendaOriginalId())
+                        || !payloadHash.equals(previous.get().getIdempotencyPayloadHash())) {
+                    throw new ResponseStatusException(HttpStatus.CONFLICT,
+                            "Idempotency-Key ja utilizada com outro payload.");
+                }
+                Hibernate.initialize(previous.get().getItens());
+                return previous.get();
+            }
+        }
         if (!List.of(VendaStatus.FINALIZADA, VendaStatus.TROCA_PARCIAL).contains(venda.getStatusOperacional())) {
             throw new IllegalArgumentException("Somente venda finalizada pode ser trocada ou devolvida.");
         }
@@ -316,11 +402,23 @@ public class VendaService {
         devolucao.setVendaOriginalId(vendaId);
         devolucao.setEmpresaId(empresaId);
         devolucao.setFilialId(filialId);
+        devolucao.setIdempotencyKey(normalizedIdempotencyKey);
+        devolucao.setIdempotencyPayloadHash(normalizedIdempotencyKey == null ? null : payloadHash);
         devolucao.setTipo(tipo);
         devolucao.setMotivo(motivo);
         devolucao.setCriadoPor(privacyGuardService.currentUserLogin(request));
         devolucao.setCriadoEm(LocalDateTime.now());
         devolucao.setValorAjuste(BigDecimal.ZERO);
+
+        Set<Long> produtosNaRequisicao = new HashSet<>();
+        for (VendaDevolucaoRequestDTO.ItemDTO itemBody : body.itens()) {
+            if (!produtosNaRequisicao.add(itemBody.produtoOriginalId())) {
+                throw new IllegalArgumentException(
+                        "Cada produto original deve aparecer uma unica vez na devolucao.");
+            }
+        }
+        List<VendaDevolucao> devolucoesExistentes = vendaDevolucaoRepository
+                .findByVendaOriginalIdAndEmpresaIdAndFilialIdOrderByCriadoEmDesc(vendaId, empresaId, filialId);
 
         int totalVendido = venda.getItens().stream().mapToInt(ProdutoVenda::getQuantidade).sum();
         int totalOperado = 0;
@@ -328,8 +426,7 @@ public class VendaService {
             ProdutoVenda itemVenda = venda.getItens().stream()
                     .filter(item -> item.getProduto().getIdProduto().equals(itemBody.produtoOriginalId()))
                     .findFirst().orElseThrow(() -> new IllegalArgumentException("Produto nao pertence a venda original."));
-            int jaDevolvido = vendaDevolucaoRepository
-                    .findByVendaOriginalIdAndEmpresaIdAndFilialIdOrderByCriadoEmDesc(vendaId, empresaId, filialId)
+            int jaDevolvido = devolucoesExistentes
                     .stream().flatMap(d -> d.getItens().stream())
                     .filter(i -> i.getProdutoOriginalId().equals(itemBody.produtoOriginalId()))
                     .mapToInt(VendaDevolucaoItem::getQuantidade).sum();
@@ -357,6 +454,7 @@ public class VendaService {
             item.setProdutoNovoId(itemBody.produtoNovoId());
             item.setQuantidade(itemBody.quantidade());
             item.setValorUnitario(itemVenda.getPrecoUnitario());
+            item.setCustoUnitario(itemVenda.getCustoUnitario() != null ? itemVenda.getCustoUnitario() : original.getCusto());
             devolucao.getItens().add(item);
             devolucao.setValorAjuste(devolucao.getValorAjuste().add(
                     itemVenda.getPrecoUnitario().multiply(BigDecimal.valueOf(itemBody.quantidade()))));
@@ -370,7 +468,10 @@ public class VendaService {
         venda.setMotivoDevolucao(motivo);
         transicionar(venda, novoStatus, tipo == TipoDevolucao.TROCA ? "TROCA_REGISTRADA" : "DEVOLUCAO_REGISTRADA",
                 motivo, request);
-        financeiroOperacionalService.ajustarPorDevolucao(venda, devolucao.getValorAjuste(), totalOperado == totalVendido);
+        if (tipo != TipoDevolucao.TROCA) {
+            financeiroOperacionalService.ajustarPorDevolucao(
+                    venda, devolucao.getValorAjuste(), totalOperado == totalVendido, false);
+        }
         if (tipo != TipoDevolucao.TROCA) {
             creditoClienteService.gerarPorDevolucao(venda, salva, request);
         }
@@ -497,6 +598,80 @@ public class VendaService {
     private String normalized(String value) {
         return Normalizer.normalize(value == null ? "" : value, Normalizer.Form.NFD)
                 .replaceAll("\\p{M}", "").toLowerCase(Locale.ROOT);
+    }
+
+    private String normalizeIdempotencyKey(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        String normalized = value.trim();
+        if (normalized.length() > 128) {
+            throw new IllegalArgumentException("Idempotency-Key excede 128 caracteres.");
+        }
+        return normalized;
+    }
+
+    private void validateDevolucaoBody(VendaDevolucaoRequestDTO body) {
+        if (body == null || body.itens() == null || body.itens().isEmpty()) {
+            throw new IllegalArgumentException("A devolucao deve conter ao menos um item.");
+        }
+        for (VendaDevolucaoRequestDTO.ItemDTO item : body.itens()) {
+            if (item == null || item.produtoOriginalId() == null
+                    || item.quantidade() == null || item.quantidade() < 1) {
+                throw new IllegalArgumentException(
+                        "Cada item da devolucao exige produto original e quantidade positiva.");
+            }
+        }
+    }
+
+    private String salePayloadHash(Venda venda) {
+        StringBuilder payload = new StringBuilder()
+                .append(venda.getCliente() == null ? null : venda.getCliente().getIdCliente()).append('|')
+                .append(venda.getUsuario() == null ? null : venda.getUsuario().getIdUsuario()).append('|')
+                .append(venda.getDesconto()).append('|').append(venda.getObservacao()).append('|')
+                .append(venda.getCaixaSessaoId()).append('|').append(venda.getCondicaoPagamentoId());
+        if (venda.getItens() != null) {
+            venda.getItens().forEach(item -> payload.append('|')
+                    .append(item.getProduto() == null ? null : item.getProduto().getIdProduto())
+                    .append(':').append(item.getQuantidade()));
+        }
+        if (venda.getPagamentos() != null) {
+            venda.getPagamentos().forEach(item -> payload.append('|')
+                    .append(item.getFormaPagamento() == null ? null : item.getFormaPagamento().getIdFormaPagamento())
+                    .append(':').append(item.getValorPago()).append(':').append(item.getNumeroParcelas()));
+        }
+        return sha256(payload.toString());
+    }
+
+    private String paymentPayloadHash(RecebimentoVendaRequestDTO body) {
+        StringBuilder payload = new StringBuilder();
+        pagamentosSolicitados(body).forEach(item -> payload.append(item.formaPagamentoId()).append(':')
+                .append(item.valor()).append(':').append(item.numeroParcelas()).append(':').append(item.creditoId()).append('|'));
+        return sha256(payload.toString());
+    }
+
+    private String devolucaoPayloadHash(Long vendaId, VendaDevolucaoRequestDTO body) {
+        StringBuilder payload = new StringBuilder()
+                .append(vendaId).append('|')
+                .append(body.tipo() == null ? null : body.tipo().trim().toUpperCase(Locale.ROOT)).append('|')
+                .append(body.motivo() == null ? null : body.motivo().trim());
+        if (body.itens() != null) {
+            body.itens().forEach(item -> payload.append('|')
+                    .append(item.produtoOriginalId()).append(':')
+                    .append(item.produtoNovoId()).append(':')
+                    .append(item.quantidade()));
+        }
+        return sha256(payload.toString());
+    }
+
+    private String sha256(String value) {
+        try {
+            byte[] digest = MessageDigest.getInstance("SHA-256")
+                    .digest(value.getBytes(StandardCharsets.UTF_8));
+            return java.util.HexFormat.of().formatHex(digest);
+        } catch (NoSuchAlgorithmException ex) {
+            throw new IllegalStateException("SHA-256 indisponivel", ex);
+        }
     }
 
     private String resumoVenda(Venda venda) {

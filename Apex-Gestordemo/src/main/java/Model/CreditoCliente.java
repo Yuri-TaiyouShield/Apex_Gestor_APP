@@ -4,8 +4,10 @@ import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import lombok.Data;
+import org.hibernate.envers.Audited;
 
 @Entity
+@Audited
 @Table(name = "Credito_Cliente")
 @Data
 public class CreditoCliente {
@@ -32,4 +34,7 @@ public class CreditoCliente {
     private CreditoStatus status;
     @Column(name = "criado_em", nullable = false)
     private LocalDateTime criadoEm;
+    @Version
+    @Column(nullable = false)
+    private Long version;
 }

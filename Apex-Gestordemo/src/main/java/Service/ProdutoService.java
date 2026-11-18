@@ -2,13 +2,16 @@ package Service;
 
 import Model.Produto;
 import Model.TipoMovimentacaoEstoque;
+import Repository.CategoriaRepository;
 import Repository.FornecedorRepository;
 import Repository.ProdutoRepository;
+import jakarta.persistence.EntityNotFoundException;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class ProdutoService {
@@ -17,6 +20,8 @@ public class ProdutoService {
     private ProdutoRepository produtoRepository;
     @Autowired
     private FornecedorRepository fornecedorRepository;
+    @Autowired
+    private CategoriaRepository categoriaRepository;
     @Autowired
     private AuditTrailService auditTrailService;
     @Autowired
@@ -34,6 +39,7 @@ public class ProdutoService {
         return produtoRepository.findById(id);
     }
 
+    @Transactional(readOnly = true)
     public Optional<Produto> buscarPorId(Long id, Long empresaId, Long filialId) {
         return produtoRepository.findByIdProdutoAndEmpresaIdAndFilialId(id, empresaId, filialId);
     }
@@ -42,9 +48,13 @@ public class ProdutoService {
         return salvar(produto, produto.getEmpresaId(), produto.getFilialId());
     }
 
+    @Transactional
     public Produto salvar(Produto produto, Long empresaId, Long filialId) {
-        Long empresaAtual = empresaId == null ? 1L : empresaId;
-        Long filialAtual = filialId == null ? 1L : filialId;
+        if (empresaId == null || filialId == null) {
+            throw new IllegalArgumentException("Empresa e filial ativas sao obrigatorias.");
+        }
+        Long empresaAtual = empresaId;
+        Long filialAtual = filialId;
         if (produto.getDescricao() == null || produto.getDescricao().isBlank()) {
             throw new IllegalArgumentException("Descricao do produto e obrigatoria.");
         }
@@ -72,6 +82,11 @@ public class ProdutoService {
                 empresaAtual,
                 filialAtual)
                 .orElseThrow(() -> new IllegalArgumentException("Fornecedor fora do escopo da empresa/filial.")));
+        produto.setCategoria(categoriaRepository.findVisibleById(
+                produto.getCategoria().getIdCategoria(),
+                empresaAtual,
+                filialAtual)
+                .orElseThrow(() -> new IllegalArgumentException("Categoria nao encontrada no escopo da empresa/filial.")));
         if (produto.getValorVenda() == null) {
             throw new IllegalArgumentException("Valor de venda do produto e obrigatorio.");
         }
@@ -79,7 +94,7 @@ public class ProdutoService {
                 ? Optional.empty()
                 : buscarPorId(produto.getIdProduto(), empresaAtual, filialAtual);
         if (produto.getIdProduto() != null && anterior.isEmpty()) {
-            throw new RuntimeException("Produto nao encontrado no escopo da empresa/filial.");
+            throw new EntityNotFoundException("Produto nao encontrado no escopo da empresa/filial.");
         }
         int saldoAnterior = anterior.map(Produto::getQuantidadeEstoque).orElse(0);
         if (produto.getCusto() == null) {
@@ -112,12 +127,14 @@ public class ProdutoService {
     }
 
     public Produto desativar(Long id) {
-        Produto p = produtoRepository.findById(id).orElseThrow(() -> new RuntimeException("Nao encontrado"));
+        Produto p = produtoRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Produto nao encontrado."));
         return desativar(p, p.getEmpresaId(), p.getFilialId());
     }
 
     public Produto desativar(Long id, Long empresaId, Long filialId) {
-        Produto p = buscarPorId(id, empresaId, filialId).orElseThrow(() -> new RuntimeException("Nao encontrado"));
+        Produto p = buscarPorId(id, empresaId, filialId)
+                .orElseThrow(() -> new EntityNotFoundException("Produto nao encontrado no escopo da empresa/filial."));
         return desativar(p, empresaId, filialId);
     }
 

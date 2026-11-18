@@ -5,6 +5,9 @@ import Model.Produto;
 import Model.TipoMovimentacaoEstoque;
 import Repository.EstoqueMovimentacaoRepository;
 import Repository.ProdutoRepository;
+import jakarta.persistence.EntityNotFoundException;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -44,12 +47,12 @@ public class EstoqueMovimentacaoService {
             Long filialId,
             Long usuarioId) {
         Produto produto = produtoRepository.findByIdProdutoAndEmpresaIdAndFilialId(produtoId, empresaId, filialId)
-                .orElseThrow(() -> new RuntimeException("Produto nao encontrado no escopo da empresa/filial"));
+                .orElseThrow(() -> new EntityNotFoundException("Produto nao encontrado no escopo da empresa/filial"));
         int saldoAnterior = produto.getQuantidadeEstoque();
         int saldoPosterior = calcularSaldoPosterior(tipo, quantidade, saldoContado, saldoAnterior);
 
         if (saldoPosterior < 0) {
-            throw new RuntimeException("Movimentacao deixaria o estoque negativo");
+            throw new IllegalArgumentException("Movimentacao deixaria o estoque negativo");
         }
 
         produto.setQuantidadeEstoque(saldoPosterior);
@@ -87,6 +90,27 @@ public class EstoqueMovimentacaoService {
             String referenciaTipo,
             Long referenciaId,
             String motivo) {
+        BigDecimal custoAtual = produto.getCusto();
+        BigDecimal valorTotalCusto = custoAtual == null
+                ? null
+                : custoAtual.multiply(BigDecimal.valueOf(quantidade)).setScale(2, RoundingMode.HALF_UP);
+        return registrar(produto, tipo, quantidade, saldoAnterior, saldoPosterior,
+                referenciaTipo, referenciaId, motivo, custoAtual, custoAtual, custoAtual, valorTotalCusto);
+    }
+
+    public EstoqueMovimentacao registrar(
+            Produto produto,
+            TipoMovimentacaoEstoque tipo,
+            int quantidade,
+            int saldoAnterior,
+            int saldoPosterior,
+            String referenciaTipo,
+            Long referenciaId,
+            String motivo,
+            BigDecimal custoUnitario,
+            BigDecimal custoMedioAnterior,
+            BigDecimal custoMedioPosterior,
+            BigDecimal valorTotalCusto) {
         EstoqueMovimentacao movimentacao = new EstoqueMovimentacao();
         movimentacao.setProduto(produto);
         movimentacao.setTipo(tipo);
@@ -98,6 +122,10 @@ public class EstoqueMovimentacaoService {
         movimentacao.setMotivo(motivo);
         movimentacao.setEmpresaId(produto.getEmpresaId());
         movimentacao.setFilialId(produto.getFilialId());
+        movimentacao.setCustoUnitario(custoUnitario);
+        movimentacao.setCustoMedioAnterior(custoMedioAnterior);
+        movimentacao.setCustoMedioPosterior(custoMedioPosterior);
+        movimentacao.setValorTotalCusto(valorTotalCusto);
         return estoqueMovimentacaoRepository.save(movimentacao);
     }
 
@@ -111,7 +139,7 @@ public class EstoqueMovimentacaoService {
         }
         if (tipo == TipoMovimentacaoEstoque.AJUSTE || tipo == TipoMovimentacaoEstoque.INVENTARIO) {
             if (saldoContado == null) {
-                throw new RuntimeException("Saldo contado e obrigatorio para ajuste ou inventario");
+                throw new IllegalArgumentException("Saldo contado e obrigatorio para ajuste ou inventario");
             }
             return saldoContado;
         }

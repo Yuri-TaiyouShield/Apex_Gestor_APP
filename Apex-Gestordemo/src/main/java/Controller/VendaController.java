@@ -27,19 +27,20 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
+
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/vendas")
-@CrossOrigin(originPatterns = {"http://localhost:*", "capacitor://localhost", "ionic://localhost", "app://localhost"})
+
 public class VendaController {
 
     @Autowired
@@ -92,10 +93,12 @@ public class VendaController {
 
     @PostMapping
     public ResponseEntity<VendaResponseDTO> realizarVenda(@Valid @RequestBody VendaRequestDTO requestBody,
-            HttpServletRequest request) {
+            HttpServletRequest request,
+            @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey) {
         authorizationService.require(request, ApexPermission.SALE_CREATE, "Vendas", "enviar venda ao caixa");
         validarPermissaoDesconto(requestBody, request);
-        Venda novaVenda = vendaService.realizarVenda(toEntity(requestBody, request), empresaId(request), filialId(request), request);
+        Venda novaVenda = vendaService.realizarVenda(toEntity(requestBody, request), empresaId(request), filialId(request),
+                request, idempotencyKey);
         return new ResponseEntity<>(toResponse(novaVenda), HttpStatus.CREATED);
     }
 
@@ -120,9 +123,11 @@ public class VendaController {
 
     @PostMapping("/{id}/devolucoes")
     public VendaDevolucaoResponseDTO devolver(@PathVariable Long id,
-            @Valid @RequestBody VendaDevolucaoRequestDTO body, HttpServletRequest request) {
+            @Valid @RequestBody VendaDevolucaoRequestDTO body, HttpServletRequest request,
+            @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey) {
         authorizationService.require(request, ApexPermission.SALE_RETURN, "Vendas", "trocar ou devolver venda");
-        var devolucao = vendaService.registrarDevolucao(id, body, empresaId(request), filialId(request), request);
+        var devolucao = vendaService.registrarDevolucao(id, body, empresaId(request), filialId(request), request,
+                idempotencyKey);
         return new VendaDevolucaoResponseDTO(devolucao.getIdVendaDevolucao(), devolucao.getVendaOriginalId(),
                 devolucao.getTipo().name(), devolucao.getMotivo(), devolucao.getValorAjuste(), devolucao.getCriadoEm(),
                 devolucao.getItens().stream().map(item -> new VendaDevolucaoResponseDTO.ItemDTO(

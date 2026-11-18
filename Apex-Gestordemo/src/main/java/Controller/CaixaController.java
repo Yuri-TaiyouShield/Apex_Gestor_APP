@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/caixa")
-@CrossOrigin(origins = "http://localhost:4200")
+
 public class CaixaController {
 
     @Autowired
@@ -81,10 +81,11 @@ public class CaixaController {
 
     @PostMapping("/vendas/{id}/receber")
     public VendaResponseDTO receber(@PathVariable Long id, @Valid @RequestBody RecebimentoVendaRequestDTO body,
-            HttpServletRequest request) {
+            HttpServletRequest request,
+            @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey) {
         authorizationService.require(request, ApexPermission.SALE_RECEIVE, "Caixa", "receber venda");
         return vendaController.toPublicResponse(vendaService.receberNoCaixa(id, body,
-                tenantScopeService.empresaId(request), tenantScopeService.filialId(request), request));
+                tenantScopeService.empresaId(request), tenantScopeService.filialId(request), request, idempotencyKey));
     }
 
     @PostMapping("/vendas/{id}/recusar")

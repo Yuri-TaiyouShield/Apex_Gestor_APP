@@ -32,7 +32,10 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 @SpringBootTest(properties = {
         "apex.seed.homologacao=true",
         "apex.security.require-auth=true",
-        "spring.jpa.hibernate.ddl-auto=update"
+        "spring.jpa.hibernate.ddl-auto=validate",
+        "apex.jwt.secret=mysql-integration-test-secret-32-chars",
+        "apex.jwt.issuer=apex-gestor-test",
+        "apex.jwt.audience=apex-api-test"
 })
 @AutoConfigureMockMvc
 class MySqlOperationalFlowTests {
@@ -61,9 +64,9 @@ class MySqlOperationalFlowTests {
     @Test
     void mysqlValidaFlywayTenantRbacVendaCaixaFinanceiroEstoqueDevolucaoELgpd() throws Exception {
         Integer migrations = jdbc.queryForObject(
-                "SELECT COUNT(*) FROM flyway_schema_history WHERE success = 1 AND version IN ('2','3','4','5')",
+                "SELECT COUNT(*) FROM flyway_schema_history WHERE success = 1 AND version IN ('2','3','4','5','6','7','8','9','10','11','12','13','14','15','16')",
                 Integer.class);
-        assertThat(migrations).isEqualTo(4);
+        assertThat(migrations).isEqualTo(15);
 
         mvc.perform(get("/api/caixa/atual"))
                 .andExpect(status().isUnauthorized());

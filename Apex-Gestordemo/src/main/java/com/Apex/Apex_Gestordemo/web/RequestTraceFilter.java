@@ -50,7 +50,8 @@ public class RequestTraceFilter extends OncePerRequestFilter {
 
     private String resolveTraceId(HttpServletRequest request) {
         String providedTraceId = request.getHeader(TRACE_ID_HEADER);
-        if (providedTraceId == null || providedTraceId.isBlank() || providedTraceId.length() > 80) {
+        if (providedTraceId == null || providedTraceId.isBlank() || providedTraceId.length() > 80
+                || !providedTraceId.matches("[A-Za-z0-9._:-]+")) {
             return UUID.randomUUID().toString();
         }
         return providedTraceId;

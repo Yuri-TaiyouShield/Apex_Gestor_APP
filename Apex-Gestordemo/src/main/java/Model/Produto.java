@@ -75,6 +75,10 @@ public class Produto {
     private Long filialId;
     @Column(nullable = false)
     private int status;
+
+    @Version
+    @Column(nullable = false)
+    private Long version;
     @ManyToOne
     @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
     @JoinColumn(name = "fornecedor_id")

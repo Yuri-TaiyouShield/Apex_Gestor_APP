@@ -6,6 +6,7 @@ import Model.Fornecedor;
 import Model.Produto;
 import Model.Usuario;
 import Model.Venda;
+import Model.VendaStatus;
 import Repository.ClienteRepository;
 import Repository.FornecedorRepository;
 import Repository.ProdutoRepository;
@@ -13,12 +14,21 @@ import Repository.UsuarioRepository;
 import Repository.VendaRepository;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
 public class RelatorioOperacionalService {
+
+    private static final Set<VendaStatus> STATUS_VENDA_FINALIZADA = EnumSet.of(
+            VendaStatus.PAGA,
+            VendaStatus.FINALIZADA,
+            VendaStatus.TROCA_PARCIAL,
+            VendaStatus.TROCA_TOTAL,
+            VendaStatus.DEVOLVIDA);
 
     @Autowired
     private ClienteRepository clienteRepository;
@@ -32,18 +42,21 @@ public class RelatorioOperacionalService {
     private FornecedorRepository fornecedorRepository;
 
     public RelatorioOperacionalDTO clientes(Long empresaId, Long filialId) {
-        List<Cliente> clientes = clienteRepository.findByEmpresaIdAndFilialIdAndDeletedAtIsNullOrderByNomeRazaoAsc(empresaId, filialId);
+        List<Cliente> clientes = clienteRepository
+                .findByEmpresaIdAndFilialIdAndDeletedAtIsNullOrderByNomeRazaoAsc(empresaId, filialId);
         return simples("Clientes", clientes.size(), contarAtivosClientes(clientes), List.of());
     }
 
     public RelatorioOperacionalDTO estoque(Long empresaId, Long filialId) {
         List<Produto> produtos = produtoRepository.findByEmpresaIdAndFilialIdOrderByDescricaoAsc(empresaId, filialId);
-        long ativos = produtos.stream().filter((produto) -> produto.getStatus() == 1).count();
-        long estoqueBaixo = produtos.stream()
+        List<Produto> ativosList = produtos.stream().filter((produto) -> produto.getStatus() == 1).toList();
+        long ativos = ativosList.size();
+        long estoqueBaixo = ativosList.stream()
                 .filter((produto) -> produto.getQuantidadeEstoque() <= produto.getEstoqueMinimo())
                 .count();
-        BigDecimal valorEstoque = produtos.stream()
-                .map((produto) -> produto.getCusto().multiply(BigDecimal.valueOf(produto.getQuantidadeEstoque())))
+        BigDecimal valorEstoque = ativosList.stream()
+                .map((produto) -> (produto.getCusto() != null ? produto.getCusto() : BigDecimal.ZERO)
+                        .multiply(BigDecimal.valueOf(produto.getQuantidadeEstoque())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         List<String> alertas = new ArrayList<>();
         if (estoqueBaixo > 0) {
@@ -60,18 +73,27 @@ public class RelatorioOperacionalService {
 
     public RelatorioOperacionalDTO vendas(Long empresaId, Long filialId) {
         List<Venda> vendas = vendaRepository.findByEmpresaIdAndFilialIdOrderByDataVendaDesc(empresaId, filialId);
-        long ativas = vendas.stream().filter((venda) -> venda.getStatus() == 1).count();
-        BigDecimal total = vendas.stream()
-                .filter((venda) -> venda.getStatus() == 1)
+        List<Venda> finalizadas = vendas.stream()
+                .filter(this::isVendaFinalizada)
+                .toList();
+        long ativas = finalizadas.size();
+        BigDecimal total = finalizadas.stream()
                 .map(Venda::getValorTotal)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         return new RelatorioOperacionalDTO("Vendas", vendas.size(), ativas, vendas.size() - ativas, total, List.of());
     }
 
     public RelatorioOperacionalDTO fornecedores(Long empresaId, Long filialId) {
-        List<Fornecedor> fornecedores = fornecedorRepository.findByEmpresaIdAndFilialIdOrderByRazaoSocialAsc(empresaId, filialId);
+        List<Fornecedor> fornecedores = fornecedorRepository
+                .findByEmpresaIdAndFilialIdOrderByRazaoSocialAsc(empresaId, filialId);
         long ativos = fornecedores.stream().filter((fornecedor) -> fornecedor.getStatus() == 1).count();
         return new RelatorioOperacionalDTO("Fornecedores", fornecedores.size(), ativos, fornecedores.size() - ativos, BigDecimal.ZERO, List.of());
+    }
+
+    private boolean isVendaFinalizada(Venda venda) {
+        return venda.getStatus() == 1
+                && (venda.getStatusOperacional() == null
+                        || STATUS_VENDA_FINALIZADA.contains(venda.getStatusOperacional()));
     }
 
     private RelatorioOperacionalDTO simples(String tipo, long total, long ativos, List<String> alertas) {

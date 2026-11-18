@@ -24,4 +24,10 @@ public class Categoria {
 
     @Column(name = "filial_id")
     private Long filialId;
+
+    @Column(name = "plano_conta_id")
+    private Long planoContaId;
+
+    @Column(name = "centro_custo_id")
+    private Long centroCustoId;
 }

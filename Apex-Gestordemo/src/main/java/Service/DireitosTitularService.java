@@ -29,6 +29,9 @@ public class DireitosTitularService {
     private PrivacyGuardService privacyGuardService;
 
     @Autowired
+    private TenantScopeService tenantScopeService;
+
+    @Autowired
     private AuditTrailService auditTrailService;
 
     public TitularDataResponseDTO registrarSolicitacao(TitularDataRequestDTO request, HttpServletRequest httpRequest) {
@@ -57,7 +60,8 @@ public class DireitosTitularService {
 
     public Map<String, Object> exportarCliente(Long clienteId, HttpServletRequest httpRequest) {
         privacyGuardService.requirePrivacyAdmin(httpRequest, "exportar dados pessoais");
-        Cliente cliente = clienteRepository.findById(clienteId)
+        Cliente cliente = clienteRepository.findByIdClienteAndEmpresaIdAndFilialId(
+                        clienteId, tenantScopeService.empresaId(httpRequest), tenantScopeService.filialId(httpRequest))
                 .orElseThrow(() -> new NoSuchElementException("Cliente nao encontrado."));
 
         Map<String, Object> export = new LinkedHashMap<>();
@@ -90,7 +94,8 @@ public class DireitosTitularService {
     public TitularDataResponseDTO anonimizarCliente(Long clienteId, TitularDataRequestDTO request,
             HttpServletRequest httpRequest) {
         privacyGuardService.requirePrivacyAdmin(httpRequest, "anonimizar dados pessoais");
-        Cliente cliente = clienteRepository.findById(clienteId)
+        Cliente cliente = clienteRepository.findByIdClienteAndEmpresaIdAndFilialId(
+                        clienteId, tenantScopeService.empresaId(httpRequest), tenantScopeService.filialId(httpRequest))
                 .orElseThrow(() -> new NoSuchElementException("Cliente nao encontrado."));
         String anterior = resumoCliente(cliente);
         String actor = privacyGuardService.currentUserLogin(httpRequest);

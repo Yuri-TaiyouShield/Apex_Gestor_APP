@@ -1,0 +1,14 @@
+package Model;
+
+public enum OrigemMovimentacaoFinanceira {
+    VENDA_AVISTA,
+    CONTA_RECEBER,
+    LIQUIDACAO_CARTAO,
+    ANTECIPACAO_RECEBIVEL,
+    CONTA_PAGAR,
+    DESPESA,
+    CAIXA_PDV,
+    TRANSFERENCIA_INTERNA,
+    LANCAMENTO_MANUAL,
+    ESTORNO_MOVIMENTACAO
+}

@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import Service.PrivacyGuardService;
 import Service.TenantScopeService;
+import Service.JwtTokenService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -24,8 +25,12 @@ class TenantScopeServiceTests {
     @Test
     void resolvesEmpresaAndFilialFromRequestContext() {
         MockHttpServletRequest request = new MockHttpServletRequest();
-        request.addHeader("X-Apex-Empresa-Id", "7");
-        request.addHeader("X-Apex-Filial-Id", "3");
+        JwtTokenService tokens = new JwtTokenService("tenant-scope-test-secret-with-32-chars");
+        PrivacyGuardService guard = new PrivacyGuardService();
+        ReflectionTestUtils.setField(guard, "jwtTokenService", tokens);
+        ReflectionTestUtils.setField(tenantScopeService, "privacyGuardService", guard);
+        request.addHeader("Authorization", "Bearer " + tokens.issueAccessToken(7L, "Teste", "tenant-test",
+                java.util.List.of("ROLE_GERENTE"), 7L, 3L, java.time.Duration.ofMinutes(5)));
 
         assertThat(tenantScopeService.empresaId(request)).isEqualTo(7L);
         assertThat(tenantScopeService.filialId(request)).isEqualTo(3L);

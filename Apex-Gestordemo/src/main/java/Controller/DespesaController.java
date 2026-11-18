@@ -1,42 +1,56 @@
 package Controller;
 
-import Model.Despesa;
-import Model.TipoDespesa;
+import DTO.DespesaRequestDTO;
+import DTO.DespesaResponseDTO;
+import DTO.PagarDespesaRequestDTO;
+import DTO.TipoDespesaRequestDTO;
+import DTO.TipoDespesaResponseDTO;
 import Service.AuthorizationService;
 import Service.DespesaService;
-import Service.FinanceiroService;
 import Service.TenantScopeService;
 import com.Apex.Apex_Gestordemo.security.ApexPermission;
 import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.beans.factory.annotation.Autowired;
+import jakarta.validation.Valid;
+import java.time.LocalDate;
+import java.util.List;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import java.util.List;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/despesas")
-@CrossOrigin(originPatterns = {"http://localhost:*", "capacitor://localhost", "ionic://localhost", "app://localhost"})
 public class DespesaController {
 
-    @Autowired
-    private DespesaService despesaService;
-    @Autowired
-    private FinanceiroService financeiroService;
-    @Autowired
-    private AuthorizationService authorizationService;
-    @Autowired
-    private TenantScopeService tenantScopeService;
+    private final DespesaService despesaService;
+    private final AuthorizationService authorizationService;
+    private final TenantScopeService tenantScopeService;
 
-    // --- Endpoints de Despesa ---
+    public DespesaController(
+            DespesaService despesaService,
+            AuthorizationService authorizationService,
+            TenantScopeService tenantScopeService) {
+        this.despesaService = despesaService;
+        this.authorizationService = authorizationService;
+        this.tenantScopeService = tenantScopeService;
+    }
+
     @GetMapping
-    public List<Despesa> listar(HttpServletRequest request) {
+    public List<DespesaResponseDTO> listar(HttpServletRequest request) {
         authorizationService.require(request, ApexPermission.FINANCE_VIEW, "Financeiro", "listar despesas");
         return despesaService.listarTodos(empresaId(request), filialId(request));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Despesa> buscarPorId(@PathVariable Long id, HttpServletRequest request) {
+    public ResponseEntity<DespesaResponseDTO> buscarPorId(@PathVariable Long id, HttpServletRequest request) {
         authorizationService.require(request, ApexPermission.FINANCE_VIEW, "Financeiro", "consultar despesa");
         return despesaService.buscarPorId(id, empresaId(request), filialId(request))
                 .map(ResponseEntity::ok)
@@ -44,32 +58,70 @@ public class DespesaController {
     }
 
     @PostMapping
-    public ResponseEntity<Despesa> criar(@RequestBody Despesa despesa, HttpServletRequest request) {
+    public ResponseEntity<DespesaResponseDTO> criar(
+            @Valid @RequestBody DespesaRequestDTO body,
+            HttpServletRequest request) {
         authorizationService.require(request, ApexPermission.FINANCE_MANAGE, "Financeiro", "criar despesa");
-        return new ResponseEntity<>(despesaService.salvar(despesa, empresaId(request), filialId(request)), HttpStatus.CREATED);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(despesaService.criar(body, empresaId(request), filialId(request), request));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<DespesaResponseDTO> atualizar(
+            @PathVariable Long id,
+            @Valid @RequestBody DespesaRequestDTO body,
+            HttpServletRequest request) {
+        authorizationService.require(request, ApexPermission.FINANCE_MANAGE, "Financeiro", "atualizar despesa");
+        return ResponseEntity.ok(despesaService.atualizar(id, body, empresaId(request), filialId(request), request));
+    }
+
+    @PatchMapping("/{id}/pagar")
+    public ResponseEntity<DespesaResponseDTO> pagar(
+            @PathVariable Long id,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataPagamento,
+            @RequestBody(required = false) @Valid PagarDespesaRequestDTO body,
+            HttpServletRequest request) {
+        authorizationService.require(request, ApexPermission.PAYABLE_SETTLE, "Financeiro", "pagar despesa");
+        LocalDate dataEfetiva = dataPagamento != null
+                ? dataPagamento
+                : (body != null ? body.dataPagamento() : null);
+        return ResponseEntity.ok(despesaService.pagar(
+                id, dataEfetiva, empresaId(request), filialId(request), request));
     }
 
     @PatchMapping("/{id}/cancelar")
-    public ResponseEntity<Despesa> cancelar(@PathVariable Long id, HttpServletRequest request) {
-        authorizationService.require(request, ApexPermission.FINANCE_MANAGE, "Financeiro", "cancelar despesa");
-        try {
-            return ResponseEntity.ok(despesaService.cancelar(id, empresaId(request), filialId(request)));
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
-        }
+    public ResponseEntity<DespesaResponseDTO> cancelar(@PathVariable Long id, HttpServletRequest request) {
+        authorizationService.require(request, ApexPermission.FINANCE_CHANGE, "Financeiro", "cancelar despesa");
+        return ResponseEntity.ok(despesaService.cancelar(id, empresaId(request), filialId(request), request));
     }
 
-    // --- Endpoints de Tipo de Despesa ---
     @GetMapping("/tipos")
-    public List<TipoDespesa> listarTipos(HttpServletRequest request) {
+    public List<TipoDespesaResponseDTO> listarTipos(
+            @RequestParam(required = false) Boolean somenteAtivos,
+            HttpServletRequest request) {
         authorizationService.require(request, ApexPermission.FINANCE_VIEW, "Financeiro", "listar tipos de despesa");
-        return financeiroService.listarTiposDespesa();
+        return despesaService.listarTipos(somenteAtivos, empresaId(request), filialId(request));
     }
 
     @PostMapping("/tipos")
-    public ResponseEntity<TipoDespesa> criarTipo(@RequestBody TipoDespesa tipo, HttpServletRequest request) {
-        authorizationService.require(request, ApexPermission.FINANCE_MANAGE, "Financeiro", "criar tipo de despesa");
-        return new ResponseEntity<>(financeiroService.salvarTipoDespesa(tipo), HttpStatus.CREATED);
+    public ResponseEntity<TipoDespesaResponseDTO> criarTipo(
+            @Valid @RequestBody TipoDespesaRequestDTO body,
+            HttpServletRequest request) {
+        authorizationService.require(request, ApexPermission.FINANCE_CLASSIFICATION_MANAGE,
+                "Financeiro", "criar tipo de despesa");
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(despesaService.criarTipo(body, empresaId(request), filialId(request), request));
+    }
+
+    @PutMapping("/tipos/{id}")
+    public ResponseEntity<TipoDespesaResponseDTO> atualizarTipo(
+            @PathVariable Long id,
+            @Valid @RequestBody TipoDespesaRequestDTO body,
+            HttpServletRequest request) {
+        authorizationService.require(request, ApexPermission.FINANCE_CLASSIFICATION_MANAGE,
+                "Financeiro", "atualizar tipo de despesa");
+        return ResponseEntity.ok(despesaService.atualizarTipo(
+                id, body, empresaId(request), filialId(request), request));
     }
 
     private Long empresaId(HttpServletRequest request) {

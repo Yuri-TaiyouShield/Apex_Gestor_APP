@@ -6,9 +6,13 @@ import Service.AuthorizationService;
 import Service.PrivacyGuardService;
 import com.Apex.Apex_Gestordemo.security.ApexPermission;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 class AuthorizationServiceTests {
 
@@ -16,8 +20,14 @@ class AuthorizationServiceTests {
 
     @BeforeEach
     void setUp() {
+        SecurityContextHolder.clearContext();
         authorizationService = new AuthorizationService();
         ReflectionTestUtils.setField(authorizationService, "privacyGuardService", new PrivacyGuardService());
+    }
+
+    @AfterEach
+    void tearDown() {
+        SecurityContextHolder.clearContext();
     }
 
     @Test
@@ -67,8 +77,8 @@ class AuthorizationServiceTests {
 
     private MockHttpServletRequest requestWithRole(String role) {
         MockHttpServletRequest request = new MockHttpServletRequest();
-        request.addHeader("X-Apex-Roles", role);
-        request.addHeader("X-Apex-User-Login", role.toLowerCase());
+        SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(
+                role.toLowerCase(), null, java.util.List.of(new SimpleGrantedAuthority(role))));
         return request;
     }
 }

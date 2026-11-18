@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.LinkedHashMap;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
@@ -33,6 +34,7 @@ public class CaixaService {
     @Autowired
     private VendaPagamentoRepository vendaPagamentoRepository;
 
+    @Transactional(readOnly = true)
     public CaixaSessaoResponseDTO statusAtual(HttpServletRequest request) {
         return caixaAberto(request).map(this::toResponse).orElse(null);
     }
@@ -52,7 +54,7 @@ public class CaixaService {
                 .stream().filter(c -> !caixaPuro || login.equals(c.getOperadorLogin())).map(this::toResponse).toList();
     }
 
-    @Transactional
+    @Transactional(isolation = Isolation.SERIALIZABLE)
     public CaixaSessaoResponseDTO abrir(BigDecimal saldoInicial, HttpServletRequest request) {
         caixaAberto(request).ifPresent(open -> {
             throw new IllegalArgumentException("Ja existe caixa aberto para este operador nesta filial.");
@@ -61,6 +63,7 @@ public class CaixaService {
         caixa.setOperadorLogin(privacyGuardService.currentUserLogin(request));
         caixa.setEmpresaId(empresaId(request));
         caixa.setFilialId(filialId(request));
+        caixa.setCaixaAbertoUnico(1);
         caixa.setStatus(CaixaStatus.ABERTO);
         caixa.setSaldoInicial(nonNegative(saldoInicial));
         caixa.setTotalVendas(BigDecimal.ZERO);
@@ -124,6 +127,7 @@ public class CaixaService {
         CaixaSessao caixa = abertoPorId(caixaId, request);
         String anterior = resumo(caixa);
         caixa.setStatus(CaixaStatus.FECHADO);
+        caixa.setCaixaAbertoUnico(null);
         BigDecimal esperado = saldoAtual(caixa);
         caixa.setSaldoFinal(esperado);
         caixa.setSaldoInformado(saldoInformado == null ? esperado : nonNegative(saldoInformado));
@@ -139,17 +143,14 @@ public class CaixaService {
     }
 
     private CaixaSessao abertoPorId(Long caixaId, HttpServletRequest request) {
-        CaixaSessao caixa = caixaSessaoRepository.findById(caixaId)
+        CaixaSessao caixa = caixaSessaoRepository.findByIdCaixaSessaoAndEmpresaIdAndFilialId(
+                        caixaId, empresaId(request), filialId(request))
                 .orElseThrow(() -> new IllegalArgumentException("Caixa nao encontrado."));
         if (caixa.getStatus() != CaixaStatus.ABERTO) {
             throw new IllegalStateException("Caixa fechado bloqueia operacoes financeiras.");
         }
         if (!privacyGuardService.currentUserLogin(request).equals(caixa.getOperadorLogin())) {
             throw new org.springframework.security.access.AccessDeniedException("Caixa pertence a outro operador.");
-        }
-        if (!java.util.Objects.equals(empresaId(request), caixa.getEmpresaId())
-                || !java.util.Objects.equals(filialId(request), caixa.getFilialId())) {
-            throw new org.springframework.security.access.AccessDeniedException("Caixa pertence a outra empresa ou filial.");
         }
         return caixa;
     }
@@ -243,12 +244,18 @@ public class CaixaService {
 
     private Long empresaId(HttpServletRequest request) {
         Long value = privacyGuardService.currentEmpresaId(request);
-        return value == null ? 1L : value;
+        if (value == null) {
+            throw new org.springframework.security.access.AccessDeniedException("Empresa ativa ausente.");
+        }
+        return value;
     }
 
     private Long filialId(HttpServletRequest request) {
         Long value = privacyGuardService.currentFilialId(request);
-        return value == null ? 1L : value;
+        if (value == null) {
+            throw new org.springframework.security.access.AccessDeniedException("Filial ativa ausente.");
+        }
+        return value;
     }
 
     private String resumo(CaixaSessao caixa) {

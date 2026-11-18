@@ -16,8 +16,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.text.Normalizer;
 import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 
 @Service
@@ -27,7 +29,8 @@ public class FinancialDocumentWorkflowService {
     public static final String STATUS_SIGNED = "SIGNED";
     public static final String STATUS_SENT = "SENT";
 
-    private static final Set<String> PRIVILEGED_SIGNER_ROLES = Set.of("ADMIN", "ADMINISTRACAO", "CONTADOR", "ADVOGADO");
+    private static final Set<String> EXECUTIVE_SIGNER_ROLES = Set.of(
+            "SYSADMIN", "DONO_GERENTE", "DONO", "ADMIN", "ADMIN_MASTER", "ADMINISTRACAO", "GERENTE", "GESTOR");
 
     private final FinancialDigitalDocumentRepository repository;
     private final FinancialAuditTrailService auditTrailService;
@@ -50,7 +53,8 @@ public class FinancialDocumentWorkflowService {
     }
 
     @Transactional
-    public FinancialDocumentDTO create(FinancialDocumentRequestDTO request, Authentication authentication) {
+    public FinancialDocumentDTO create(FinancialDocumentRequestDTO request, Authentication authentication,
+            Long empresaId, Long filialId) {
         String actor = actor(authentication);
         FinancialDigitalDocument document = new FinancialDigitalDocument();
         document.setTipoDocumento(request.tipoDocumento());
@@ -60,36 +64,46 @@ public class FinancialDocumentWorkflowService {
         document.setCargoAssinanteObrigatorio(normalizeRole(defaultIfBlank(request.cargoAssinanteObrigatorio(), "CONTADOR")));
         document.setGeradoPor(actor);
         document.setGeradoEm(LocalDateTime.now());
+        document.setEmpresaId(empresaId);
+        document.setFilialId(filialId);
         document.setConteudo(request.conteudo());
         document.setConteudoHash(dataProtectionService.hash(request.conteudo()));
         document.setReferencia(request.referencia());
         document.setAssuntoEmail("Documento " + request.tipoDocumento() + " aprovado - Apex Gestor");
         document.setMensagemEmail("Seu documento foi aprovado e assinado digitalmente no Apex Gestor.");
         FinancialDigitalDocument saved = repository.save(document);
-        auditTrailService.record("DOCUMENTO_GERADO", "financial_digital_document", saved.getIdFinancialDigitalDocument(), actor, null, saved.getStatus(), saved);
+        auditTrailService.record("DOCUMENTO_GERADO", "financial_digital_document",
+                saved.getIdFinancialDigitalDocument(), actor, null, saved.getStatus(), documentAuditSummary(saved),
+                empresaId, filialId);
         String before = saved.getStatus();
         saved.setStatus(stateMachine.transition(before, FinancialDocumentStatus.PENDING_SIGNATURE));
         saved = repository.save(saved);
-        auditTrailService.record("DOCUMENTO_PENDENTE_ASSINATURA", "financial_digital_document", saved.getIdFinancialDigitalDocument(), actor, before, saved.getStatus(), saved);
-        return toDto(saved);
+        auditTrailService.record("DOCUMENTO_PENDENTE_ASSINATURA", "financial_digital_document",
+                saved.getIdFinancialDigitalDocument(), actor, before, saved.getStatus(), documentAuditSummary(saved),
+                empresaId, filialId);
+        return toDto(saved, true);
     }
 
     @Transactional
-    public FinancialDocumentDTO createDraft(Long id, EmailDraftRequestDTO request, Authentication authentication) {
+    public FinancialDocumentDTO createDraft(Long id, EmailDraftRequestDTO request, Authentication authentication,
+            Long empresaId, Long filialId) {
         String actor = actor(authentication);
-        FinancialDigitalDocument document = findDocument(id);
+        FinancialDigitalDocument document = findDocument(id, empresaId, filialId);
         String before = document.getAssuntoEmail();
         document.setAssuntoEmail(request.assunto());
         document.setMensagemEmail(request.mensagem());
         FinancialDigitalDocument saved = repository.save(document);
-        auditTrailService.record("RASCUNHO_EMAIL_CRIADO", "financial_digital_document", saved.getIdFinancialDigitalDocument(), actor, before, saved.getAssuntoEmail(), saved);
-        return toDto(saved);
+        auditTrailService.record("RASCUNHO_EMAIL_CRIADO", "financial_digital_document",
+                saved.getIdFinancialDigitalDocument(), actor, before, saved.getAssuntoEmail(),
+                documentAuditSummary(saved), empresaId, filialId);
+        return toDto(saved, true);
     }
 
     @Transactional
-    public FinancialDocumentDTO sign(Long id, SignFinancialDocumentRequestDTO request, Authentication authentication) {
+    public FinancialDocumentDTO sign(Long id, SignFinancialDocumentRequestDTO request, Authentication authentication,
+            Long empresaId, Long filialId) {
         String actor = actor(authentication);
-        FinancialDigitalDocument document = findDocument(id);
+        FinancialDigitalDocument document = findDocument(id, empresaId, filialId);
         if (stateMachine.parse(document.getStatus()) != FinancialDocumentStatus.PENDING_SIGNATURE) {
             throw new IllegalStateException("Documento nao esta pendente de assinatura");
         }
@@ -99,50 +113,84 @@ public class FinancialDocumentWorkflowService {
         String signerRole = normalizeRole(request.cargoAssinante());
         ensureSignerAllowed(document.getCargoAssinanteObrigatorio(), signerRole, authentication);
         String before = document.getStatus();
-        document.setAssinadoPor(request.nomeAssinante());
+        document.setAssinadoPor(actor);
         document.setCargoAssinante(signerRole);
         document.setAssinadoEm(LocalDateTime.now());
-        document.setAssinaturaDigitalHash(dataProtectionService.hash(document.getConteudoHash() + ":" + actor + ":" + signerRole + ":" + request.certificadoFingerprint()));
+        document.setAssinaturaDigitalHash(dataProtectionService.hash(
+                document.getConteudoHash() + ":" + actor + ":" + signerRole + ":" + request.certificadoFingerprint()));
         document.setStatus(stateMachine.transition(before, FinancialDocumentStatus.SIGNED));
         document.setUltimoErro(null);
         FinancialDigitalDocument saved = repository.save(document);
         deliveryService.enqueueSignedDocument(saved, actor);
-        auditTrailService.record("DOCUMENTO_ASSINADO", "financial_digital_document", saved.getIdFinancialDigitalDocument(), actor, before, saved.getStatus(), saved);
-        return toDto(saved);
+        auditTrailService.record("DOCUMENTO_ASSINADO", "financial_digital_document",
+                saved.getIdFinancialDigitalDocument(), actor, before, saved.getStatus(), documentAuditSummary(saved),
+                empresaId, filialId);
+        return toDto(saved, true);
     }
 
     @Transactional(readOnly = true)
-    public List<FinancialDocumentDTO> listRecent(int limit) {
-        int pageSize = Math.min(Math.max(limit, 1), 100);
-        return repository.findAll(PageRequest.of(0, pageSize, Sort.by(Sort.Direction.DESC, "geradoEm")))
+    public List<FinancialDocumentDTO> listRecent(int limit, Long empresaId, Long filialId) {
+        return listRecent(limit, empresaId, filialId, false);
+    }
+
+    @Transactional(readOnly = true)
+    public List<FinancialDocumentDTO> listRecent(int limit, Long empresaId, Long filialId, boolean revealPii) {
+        int pageSize = Math.min(Math.max(limit, 1), 200);
+        return repository.findByEmpresaIdAndFilialId(empresaId, filialId,
+                        PageRequest.of(0, pageSize, Sort.by(Sort.Direction.DESC, "geradoEm")))
                 .stream()
-                .map(this::toDto)
+                .map(doc -> toDto(doc, revealPii))
                 .toList();
     }
 
-    private FinancialDigitalDocument findDocument(Long id) {
-        return repository.findById(id).orElseThrow(() -> new IllegalArgumentException("Documento nao encontrado"));
+    private FinancialDigitalDocument findDocument(Long id, Long empresaId, Long filialId) {
+        return repository.findByIdFinancialDigitalDocumentAndEmpresaIdAndFilialId(id, empresaId, filialId)
+                .orElseThrow(() -> new IllegalArgumentException("Documento nao encontrado"));
     }
 
     private void ensureSignerAllowed(String requiredRole, String signerRole, Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new AccessDeniedException("Usuario nao autenticado para assinar documento");
+        }
         Set<String> authRoles = authentication.getAuthorities().stream()
-                .map(authority -> authority.getAuthority().replace("ROLE_", ""))
+                .map(authority -> authority.getAuthority().replaceFirst("^ROLE_", ""))
                 .map(this::normalizeRole)
                 .collect(java.util.stream.Collectors.toSet());
-        if (signerRole.equals(requiredRole) || PRIVILEGED_SIGNER_ROLES.contains(signerRole)) {
-            if (authRoles.contains(signerRole) || authRoles.contains(requiredRole) || authRoles.stream().anyMatch(PRIVILEGED_SIGNER_ROLES::contains)) {
-                return;
-            }
+        if (!authRoles.contains(signerRole)) {
+            throw new AccessDeniedException("Cargo de assinatura informado nao pertence ao usuario autenticado");
+        }
+        if (signerRole.equals(requiredRole) || EXECUTIVE_SIGNER_ROLES.contains(signerRole)) {
+            return;
         }
         throw new AccessDeniedException("Usuario autenticado nao possui cargo autorizado para assinar este documento");
     }
 
-    private FinancialDocumentDTO toDto(FinancialDigitalDocument document) {
+    private Map<String, Object> documentAuditSummary(FinancialDigitalDocument document) {
+        Map<String, Object> summary = new LinkedHashMap<>();
+        summary.put("idDocumento", document.getIdFinancialDigitalDocument());
+        summary.put("tipoDocumento", document.getTipoDocumento());
+        summary.put("status", document.getStatus());
+        summary.put("referencia", document.getReferencia());
+        summary.put("conteudoHash", document.getConteudoHash());
+        summary.put("cargoAssinanteObrigatorio", document.getCargoAssinanteObrigatorio());
+        if (document.getCargoAssinante() != null) {
+            summary.put("cargoAssinante", document.getCargoAssinante());
+        }
+        if (document.getAssinaturaDigitalHash() != null) {
+            summary.put("assinaturaDigitalHash", document.getAssinaturaDigitalHash());
+        }
+        return summary;
+    }
+
+    private FinancialDocumentDTO toDto(FinancialDigitalDocument document, boolean revealPii) {
+        String nome = revealPii ? document.getFuncionarioNome() : maskName(document.getFuncionarioNome());
+        String email = revealPii ? document.getFuncionarioEmail()
+                : dataProtectionService.maskEmail(document.getFuncionarioEmail());
         return new FinancialDocumentDTO(
                 document.getIdFinancialDigitalDocument(),
                 document.getTipoDocumento(),
-                document.getFuncionarioNome(),
-                document.getFuncionarioEmail(),
+                nome,
+                email,
                 document.getStatus(),
                 document.getCargoAssinanteObrigatorio(),
                 document.getGeradoPor(),
@@ -158,8 +206,31 @@ public class FinancialDocumentWorkflowService {
         );
     }
 
+    private String maskName(String value) {
+        if (value == null || value.isBlank()) {
+            return "***";
+        }
+        String[] parts = value.trim().split("\\s+");
+        StringBuilder masked = new StringBuilder();
+        for (int i = 0; i < parts.length; i++) {
+            if (i > 0) {
+                masked.append(' ');
+            }
+            masked.append(parts[i].charAt(0)).append("***");
+        }
+        return masked.toString();
+    }
+
     private String actor(Authentication authentication) {
-        return authentication == null || authentication.getName() == null ? "anonymous" : authentication.getName();
+        if (authentication == null || !authentication.isAuthenticated()
+                || authentication.getName() == null || authentication.getName().isBlank()) {
+            throw new AccessDeniedException("Usuario autenticado obrigatorio para operacoes de documento financeiro");
+        }
+        if (authentication.getDetails() instanceof JwtTokenService.JwtClaims claims
+                && claims.login() != null && !claims.login().isBlank()) {
+            return claims.login();
+        }
+        return authentication.getName();
     }
 
     private String defaultIfBlank(String value, String fallback) {

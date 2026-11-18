@@ -8,5 +8,6 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface NotificacaoRepository extends JpaRepository<Notificacao, Long> {
 
-    List<Notificacao> findByStatusOrderByCriadoEmDesc(String status);
+    List<Notificacao> findByEmpresaIdAndFilialIdAndStatusOrderByCriadoEmDesc(
+            Long empresaId, Long filialId, String status);
 }

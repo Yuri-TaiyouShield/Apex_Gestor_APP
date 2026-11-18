@@ -12,12 +12,14 @@ import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.env.Environment;
+import org.springframework.core.env.Profiles;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 @Component
-@Profile("local")
+@Profile({"local", "dev"})
 @ConditionalOnProperty(name = "apex.seed.homologacao", havingValue = "true")
 public class HomologacaoDataSeeder implements ApplicationRunner {
     public static final String EMPRESA_CNPJ = "99999999000199";
@@ -37,6 +39,7 @@ public class HomologacaoDataSeeder implements ApplicationRunner {
     private final MetaVendedorRepository metaVendedorRepository;
     private final ContaPagarRepository contaPagarRepository;
     private final PasswordEncoder passwordEncoder;
+    private final Environment environment;
 
     public HomologacaoDataSeeder(EmpresaRepository empresaRepository, FilialRepository filialRepository,
             PerfilRepository perfilRepository, UsuarioRepository usuarioRepository,
@@ -45,7 +48,7 @@ public class HomologacaoDataSeeder implements ApplicationRunner {
             FormaPagamentoRepository formaPagamentoRepository,
             CondicaoPagamentoRepository condicaoPagamentoRepository, ProdutoRepository produtoRepository,
             MetaVendedorRepository metaVendedorRepository, ContaPagarRepository contaPagarRepository,
-            PasswordEncoder passwordEncoder) {
+            PasswordEncoder passwordEncoder, Environment environment) {
         this.empresaRepository = empresaRepository;
         this.filialRepository = filialRepository;
         this.perfilRepository = perfilRepository;
@@ -60,11 +63,15 @@ public class HomologacaoDataSeeder implements ApplicationRunner {
         this.metaVendedorRepository = metaVendedorRepository;
         this.contaPagarRepository = contaPagarRepository;
         this.passwordEncoder = passwordEncoder;
+        this.environment = environment;
     }
 
     @Override
     @Transactional
     public void run(ApplicationArguments args) {
+        if (environment.acceptsProfiles(Profiles.of("prod"))) {
+            throw new IllegalStateException("HomologacaoDataSeeder nao pode ser executado com perfil prod ativo.");
+        }
         Empresa empresa = empresaRepository.findByCnpj(EMPRESA_CNPJ).orElseGet(this::criarEmpresa);
         Filial filial = filialRepository.findByEmpresaIdEmpresaAndCodigo(empresa.getIdEmpresa(), FILIAL_CODIGO)
                 .orElseGet(() -> criarFilial(empresa));

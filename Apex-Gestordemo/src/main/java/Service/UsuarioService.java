@@ -4,6 +4,7 @@ import Model.Perfil;
 import Model.Usuario;
 import Repository.PerfilRepository;
 import Repository.UsuarioRepository;
+import jakarta.persistence.EntityNotFoundException;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -58,7 +59,7 @@ public class UsuarioService {
                 ? Optional.empty()
                 : buscarPorId(usuario.getIdUsuario(), empresaAtual, filialAtual);
         if (usuario.getIdUsuario() != null && anterior.isEmpty()) {
-            throw new RuntimeException("Usuario nao encontrado no escopo da empresa/filial.");
+            throw new EntityNotFoundException("Usuario nao encontrado no escopo da empresa/filial.");
         }
         if (usuario.getSenha() == null || usuario.getSenha().isBlank()) {
             usuario.setSenha(anterior.map(Usuario::getSenha)
@@ -83,13 +84,13 @@ public class UsuarioService {
 
     public Usuario desativar(Long id) {
         Usuario usuario = usuarioRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Nao encontrado"));
+                .orElseThrow(() -> new EntityNotFoundException("Nao encontrado"));
         return desativar(usuario, usuario.getEmpresaId(), usuario.getFilialId());
     }
 
     public Usuario desativar(Long id, Long empresaId, Long filialId) {
         Usuario usuario = buscarPorId(id, empresaId, filialId)
-                .orElseThrow(() -> new RuntimeException("Nao encontrado"));
+                .orElseThrow(() -> new EntityNotFoundException("Nao encontrado"));
         return desativar(usuario, empresaId, filialId);
     }
 

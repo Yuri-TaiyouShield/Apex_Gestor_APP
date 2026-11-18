@@ -29,14 +29,18 @@ public class FinancialCalculation {
     @Column(name = "input_hash", nullable = false, length = 128)
     private String inputHash;
 
-    @Lob
-    @Column(name = "input_snapshot", nullable = false)
+    @Column(name = "input_snapshot", nullable = false, columnDefinition = "TEXT")
     private String inputSnapshot;
 
-    @Lob
-    @Column(name = "resultado_snapshot", nullable = false)
+    @Column(name = "resultado_snapshot", nullable = false, columnDefinition = "TEXT")
     private String resultadoSnapshot;
 
     @Column(name = "criado_em", nullable = false)
     private LocalDateTime criadoEm;
+
+    @Column(name = "empresa_id")
+    private Long empresaId;
+
+    @Column(name = "filial_id")
+    private Long filialId;
 }
