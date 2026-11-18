@@ -29,7 +29,11 @@ export class ApiConfigService {
   }
 
   private readInitialBaseUrl(): string {
-    return localStorage.getItem(STORAGE_KEY) ?? this.defaultBaseUrl();
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored === null || stored === 'http://localhost:8085' || stored === 'http://127.0.0.1:8085') {
+      return this.defaultBaseUrl();
+    }
+    return stored;
   }
 
   private defaultBaseUrl(): string {

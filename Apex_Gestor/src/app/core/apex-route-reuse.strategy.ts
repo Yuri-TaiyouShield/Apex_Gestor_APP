@@ -4,18 +4,23 @@ import { ActivatedRouteSnapshot, DetachedRouteHandle, RouteReuseStrategy } from 
 @Injectable()
 export class ApexRouteReuseStrategy implements RouteReuseStrategy {
   shouldDetach(_route: ActivatedRouteSnapshot): boolean {
+    void _route;
     return false;
   }
 
   store(_route: ActivatedRouteSnapshot, _handle: DetachedRouteHandle | null): void {
+    void _route;
+    void _handle;
     // No-op: operational screens must load their current route context every time.
   }
 
   shouldAttach(_route: ActivatedRouteSnapshot): boolean {
+    void _route;
     return false;
   }
 
   retrieve(_route: ActivatedRouteSnapshot): DetachedRouteHandle | null {
+    void _route;
     return null;
   }
 

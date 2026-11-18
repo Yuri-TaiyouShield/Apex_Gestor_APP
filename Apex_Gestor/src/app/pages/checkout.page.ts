@@ -2,18 +2,17 @@ import { CommonModule } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { IonicModule } from '@ionic/angular';
+import { IonContent, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonItem, IonSelect, IonSelectOption, IonTextarea, IonNote, IonButton } from '@ionic/angular/standalone';
 import { catchError, of, switchMap } from 'rxjs';
 
 import { ApexApiService } from '../core/apex-api.service';
 import { CartService } from '../core/cart.service';
-import { MOCK_CLIENTS, MOCK_PAYMENT_METHODS } from '../core/mock-data';
 import { Cliente, FormaPagamento } from '../core/models';
 import { currency } from '../core/view-utils';
 
 @Component({
   standalone: true,
-  imports: [CommonModule, FormsModule, IonicModule, RouterLink],
+  imports: [CommonModule, FormsModule, IonContent, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonItem, IonSelect, IonSelectOption, IonTextarea, IonNote, IonButton, RouterLink],
   template: `
     <ion-content>
       <main class="page">
@@ -98,16 +97,16 @@ export class CheckoutPage {
   private readonly router = inject(Router);
   readonly cart = inject(CartService);
   readonly money = currency;
-  readonly clients = signal<Cliente[]>(MOCK_CLIENTS);
-  readonly paymentMethods = signal<FormaPagamento[]>(MOCK_PAYMENT_METHODS);
+  readonly clients = signal<Cliente[]>([]);
+  readonly paymentMethods = signal<FormaPagamento[]>([]);
   readonly message = signal('');
-  clienteId = MOCK_CLIENTS[0]?.idCliente;
-  formaPagamentoId = MOCK_PAYMENT_METHODS[0]?.idFormaPagamento;
+  clienteId?: number;
+  formaPagamentoId?: number;
   observacao = '';
 
   constructor() {
-    this.api.clients().pipe(catchError(() => of(MOCK_CLIENTS))).subscribe((clients) => this.clients.set(clients));
-    this.api.paymentMethods().pipe(catchError(() => of(MOCK_PAYMENT_METHODS))).subscribe((methods) => this.paymentMethods.set(methods));
+    this.api.clients().pipe(catchError(() => of([] as Cliente[]))).subscribe((clients) => { this.clients.set(clients); this.clienteId ??= clients[0]?.idCliente; });
+    this.api.paymentMethods().pipe(catchError(() => of([] as FormaPagamento[]))).subscribe((methods) => { this.paymentMethods.set(methods); this.formaPagamentoId ??= methods[0]?.idFormaPagamento; });
   }
 
   finish(): void {
@@ -137,8 +136,9 @@ export class CheckoutPage {
           }
         ]
       })),
-      catchError(() => of({ offline: true }))
-    ).subscribe(() => {
+      catchError((error) => { this.message.set(error?.error?.detail || 'Não foi possível confirmar o pedido com a API.'); return of(null); })
+    ).subscribe((result) => {
+      if (!result) return;
       this.message.set('Pedido confirmado. O estoque sera reservado e baixado pela venda.');
       this.cart.clear();
       setTimeout(() => this.router.navigateByUrl('/store'), 900);

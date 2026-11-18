@@ -3,13 +3,12 @@ import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-import { IonicModule } from '@ionic/angular';
-import { Subscription, catchError, finalize, of } from 'rxjs';
+import { IonContent, IonButton, IonIcon, IonCard, IonCardContent, IonSearchbar, IonSegment, IonSegmentButton, IonLabel, IonCardHeader, IonCardTitle, IonCardSubtitle, IonItem, IonInput, IonNote, IonSelect, IonSelectOption } from '@ionic/angular/standalone';
+import { Subscription, catchError, finalize, forkJoin, of } from 'rxjs';
 
 import { ApexApiService } from '../core/apex-api.service';
 import { ENTITY_CONFIGS } from '../core/entity-config';
-import { MOCK_CLIENTS, MOCK_EXPENSES, MOCK_EXPENSE_TYPES, MOCK_PAYMENT_METHODS, MOCK_PRODUCTS, MOCK_USERS } from '../core/mock-data';
-import { EntityConfig } from '../core/models';
+import { CentroCustoResponse, EntityConfig, PlanoContasResponse, TipoDespesa } from '../core/models';
 import { SessionService } from '../core/session.service';
 import { currency, date, getNestedValue } from '../core/view-utils';
 
@@ -25,9 +24,14 @@ interface OperationalMetric {
   tone: 'primary' | 'success' | 'warning' | 'danger' | 'indigo';
 }
 
+interface SelectOption {
+  value: number;
+  label: string;
+}
+
 @Component({
   standalone: true,
-  imports: [CommonModule, FormsModule, IonicModule],
+  imports: [CommonModule, FormsModule, IonContent, IonButton, IonIcon, IonCard, IonCardContent, IonSearchbar, IonSegment, IonSegmentButton, IonLabel, IonCardHeader, IonCardTitle, IonCardSubtitle, IonItem, IonInput, IonNote, IonSelect, IonSelectOption],
   template: `
     <ion-content>
       <main class="page entity-page">
@@ -96,7 +100,7 @@ interface OperationalMetric {
             } @else if (offline()) {
               <div class="state-line warning">
                 <ion-icon name="cloud-offline-outline" aria-hidden="true"></ion-icon>
-                API indisponível. Operando com dados locais de demonstração para evitar tela vazia.
+                API indisponível. Nenhuma alteração local será tratada como persistida.
               </div>
             } @else {
               <div class="state-line success">
@@ -140,6 +144,11 @@ interface OperationalMetric {
                         }
                         <td>
                           <div class="table-actions">
+                            @if (config().key === 'expenses' && !row['dataPagamento'] && isActive(row, 'status')) {
+                              <ion-button size="small" fill="clear" color="success" (click)="payExpense(row)" [disabled]="!canManageEntity()" aria-label="Marcar despesa como paga" title="Marcar como paga">
+                                <ion-icon slot="icon-only" name="checkmark-circle-outline"></ion-icon>
+                              </ion-button>
+                            }
                             <ion-button size="small" fill="clear" (click)="edit(row)" [disabled]="!canManageEntity()" aria-label="Editar registro" title="Editar">
                               <ion-icon slot="icon-only" name="create-outline"></ion-icon>
                             </ion-button>
@@ -195,15 +204,29 @@ interface OperationalMetric {
                 }
                 @for (field of visibleFields(); track field.key) {
                   <ion-item class="form-field" [class.invalid]="saveState() === 'error' && isRequired(field.key, field.required || false) && isEmpty(fieldValue(field.key))">
-                    <ion-input
-                      [type]="field.type"
-                      [label]="field.label"
-                      label-placement="stacked"
-                      [ngModel]="fieldValue(field.key)"
-                      (ngModelChange)="setFieldValue(field.key, $event)"
-                      [required]="isRequired(field.key, field.required || false)"
-                      [placeholder]="field.placeholder || ''"
-                    ></ion-input>
+                    @if (selectOptionsForField(field.key).length > 0) {
+                      <ion-select
+                        [label]="field.label"
+                        label-placement="stacked"
+                        [ngModel]="fieldValue(field.key)"
+                        (ngModelChange)="setFieldValue(field.key, $event)"
+                      >
+                        <ion-select-option [value]="undefined">Padrão / Não informado</ion-select-option>
+                        @for (option of selectOptionsForField(field.key); track option.value) {
+                          <ion-select-option [value]="option.value">{{ option.label }}</ion-select-option>
+                        }
+                      </ion-select>
+                    } @else {
+                      <ion-input
+                        [type]="field.type"
+                        [label]="field.label"
+                        label-placement="stacked"
+                        [ngModel]="fieldValue(field.key)"
+                        (ngModelChange)="setFieldValue(field.key, $event)"
+                        [required]="isRequired(field.key, field.required || false)"
+                        [placeholder]="field.placeholder || ''"
+                      ></ion-input>
+                    }
                   </ion-item>
                 }
                 <div class="form-actions">
@@ -373,7 +396,7 @@ interface OperationalMetric {
       min-height: 32px;
       min-width: max-content;
       --indicator-color: var(--apex-primary);
-      --color-checked: var(--apex-primary-strong);
+      --color-checked: var(--apex-text-brand);
     }
 
     .side-stack {
@@ -452,10 +475,14 @@ export class EntityListPage {
   private readonly session = inject(SessionService);
   private readonly destroyRef = inject(DestroyRef);
   private loadSubscription?: Subscription;
+  private expenseMetaSubscription?: Subscription;
   private activeLoadKey = '';
   readonly entityKey = signal('products');
   readonly search = signal('');
   readonly rows = signal<Row[]>([]);
+  readonly expenseTypes = signal<TipoDespesa[]>([]);
+  readonly planoContas = signal<PlanoContasResponse[]>([]);
+  readonly centrosCusto = signal<CentroCustoResponse[]>([]);
   readonly editingId = signal<number | string | null>(null);
   readonly formMessage = signal('');
   readonly statusFilter = signal<StatusFilter>('all');
@@ -515,13 +542,13 @@ export class EntityListPage {
     const loadKey = `${config.key}:${Date.now()}`;
     this.activeLoadKey = loadKey;
     this.loadSubscription?.unsubscribe();
-    this.rows.set(this.mockRows(config.key));
+    this.rows.set([]);
     this.loading.set(true);
     this.offline.set(false);
     this.loadSubscription = this.api.list<Row>(config.endpoint, { refresh: options.refresh }).pipe(
       catchError(() => {
         this.offline.set(true);
-        return of(this.mockRows(config.key));
+        return of([] as Row[]);
       }),
       finalize(() => {
         if (this.activeLoadKey === loadKey) {
@@ -532,9 +559,13 @@ export class EntityListPage {
       if (this.activeLoadKey !== loadKey) {
         return;
       }
-      this.rows.set(Array.isArray(rows) ? rows : this.mockRows(config.key));
+      this.rows.set(Array.isArray(rows) ? rows : []);
       this.page.set(1);
     });
+
+    if (config.key === 'expenses') {
+      this.loadExpenseMetadata(options.refresh);
+    }
   }
 
   setSearch(value: string): void {
@@ -576,6 +607,27 @@ export class EntityListPage {
     }
   }
 
+  selectOptionsForField(key: string): SelectOption[] {
+    if (this.config().key !== 'expenses') {
+      return [];
+    }
+    if (key === 'tipoDespesaId') {
+      return this.expenseTypes()
+        .filter((item): item is TipoDespesa & { idTipoDespesa: number } => typeof item.idTipoDespesa === 'number')
+        .map((item) => ({ value: item.idTipoDespesa, label: item.nome }));
+    }
+    if (key === 'planoContaId') {
+      return this.planoContas()
+        .filter((item) => item.aceitaLancamento !== false)
+        .map((item) => ({ value: item.idPlanoConta, label: `${item.codigo} - ${item.nome}` }));
+    }
+    if (key === 'centroCustoId') {
+      return this.centrosCusto()
+        .map((item) => ({ value: item.idCentroCusto, label: `${item.codigo} - ${item.nome}` }));
+    }
+    return [];
+  }
+
   save(): void {
     if (!this.canManageEntity()) {
       this.formMessage.set('Acesso negado: seu perfil nao permite alterar este cadastro.');
@@ -597,10 +649,11 @@ export class EntityListPage {
       ? this.api.update<Row>(config.endpoint, this.editingId()!, payload)
       : this.api.create<Row>(config.endpoint, payload);
 
+    let mutationErrorMessage = 'Não foi possível salvar com a API; nenhuma alteração local foi aplicada.';
     request.pipe(
-      catchError(() => {
-        this.offline.set(true);
-        return of({ ...payload, [config.idKey]: this.editingId() ?? Date.now() });
+      catchError((err: unknown) => {
+        mutationErrorMessage = this.handleMutationError(err, mutationErrorMessage);
+        return of(null);
       }),
       finalize(() => {
         if (this.saveState() === 'loading') {
@@ -608,6 +661,11 @@ export class EntityListPage {
         }
       })
     ).subscribe((saved) => {
+      if (!saved) {
+        this.saveState.set('error');
+        this.formMessage.set(mutationErrorMessage);
+        return;
+      }
       const id = saved[config.idKey] ?? this.editingId();
       if (this.editingId()) {
         this.rows.update((rows) => rows.map((row) => (row[config.idKey] === this.editingId() ? { ...row, ...saved } : row)));
@@ -617,7 +675,35 @@ export class EntityListPage {
       this.formModel = {};
       this.editingId.set(null);
       this.saveState.set('success');
-      this.formMessage.set(this.offline() ? 'Registro salvo localmente porque a API está indisponível.' : 'Registro salvo com sucesso.');
+      this.formMessage.set('Registro salvo com sucesso.');
+      if (!this.offline()) {
+        this.load({ refresh: true });
+      }
+    });
+  }
+
+  payExpense(row: Row): void {
+    if (!this.canManageEntity() || this.config().key !== 'expenses') {
+      return;
+    }
+    const id = Number(row[this.config().idKey]);
+    if (!Number.isFinite(id) || id <= 0) {
+      return;
+    }
+    const today = new Date().toISOString().slice(0, 10);
+    let mutationErrorMessage = 'Não foi possível registrar o pagamento com a API.';
+    this.api.pagarDespesa(id, today).pipe(
+      catchError((err: unknown) => {
+        mutationErrorMessage = this.handleMutationError(err, mutationErrorMessage);
+        return of(null);
+      })
+    ).subscribe((updated) => {
+      if (!updated) {
+        this.formMessage.set(mutationErrorMessage);
+        return;
+      }
+      this.rows.update((rows) => rows.map((item) => (Number(item[this.config().idKey]) === id ? { ...item, ...updated } : item)));
+      this.formMessage.set('Despesa marcada como paga.');
       if (!this.offline()) {
         this.load({ refresh: true });
       }
@@ -638,10 +724,15 @@ export class EntityListPage {
     if (!window.confirm(`Desativar "${label}"? A ação deve preservar histórico e auditoria.`)) {
       return;
     }
-    this.api.patch<Row>(config.deactivatePath(id)).pipe(catchError(() => {
-      this.offline.set(true);
-      return of({ ...row, [this.statusKey()]: 0 });
+    let mutationErrorMessage = 'Não foi possível desativar com a API; nenhuma alteração local foi aplicada.';
+    this.api.patch<Row>(config.deactivatePath(id)).pipe(catchError((err: unknown) => {
+      mutationErrorMessage = this.handleMutationError(err, mutationErrorMessage);
+      return of(null);
     })).subscribe((updated) => {
+      if (!updated) {
+        this.formMessage.set(mutationErrorMessage);
+        return;
+      }
       this.rows.update((rows) => rows.map((item) => (item[config.idKey] === id ? { ...item, ...updated, [this.statusKey()]: updated[this.statusKey()] ?? 0 } : item)));
       this.formMessage.set('Registro desativado. Ação crítica deve gerar auditoria no backend.');
       if (!this.offline()) {
@@ -695,10 +786,16 @@ export class EntityListPage {
     if (key === 'users' || key === 'profiles' || key === 'menus') {
       return this.session.hasAnyRole(['ROLE_SYSADMIN', 'ROLE_DONO_GERENTE', 'ROLE_ADMIN', 'ROLE_GERENTE']);
     }
-    if (key === 'expenses' || key === 'expenseTypes' || key === 'paymentMethods') {
+    if (key === 'expenseTypes') {
+      return this.session.hasAnyRole(['ROLE_SYSADMIN', 'ROLE_DONO_GERENTE', 'ROLE_FINANCEIRO', 'ROLE_CONTADOR', 'ROLE_ADMIN', 'ROLE_GERENTE']);
+    }
+    if (key === 'expenses') {
       return this.session.hasAnyRole(['ROLE_SYSADMIN', 'ROLE_DONO_GERENTE', 'ROLE_FINANCEIRO', 'ROLE_ADMIN', 'ROLE_GERENTE']);
     }
-    return !this.session.hasAnyRole(['ROLE_CLIENTE_B2C']);
+    if (key === 'paymentMethods') {
+      return this.session.hasAnyRole(['ROLE_SYSADMIN', 'ROLE_DONO_GERENTE', 'ROLE_ADMIN', 'ROLE_GERENTE']);
+    }
+    return this.session.hasAnyRole(['ROLE_SYSADMIN', 'ROLE_DONO_GERENTE', 'ROLE_ADMIN', 'ROLE_GERENTE']);
   }
 
   fieldValue(key: string): unknown {
@@ -720,6 +817,19 @@ export class EntityListPage {
         current[segment] = shouldCreateArray ? [] : {};
       }
       current = current[segment] as Row;
+    });
+  }
+
+  private loadExpenseMetadata(refresh?: boolean): void {
+    this.expenseMetaSubscription?.unsubscribe();
+    this.expenseMetaSubscription = forkJoin({
+      tipos: this.api.listTiposDespesa({ refresh }).pipe(catchError(() => of([] as TipoDespesa[]))),
+      contas: this.api.listPlanoContas(true).pipe(catchError(() => of([] as PlanoContasResponse[]))),
+      centros: this.api.listCentrosCusto(true).pipe(catchError(() => of([] as CentroCustoResponse[])))
+    }).subscribe(({ tipos, contas, centros }) => {
+      this.expenseTypes.set(Array.isArray(tipos) ? tipos : []);
+      this.planoContas.set(Array.isArray(contas) ? contas : []);
+      this.centrosCusto.set(Array.isArray(centros) ? centros : []);
     });
   }
 
@@ -773,8 +883,37 @@ export class EntityListPage {
       payload['dataNascimento'] = payload['dataNascimento'] ?? '1990-01-01';
     }
     if (config.key === 'expenses') {
+      delete payload['status'];
+      delete payload['dataPagamento'];
       payload['valor'] = Number(payload['valor'] ?? 0);
-      payload['tipoDespesa'] = payload['tipoDespesa'] ?? { idTipoDespesa: 1 };
+      const tipoDespesaId = toOptionalPositiveInt(
+        payload['tipoDespesaId'] ?? (payload['tipoDespesa'] as Row | undefined)?.['idTipoDespesa']
+      );
+      const planoContaId = toOptionalPositiveInt(payload['planoContaId']);
+      const centroCustoId = toOptionalPositiveInt(payload['centroCustoId']);
+
+      if (tipoDespesaId !== undefined) {
+        payload['tipoDespesaId'] = tipoDespesaId;
+        payload['tipoDespesa'] = { idTipoDespesa: tipoDespesaId };
+      } else {
+        delete payload['tipoDespesaId'];
+        delete payload['tipoDespesa'];
+      }
+      if (planoContaId !== undefined) {
+        payload['planoContaId'] = planoContaId;
+      } else {
+        delete payload['planoContaId'];
+      }
+      if (centroCustoId !== undefined) {
+        payload['centroCustoId'] = centroCustoId;
+      } else {
+        delete payload['centroCustoId'];
+      }
+      for (const dateKey of ['dataVencimento', 'dataCompetencia', 'dataEmissao']) {
+        if (!payload[dateKey] || String(payload[dateKey]).trim() === '') {
+          delete payload[dateKey];
+        }
+      }
     }
     if (config.key === 'paymentMethods') {
       payload['tipoPagamento'] = Number(payload['tipoPagamento'] ?? 1);
@@ -799,10 +938,12 @@ export class EntityListPage {
       ];
     }
     if (key === 'expenses') {
-      const total = rows.reduce((sum, row) => sum + Number(row['valor'] ?? 0), 0);
+      const openTotal = rows
+        .filter((row) => this.isActive(row, this.statusKey()) && !row['dataPagamento'])
+        .reduce((sum, row) => sum + Number(row['valor'] ?? 0), 0);
       return [
         { label: 'Lançamentos', value: String(rows.length), hint: 'contas e despesas', icon: 'receipt-outline', tone: 'primary' },
-        { label: 'Valor aberto', value: currency(total), hint: 'fluxo previsto', icon: 'cash-outline', tone: 'warning' },
+        { label: 'Valor aberto', value: currency(openTotal), hint: 'ativas em aberto', icon: 'cash-outline', tone: 'warning' },
         { label: 'Ativos', value: String(active), hint: 'pendentes ou válidos', icon: 'checkmark-circle-outline', tone: 'success' },
         { label: 'Cancelados', value: String(inactive), hint: 'revisar auditoria', icon: 'ban-outline', tone: inactive ? 'danger' : 'indigo' }
       ];
@@ -821,52 +962,22 @@ export class EntityListPage {
       clients: ['Dados gerais', 'Contatos', 'Endereços dentro do cliente', 'Histórico de compras', 'Financeiro e observações'],
       suppliers: ['Dados fiscais', 'Contato comercial', 'Entrada de NF', 'Compras vinculadas', 'Avaliação de reposição'],
       users: ['Dados do funcionário', 'Perfil RBAC', 'Registro de ponto', 'Justificativas', 'Histórico de alterações'],
-      expenses: ['Conta a pagar/receber', 'Vencimento', 'Conciliação', 'Sangria/suprimento', 'Fechamento diário'],
+      expenses: ['Conta a pagar/receber', 'Vencimento e competência', 'Plano de contas e centro de custo', 'Pagamento e conciliação', 'Auditoria'],
       profiles: ['Perfil', 'Permissões', 'Menus vinculados', 'Unidade/filial', 'Auditoria de acesso'],
       menus: ['Rota', 'Ícone', 'Exibição', 'Perfis vinculados', 'Ordem operacional']
     };
     return flows[key] ?? ['Cadastro', 'Validação', 'Ativação', 'Auditoria', 'Relatórios'];
   }
 
-  private mockRows(key: string): Row[] {
-    const suppliers = [
-      { idFornecedor: 1, razaoSocial: 'Distribuidora Norte LTDA', nomeFantasia: 'Norte Materiais', cnpj: '12.345.678/0001-90', telefone: '(11) 3333-1010', status: 1 },
-      { idFornecedor: 2, razaoSocial: 'Acabamentos Paulista SA', nomeFantasia: 'Paulista Acabamentos', cnpj: '98.765.432/0001-10', telefone: '(11) 3333-2020', status: 1 }
-    ];
-    const categories = [
-      { idCategoria: 1, descricao: 'Construção', status: 1 },
-      { idCategoria: 2, descricao: 'Ferramentas', status: 1 },
-      { idCategoria: 3, descricao: 'Pintura', status: 1 }
-    ];
-    const productGroups = [
-      { idGrupoProduto: 1, nome: 'Materiais básicos', descricao: 'Cimento, areia, tijolos e agregados', status: 1 },
-      { idGrupoProduto: 2, nome: 'Acabamento', descricao: 'Tintas, revestimentos e acessórios', status: 1 }
-    ];
-    const menus = [
-      { idMenu: 1, nome: 'Dashboard', link: '/', icone: 'bar-chart-outline', exibir: 1 },
-      { idMenu: 2, nome: 'PDV', link: '/pos', icone: 'cart-outline', exibir: 1 },
-      { idMenu: 3, nome: 'Caixa', link: '/cashier', icone: 'cash-outline', exibir: 1 },
-      { idMenu: 4, nome: 'Financeiro', link: '/expenses', icone: 'receipt-outline', exibir: 1 }
-    ];
-    const profiles = [
-      { idPerfil: 1, nome: 'Administrador', status: 1 },
-      { idPerfil: 2, nome: 'Gerente', status: 1 },
-      { idPerfil: 3, nome: 'Operador de Caixa', status: 1 }
-    ];
-    const map: Record<string, Row[]> = {
-      products: MOCK_PRODUCTS as unknown as Row[],
-      clients: MOCK_CLIENTS as unknown as Row[],
-      suppliers,
-      users: MOCK_USERS as unknown as Row[],
-      expenses: MOCK_EXPENSES as unknown as Row[],
-      expenseTypes: MOCK_EXPENSE_TYPES as unknown as Row[],
-      paymentMethods: MOCK_PAYMENT_METHODS as unknown as Row[],
-      categories,
-      productGroups,
-      menus,
-      profiles
-    };
-    return map[key] ?? [];
+  private handleMutationError(err: unknown, fallbackMessage: string): string {
+    const httpErr = err as { status?: number; error?: { detail?: string; message?: string } } | null | undefined;
+    const status = httpErr?.status;
+    if (!status || status === 0) {
+      this.offline.set(true);
+      return fallbackMessage;
+    }
+    this.offline.set(false);
+    return httpErr?.error?.detail ?? httpErr?.error?.message ?? 'Nao foi possivel concluir a operacao.';
   }
 
   private formModelFromRow(config: EntityConfig, row: Row): Row {
@@ -875,6 +986,20 @@ export class EntityListPage {
       const enderecos = clone['enderecos'] as Row[] | undefined;
       clone['endereco'] = enderecos?.[0] ?? {};
     }
+    if (config.key === 'expenses') {
+      const tipo = clone['tipoDespesa'] as Row | undefined;
+      if (clone['tipoDespesaId'] == null && tipo?.['idTipoDespesa'] != null) {
+        clone['tipoDespesaId'] = tipo['idTipoDespesa'];
+      }
+    }
     return clone;
   }
+}
+
+function toOptionalPositiveInt(value: unknown): number | undefined {
+  if (value === null || value === undefined || String(value).trim() === '') {
+    return undefined;
+  }
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : undefined;
 }

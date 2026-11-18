@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { IonicModule } from '@ionic/angular';
+import { IonContent, IonBadge, IonCard, IonCardHeader, IonCardTitle, IonCardSubtitle, IonCardContent, IonItem, IonInput, IonButton, IonNote } from '@ionic/angular/standalone';
 import { catchError, of } from 'rxjs';
 
 import { AuthService } from '../core/auth.service';
@@ -9,7 +9,7 @@ import { PrivacyService } from '../core/privacy.service';
 
 @Component({
   standalone: true,
-  imports: [CommonModule, FormsModule, IonicModule],
+  imports: [CommonModule, FormsModule, IonContent, IonBadge, IonCard, IonCardHeader, IonCardTitle, IonCardSubtitle, IonCardContent, IonItem, IonInput, IonButton, IonNote],
   template: `
     <ion-content>
       <main class="page">
@@ -80,7 +80,7 @@ import { PrivacyService } from '../core/privacy.service';
   `,
   styles: [`
     .masked-box {
-      background: #f8fafc;
+      background: var(--apex-bg-surface-muted);
       border: 1px solid var(--apex-border);
       border-radius: 8px;
       display: grid;
@@ -89,7 +89,7 @@ import { PrivacyService } from '../core/privacy.service';
     }
 
     .masked-box span {
-      color: #64748b;
+      color: var(--apex-text-muted);
       font-size: 0.82rem;
     }
 
@@ -114,14 +114,14 @@ export class PrivacyPage {
 
   requestExport(): void {
     this.privacy.request({ titularId: String(this.clienteId), tipo: 'EXPORTACAO' })
-      .pipe(catchError(() => of({ offline: true })))
-      .subscribe((response) => this.message.set(`Solicitação de exportação registrada: ${JSON.stringify(response)}`));
+      .pipe(catchError((error) => { this.message.set(error?.error?.detail || 'Não foi possível registrar a solicitação na API.'); return of(null); }))
+      .subscribe((response) => { if (response) this.message.set(`Solicitação de exportação registrada: ${JSON.stringify(response)}`); });
   }
 
   requestDeletion(): void {
     this.privacy.request({ titularId: String(this.clienteId), tipo: 'EXCLUSAO' })
-      .pipe(catchError(() => of({ offline: true })))
-      .subscribe((response) => this.message.set(`Solicitação de exclusão registrada: ${JSON.stringify(response)}`));
+      .pipe(catchError((error) => { this.message.set(error?.error?.detail || 'Não foi possível registrar a solicitação na API.'); return of(null); }))
+      .subscribe((response) => { if (response) this.message.set(`Solicitação de exclusão registrada: ${JSON.stringify(response)}`); });
   }
 
   downloadExport(): void {

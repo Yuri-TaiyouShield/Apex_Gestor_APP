@@ -286,4 +286,35 @@ describe('AuthService session lifecycle', () => {
       expect(serviceInvalid.isAuthenticated()).toBeTrue();
     });
   });
+
+  describe('enterDemoSession', () => {
+    it('recusa sessão demo quando DEMO_MODE está desativado sem alterar estado ou tokens existentes', () => {
+      const { service, session } = configureAuthService({
+        accessToken: 'access-secret',
+        expiresAt: String(Date.now() + 120_000),
+        refreshToken: 'refresh-secret',
+        user: { login: 'v5_vendedor', roles: ['ROLE_VENDEDOR'], usuarioId: 7 }
+      });
+      session.setRoles.calls.reset();
+      session.setPersona.calls.reset();
+      session.setAccessIssue.calls.reset();
+
+      const entered = service.enterDemoSession(['ROLE_GERENTE']);
+
+      expect(entered).toBeFalse();
+      expect(service.accessToken()).toBe('access-secret');
+      expect(service.isAuthenticated()).toBeTrue();
+      expect(session.setRoles).not.toHaveBeenCalled();
+      expect(session.setPersona).not.toHaveBeenCalled();
+      expect(session.setAccessIssue).not.toHaveBeenCalled();
+    });
+
+    it('mantém isAuthenticated falso quando não há token e DEMO_MODE está desativado', () => {
+      const { service, session } = configureAuthService();
+
+      expect(service.enterDemoSession(['ROLE_CAIXA'])).toBeFalse();
+      expect(service.isAuthenticated()).toBeFalse();
+      expect(session.setRoles).not.toHaveBeenCalled();
+    });
+  });
 });

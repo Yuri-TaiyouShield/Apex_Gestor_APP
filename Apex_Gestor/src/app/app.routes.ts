@@ -5,6 +5,20 @@ import { requireAuthGuard, roleGuard } from './core/auth.guard';
 const STAFF_DASHBOARD_ROLES = ['ROLE_SYSADMIN', 'ROLE_DONO_GERENTE', 'ROLE_FINANCEIRO', 'ROLE_VENDEDOR', 'ROLE_CAIXA', 'ROLE_DESPACHANTE', 'ROLE_ADMIN', 'ROLE_GERENTE', 'ROLE_GESTOR'];
 const MANAGER_ROLES = ['ROLE_SYSADMIN', 'ROLE_DONO_GERENTE', 'ROLE_ADMIN', 'ROLE_GERENTE'];
 const FINANCE_ROLES = ['ROLE_SYSADMIN', 'ROLE_DONO_GERENTE', 'ROLE_FINANCEIRO', 'ROLE_AUDITOR', 'ROLE_CONTADOR', 'ROLE_ADVOGADO', 'ROLE_ADMIN', 'ROLE_GERENTE'];
+const FINANCE_FOUNDATION_ROLES = [
+  'ROLE_FINANCEIRO',
+  'ROLE_FINANCAS',
+  'ROLE_AUDITOR',
+  'ROLE_CONTADOR',
+  'ROLE_GERENTE',
+  'ROLE_GESTOR',
+  'ROLE_ADMIN',
+  'ROLE_ADMINISTRACAO',
+  'ROLE_ADMIN_MASTER',
+  'ROLE_DONO',
+  'ROLE_DONO_GERENTE',
+  'ROLE_SYSADMIN'
+];
 const CASHIER_ROLES = ['ROLE_SYSADMIN', 'ROLE_DONO_GERENTE', 'ROLE_CAIXA', 'ROLE_ADMIN', 'ROLE_GERENTE'];
 const SALES_ROLES = ['ROLE_SYSADMIN', 'ROLE_DONO_GERENTE', 'ROLE_VENDEDOR', 'ROLE_CAIXA', 'ROLE_ADMIN', 'ROLE_GERENTE'];
 
@@ -106,6 +120,34 @@ export const routes: Routes = [
     canActivate: [roleGuard],
     data: { roles: FINANCE_ROLES },
     loadComponent: () => import('./pages/finance-compliance.page').then((m) => m.FinanceCompliancePage)
+  },
+  {
+    path: 'finance/foundation',
+    title: 'Fundação Financeira',
+    canActivate: [roleGuard],
+    data: { roles: FINANCE_FOUNDATION_ROLES },
+    loadComponent: () => import('./pages/finance-foundation.page').then((m) => m.FinanceFoundationPage)
+  },
+  {
+    path: 'finance/dre',
+    title: 'DRE Gerencial',
+    canActivate: [roleGuard],
+    data: { roles: FINANCE_FOUNDATION_ROLES },
+    loadComponent: () => import('./pages/finance-dre.page').then((m) => m.FinanceDrePage)
+  },
+  {
+    path: 'finance/cash-flow',
+    title: 'Fluxo de Caixa',
+    canActivate: [roleGuard],
+    data: { roles: FINANCE_FOUNDATION_ROLES },
+    loadComponent: () => import('./pages/finance-cash-flow.page').then((m) => m.FinanceCashFlowPage)
+  },
+  {
+    path: 'finance/indicators',
+    title: 'Inteligência Administrativa',
+    canActivate: [roleGuard],
+    data: { roles: FINANCE_FOUNDATION_ROLES },
+    loadComponent: () => import('./pages/finance-indicators.page').then((m) => m.FinanceIndicatorsPage)
   },
   {
     path: 'finance-operations',

@@ -26,13 +26,6 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
   if (token) {
     baseHeaders['Authorization'] = `Bearer ${token}`;
   }
-  const user = auth.user();
-  if (user) {
-    baseHeaders['X-Apex-User-Id'] = String(user.usuarioId);
-    baseHeaders['X-Apex-User-Login'] = user.login;
-    baseHeaders['X-Apex-Roles'] = user.roles.join(',');
-  }
-
   return from(licenseContext.licenseHeaders()).pipe(
     switchMap((licenseHeaders) => next(request.clone({
       setHeaders: {

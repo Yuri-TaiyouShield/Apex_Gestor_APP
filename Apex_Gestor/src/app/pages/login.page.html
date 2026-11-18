@@ -1,0 +1,91 @@
+<main class="login-page">
+  <section class="login-shell">
+    <aside class="login-context">
+      <div>
+        <div class="brand-mark" aria-hidden="true">A</div>
+        <span class="page-kicker">Apex Gestor</span>
+        <h1>Operação pronta para loja, caixa e gestão.</h1>
+        <p>ERP, PDV, estoque, financeiro e permissões em uma interface única para o varejo brasileiro.</p>
+      </div>
+
+      <div class="context-grid">
+        <span>
+          <strong>LGPD</strong>
+          <small>Consentimento auditável</small>
+        </span>
+        <span>
+          <strong>RBAC</strong>
+          <small>Perfis por função</small>
+        </span>
+        <span>
+          <strong>API</strong>
+          <small>Dados sincronizados</small>
+        </span>
+      </div>
+    </aside>
+
+    <section class="login-panel">
+      <div class="panel-title">
+        <span>Acesso seguro</span>
+        <h2>Entrar no Apex</h2>
+      </div>
+
+      <label class="field">
+        <span>Login</span>
+        <input [(ngModel)]="login" placeholder="Seu login" autocomplete="username">
+      </label>
+      <label class="field">
+        <span>Senha</span>
+        <input type="password" [(ngModel)]="senha" [placeholder]="demoMode ? testPassword : 'Sua senha'" autocomplete="current-password">
+      </label>
+
+      @if (demoMode) {
+        <div class="credential-help">
+          <strong>Ambiente local de teste</strong>
+          <span>Use os usuários semeados apenas no profile local.</span>
+          <div class="preset-grid">
+            @for (preset of loginPresets; track preset.login) {
+              <button type="button" class="soft-button" (click)="usePreset(preset.login)">
+                {{ preset.label }}
+              </button>
+            }
+          </div>
+        </div>
+      }
+
+      @if (twoFactorEnabled) {
+        <label class="field">
+          <span>Código 2FA</span>
+          <input [(ngModel)]="totpCode" placeholder="Código do autenticador" inputmode="numeric">
+        </label>
+      }
+      <label class="check-row">
+        <input type="checkbox" [(ngModel)]="acceptedPrivacyTerms">
+        <span>Li e aceito a política de privacidade v1.0</span>
+      </label>
+
+      @if (message()) {
+        <p class="auth-message" [class.danger]="messageColor() === 'danger'">{{ message() }}</p>
+      }
+
+      <button type="button" class="primary-action" (click)="enter()" [disabled]="!login || !senha || !acceptedPrivacyTerms">
+        Entrar com segurança
+      </button>
+
+      @if (demoMode) {
+      <details class="demo-details">
+        <summary>Modo demonstração sem backend</summary>
+        <div class="demo-panel">
+          <div class="segmented-control" role="group" aria-label="Perfil de demonstração">
+            <button type="button" [class.selected]="demoPersona === 'caixa'" [attr.aria-pressed]="demoPersona === 'caixa'" (click)="demoPersona = 'caixa'">Caixa</button>
+            <button type="button" [class.selected]="demoPersona === 'vendedor'" [attr.aria-pressed]="demoPersona === 'vendedor'" (click)="demoPersona = 'vendedor'">Vendedor</button>
+            <button type="button" [class.selected]="demoPersona === 'gerente'" [attr.aria-pressed]="demoPersona === 'gerente'" (click)="demoPersona = 'gerente'">Gerente</button>
+            <button type="button" [class.selected]="demoPersona === 'admin'" [attr.aria-pressed]="demoPersona === 'admin'" (click)="demoPersona = 'admin'">Admin</button>
+          </div>
+          <button type="button" class="secondary-action" (click)="enterDemo()">Entrar em modo demo</button>
+        </div>
+      </details>
+      }
+    </section>
+  </section>
+</main>

@@ -1,5 +1,23 @@
 import { addIcons } from 'ionicons';
-import { cartOutline, settingsOutline, shieldCheckmarkOutline, warningOutline } from 'ionicons/icons';
+import {
+  barChartOutline,
+  businessOutline,
+  cardOutline,
+  cartOutline,
+  cashOutline,
+  cubeOutline,
+  documentTextOutline,
+  layersOutline,
+  moonOutline,
+  peopleOutline,
+  personCircleOutline,
+  receiptOutline,
+  settingsOutline,
+  shieldCheckmarkOutline,
+  storefrontOutline,
+  sunnyOutline,
+  warningOutline
+} from 'ionicons/icons';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { MenuController } from '@ionic/angular/standalone';
@@ -15,11 +33,17 @@ describe('AppComponent shell', () => {
   let events: Subject<NavigationEnd>;
   let whiteLabel: boolean;
   let persona: Persona;
-  let session: { persona: jasmine.Spy<() => Persona>; hasAnyRole: jasmine.Spy<(roles?: readonly string[]) => boolean> };
+  let session: {
+    persona: jasmine.Spy<() => Persona>;
+    hasAnyRole: jasmine.Spy<(roles?: readonly string[]) => boolean>;
+    roleLabel: jasmine.Spy<() => string>;
+    accessIssue: jasmine.Spy<() => string | null>;
+    setAccessIssue: jasmine.Spy<(issue: string | null) => void>;
+  };
   let tenantFeatures: {
     refreshFromCache: jasmine.Spy;
     isWhiteLabelB2C: jasmine.Spy<() => boolean>;
-    context: () => { tenantName: string; branding: { storefrontName?: string } | null };
+    context: () => { tenantName: string; subscriptionTier?: string; branding: { storefrontName?: string } | null };
     hasAll: jasmine.Spy<() => boolean>;
   };
   let sessionTimeout: { start: jasmine.Spy };
@@ -29,9 +53,22 @@ describe('AppComponent shell', () => {
 
   beforeAll(() => {
     addIcons({
+      'bar-chart-outline': barChartOutline,
+      'business-outline': businessOutline,
+      'card-outline': cardOutline,
       'cart-outline': cartOutline,
+      'cash-outline': cashOutline,
+      'cube-outline': cubeOutline,
+      'document-text-outline': documentTextOutline,
+      'layers-outline': layersOutline,
+      'moon-outline': moonOutline,
+      'people-outline': peopleOutline,
+      'person-circle-outline': personCircleOutline,
+      'receipt-outline': receiptOutline,
       'settings-outline': settingsOutline,
       'shield-checkmark-outline': shieldCheckmarkOutline,
+      'storefront-outline': storefrontOutline,
+      'sunny-outline': sunnyOutline,
       'warning-outline': warningOutline
     });
   });
@@ -50,13 +87,17 @@ describe('AppComponent shell', () => {
 
     session = {
       persona: jasmine.createSpy('persona').and.callFake(() => persona),
-      hasAnyRole: jasmine.createSpy('hasAnyRole').and.returnValue(true)
+      hasAnyRole: jasmine.createSpy('hasAnyRole').and.returnValue(true),
+      roleLabel: jasmine.createSpy('roleLabel').and.returnValue('Gerente'),
+      accessIssue: jasmine.createSpy('accessIssue').and.returnValue(null),
+      setAccessIssue: jasmine.createSpy('setAccessIssue')
     };
     tenantFeatures = {
       refreshFromCache: jasmine.createSpy('refreshFromCache'),
       isWhiteLabelB2C: jasmine.createSpy('isWhiteLabelB2C').and.callFake(() => whiteLabel),
       context: jasmine.createSpy('context').and.callFake(() => ({
         tenantName: 'HML Retail',
+        subscriptionTier: 'Growth',
         branding: whiteLabel ? { storefrontName: 'B2C Storefront' } : null
       })),
       hasAll: jasmine.createSpy('hasAll').and.returnValue(true)
@@ -80,6 +121,9 @@ describe('AppComponent shell', () => {
 
   afterEach(() => {
     localStorage.clear();
+    document.documentElement.removeAttribute('data-theme');
+    document.documentElement.removeAttribute('data-density');
+    document.documentElement.classList.remove('ion-palette-dark');
   });
 
   it('exibe Apex Gestor para o quadro de funcionários fora do comércio', () => {
@@ -174,5 +218,16 @@ describe('AppComponent shell', () => {
     await fixture.componentInstance.closeMenu();
 
     expect(menu.close).toHaveBeenCalledOnceWith('main-menu');
+  });
+
+  it('alterna tema global claro/escuro pelo botão de alternância no shell', () => {
+    fixture.detectChanges();
+    const initialDark = fixture.componentInstance.theme.isDark();
+
+    fixture.componentInstance.theme.toggleLightDark();
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.theme.isDark()).toBe(!initialDark);
+    expect(document.documentElement.getAttribute('data-theme')).toBe(initialDark ? 'premium-light' : 'dark-executive');
   });
 });

@@ -75,6 +75,39 @@ describe('ERP operational configuration', () => {
       expect(config.columns.length).toBeGreaterThan(0);
     }
   });
+
+  it('registers finance foundation menu entry in gestao excluding seller, cashier and B2C client', () => {
+    const foundation = APEX_NAV_ITEMS.find((item) => item.path === '/finance/foundation');
+
+    expect(foundation).toBeDefined();
+    expect(foundation?.group).toBe('gestao');
+    expect(foundation?.requiredFeatures).toEqual(['FINANCIAL_CORE']);
+    expect(foundation?.allowedRoles).toContain('ROLE_FINANCEIRO');
+    expect(foundation?.allowedRoles).toContain('ROLE_AUDITOR');
+    expect(foundation?.allowedRoles).not.toContain('ROLE_VENDEDOR');
+    expect(foundation?.allowedRoles).not.toContain('ROLE_CAIXA');
+    expect(foundation?.allowedRoles).not.toContain('ROLE_CLIENTE_B2C');
+  });
+
+  it('exposes optional competence and managerial classification fields on expenses without breaking required fields', () => {
+    const fieldKeys = ENTITY_CONFIGS['expenses'].fields.map((field) => field.key);
+
+    expect(fieldKeys).toEqual(jasmine.arrayContaining([
+      'descricao',
+      'valor',
+      'dataVencimento',
+      'dataCompetencia',
+      'dataEmissao',
+      'tipoDespesaId',
+      'planoContaId',
+      'centroCustoId'
+    ]));
+    expect(columnKeys('expenses')).toEqual(jasmine.arrayContaining([
+      'dataCompetencia',
+      'planoContaNome',
+      'tipoDespesa.nome'
+    ]));
+  });
 });
 
 function groups(key: keyof typeof ENTITY_CONFIGS): string[] {

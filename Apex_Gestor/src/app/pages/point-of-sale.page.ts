@@ -1,17 +1,16 @@
 import { CommonModule } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { IonicModule } from '@ionic/angular';
+import { IonContent, IonBadge, IonCard, IonCardHeader, IonCardTitle, IonCardSubtitle, IonCardContent, IonSearchbar, IonItem, IonLabel, IonButton, IonIcon, IonSelect, IonSelectOption, IonInput, IonNote } from '@ionic/angular/standalone';
 import { catchError, of } from 'rxjs';
 
 import { ApexApiService } from '../core/apex-api.service';
-import { MOCK_CLIENTS, MOCK_PRODUCTS } from '../core/mock-data';
 import { CartItem, Cliente, CondicaoPagamento, Produto } from '../core/models';
 import { currency } from '../core/view-utils';
 
 @Component({
   standalone: true,
-  imports: [CommonModule, FormsModule, IonicModule],
+  imports: [CommonModule, FormsModule, IonContent, IonBadge, IonCard, IonCardHeader, IonCardTitle, IonCardSubtitle, IonCardContent, IonSearchbar, IonItem, IonLabel, IonButton, IonIcon, IonSelect, IonSelectOption, IonInput, IonNote],
   template: `
     <ion-content>
       <main class="page pos-page">
@@ -80,7 +79,7 @@ import { currency } from '../core/view-utils';
     .pos-grid{display:grid;gap:14px;grid-template-columns:minmax(300px,.9fr) minmax(0,1.1fr) minmax(320px,.72fr)}
     ion-searchbar{padding:0 0 10px}.product-list{display:grid;gap:8px;max-height:62vh;overflow:auto}
     .product-list button{align-items:center;background:var(--apex-card-muted);border:1px solid var(--apex-border);border-radius:8px;color:var(--apex-ink);display:flex;gap:12px;justify-content:space-between;padding:11px;text-align:left;width:100%}
-    .product-list button:hover{border-color:var(--apex-primary)}.product-list button:disabled{opacity:.55}.product-list span,.product-list strong,.product-list small{display:block}.product-list small{color:var(--apex-muted);font-size:.74rem;margin-top:4px}.product-list b{color:var(--apex-primary);white-space:nowrap}
+    .product-list button:hover{border-color:var(--apex-primary)}.product-list button:disabled{opacity:.55}.product-list span,.product-list strong,.product-list small{display:block}.product-list small{color:var(--apex-muted);font-size:.74rem;margin-top:4px}.product-list b{color:var(--apex-text-brand);white-space:nowrap}
     .cart-line,.checkout-panel ion-item{--background:var(--apex-card-muted);--border-radius:8px;border:1px solid var(--apex-border);border-radius:8px;margin-bottom:8px}
     .summary{display:grid;gap:8px;grid-template-columns:1fr 1fr}.summary span{background:var(--apex-card-muted);border:1px solid var(--apex-border);border-radius:8px;padding:10px}.summary strong{display:block;margin-top:4px}.total{background:var(--apex-primary);border-radius:8px;color:#fff;display:flex;justify-content:space-between;padding:16px}.total strong{font-size:1.5rem}
     @media(max-width:1180px){.pos-grid{grid-template-columns:1fr}}
@@ -89,8 +88,8 @@ import { currency } from '../core/view-utils';
 export class PointOfSalePage {
   private readonly api = inject(ApexApiService);
   readonly money = currency;
-  readonly products = signal<Produto[]>(MOCK_PRODUCTS);
-  readonly clients = signal<Cliente[]>(MOCK_CLIENTS);
+  readonly products = signal<Produto[]>([]);
+  readonly clients = signal<Cliente[]>([]);
   readonly paymentConditions = signal<CondicaoPagamento[]>([]);
   readonly items = signal<CartItem[]>([]);
   readonly search = signal('');
@@ -98,7 +97,7 @@ export class PointOfSalePage {
   readonly message = signal('');
   readonly apiOffline = signal(false);
   readonly sending = signal(false);
-  clienteId = MOCK_CLIENTS[0]?.idCliente;
+  clienteId?: number;
   condicaoPagamentoId?: number;
 
   readonly subtotal = computed(() => this.items().reduce((sum, item) => sum + item.produto.valorVenda * item.quantidade, 0));
@@ -110,8 +109,8 @@ export class PointOfSalePage {
   });
 
   constructor() {
-    this.api.products().pipe(catchError(() => { this.apiOffline.set(true); return of(MOCK_PRODUCTS); })).subscribe((value) => this.products.set(value));
-    this.api.clients().pipe(catchError(() => of(MOCK_CLIENTS))).subscribe((value) => { this.clients.set(value); this.clienteId ??= value[0]?.idCliente; });
+    this.api.products().pipe(catchError(() => { this.apiOffline.set(true); return of([] as Produto[]); })).subscribe((value) => this.products.set(value));
+    this.api.clients().pipe(catchError(() => { this.apiOffline.set(true); return of([] as Cliente[]); })).subscribe((value) => { this.clients.set(value); this.clienteId ??= value[0]?.idCliente; });
     this.api.paymentConditions().pipe(catchError(() => of([]))).subscribe((value) => { this.paymentConditions.set(value); this.condicaoPagamentoId ??= value[0]?.idCondicaoPagamento; });
   }
 

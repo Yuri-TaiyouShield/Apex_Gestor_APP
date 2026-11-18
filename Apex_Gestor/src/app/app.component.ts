@@ -10,11 +10,13 @@ import { APEX_NAV_ITEMS, ApexNavItem } from './core/feature-menu.config';
 import { SessionService } from './core/session.service';
 import { SessionTimeoutService } from './core/session-timeout.service';
 import { TenantFeatureService } from './core/tenant-feature.service';
+import { ThemeService } from './core/ui/theme.service';
+import { ApexDialogHostComponent, ApexToastHostComponent } from './shared/ui';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, IonApp, IonSplitPane, IonMenu, IonHeader, IonToolbar, IonTitle, IonContent, IonList, IonItem, IonIcon, IonLabel, IonMenuToggle, IonMenuButton, IonButtons, IonButton, IonRouterOutlet, RouterLink, RouterLinkActive],
+  imports: [CommonModule, IonApp, IonSplitPane, IonMenu, IonHeader, IonToolbar, IonTitle, IonContent, IonList, IonItem, IonIcon, IonLabel, IonMenuToggle, IonMenuButton, IonButtons, IonButton, IonRouterOutlet, RouterLink, RouterLinkActive, ApexDialogHostComponent, ApexToastHostComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })
@@ -24,6 +26,7 @@ export class AppComponent implements OnInit {
   private readonly sessionTimeout = inject(SessionTimeoutService);
   readonly session = inject(SessionService);
   readonly tenantFeatures = inject(TenantFeatureService);
+  readonly theme = inject(ThemeService);
 
   private readonly currentUrl = toSignal(
     this.router.events.pipe(

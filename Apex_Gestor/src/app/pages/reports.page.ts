@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
-import { IonicModule } from '@ionic/angular';
+import { IonContent, IonButton, IonIcon, IonCard, IonCardHeader, IonCardTitle, IonCardSubtitle, IonCardContent, IonNote } from '@ionic/angular/standalone';
 import { catchError, forkJoin, of } from 'rxjs';
 
 import { ApexApiService } from '../core/apex-api.service';
@@ -11,7 +11,7 @@ type ReportKind = 'clientes' | 'estoque' | 'funcionarios' | 'vendas' | 'forneced
 
 @Component({
   standalone: true,
-  imports: [CommonModule, IonicModule],
+  imports: [CommonModule, IonContent, IonButton, IonIcon, IonCard, IonCardHeader, IonCardTitle, IonCardSubtitle, IonCardContent, IonNote],
   template: `
     <ion-content>
       <main class="page">
@@ -30,7 +30,7 @@ type ReportKind = 'clientes' | 'estoque' | 'funcionarios' | 'vendas' | 'forneced
         @if (offline()) {
           <div class="state-line warning">
             <ion-icon name="cloud-offline-outline" aria-hidden="true"></ion-icon>
-            API indisponível. Relatórios exibindo amostra operacional para manter a tela utilizável.
+            API indisponível. Nenhum dado fictício será exibido.
           </div>
         }
 
@@ -157,13 +157,13 @@ export class ReportsPage {
 
   loadReports(): void {
     const kinds: ReportKind[] = ['clientes', 'estoque', 'funcionarios', 'vendas', 'fornecedores'];
-    this.reports.set(kinds.map((kind) => this.mockReport(kind)));
+    this.reports.set([]);
     this.offline.set(false);
     forkJoin(kinds.map((kind) => this.api.operationalReport(kind).pipe(catchError(() => {
       this.offline.set(true);
-      return of(this.mockReport(kind));
+      return of(null);
     })))).subscribe((reports) => {
-      this.reports.set(reports);
+      this.reports.set(reports.filter((report): report is RelatorioOperacional => report !== null));
     });
   }
 
@@ -178,59 +178,4 @@ export class ReportsPage {
     return subtitles[tipo] ?? 'Resumo operacional';
   }
 
-  private mockReport(kind: ReportKind): RelatorioOperacional {
-    const labels: Record<ReportKind, string> = {
-      clientes: 'Clientes',
-      estoque: 'Estoque',
-      funcionarios: 'Funcionarios',
-      vendas: 'Vendas',
-      fornecedores: 'Fornecedores'
-    };
-    return {
-      tipo: labels[kind],
-      totalRegistros: this.mockTotals[kind].totalRegistros,
-      ativos: this.mockTotals[kind].ativos,
-      inativos: this.mockTotals[kind].inativos,
-      valorTotal: this.mockTotals[kind].valorTotal,
-      alertas: this.mockTotals[kind].alertas
-    };
-  }
-
-  private readonly mockTotals: Record<ReportKind, Omit<RelatorioOperacional, 'tipo'>> = {
-    clientes: {
-      totalRegistros: 42,
-      ativos: 39,
-      inativos: 3,
-      valorTotal: 0,
-      alertas: ['8 clientes sem compra nos últimos 60 dias']
-    },
-    estoque: {
-      totalRegistros: 128,
-      ativos: 124,
-      inativos: 4,
-      valorTotal: 184300,
-      alertas: ['6 produtos abaixo do estoque mínimo', '2 itens sem venda há mais de 90 dias']
-    },
-    funcionarios: {
-      totalRegistros: 12,
-      ativos: 11,
-      inativos: 1,
-      valorTotal: 0,
-      alertas: ['3 ajustes de ponto aguardando aprovação']
-    },
-    vendas: {
-      totalRegistros: 316,
-      ativos: 309,
-      inativos: 7,
-      valorTotal: 89640,
-      alertas: ['7 vendas canceladas exigem conferência de auditoria']
-    },
-    fornecedores: {
-      totalRegistros: 18,
-      ativos: 17,
-      inativos: 1,
-      valorTotal: 0,
-      alertas: ['4 fornecedores sem pedido nos últimos 90 dias']
-    }
-  };
 }

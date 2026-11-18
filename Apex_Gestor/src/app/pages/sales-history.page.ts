@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { IonicModule } from '@ionic/angular';
+import { IonContent, IonSearchbar, IonSelect, IonSelectOption, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCardSubtitle } from '@ionic/angular/standalone';
 import { catchError, finalize, of } from 'rxjs';
 
 import { ApexApiService } from '../core/apex-api.service';
@@ -11,7 +11,7 @@ import { currency, date } from '../core/view-utils';
 
 @Component({
   standalone: true,
-  imports: [CommonModule, FormsModule, IonicModule],
+  imports: [CommonModule, FormsModule, IonContent, IonSearchbar, IonSelect, IonSelectOption, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCardSubtitle],
   template: `
     <ion-content><main class="page history-page">
       <header class="page-header"><div><span class="page-kicker">Pós-venda auditável</span><h1>Histórico de Vendas</h1>
@@ -32,7 +32,7 @@ import { currency, date } from '../core/view-utils';
     </main></ion-content>
   `,
   styles: [`
-    .filter-bar{align-items:center;background:#fff;border:1px solid var(--apex-border);border-radius:8px;display:grid;gap:8px;grid-template-columns:minmax(260px,1fr) 220px auto;margin-bottom:12px;padding:8px}.filter-bar ion-searchbar{padding:0}td small{color:var(--apex-muted);display:block;font-size:.74rem;margin-top:3px}.detail-card{margin-top:12px}.detail-grid{display:grid;gap:8px;grid-template-columns:repeat(4,1fr)}.detail-grid span{background:var(--apex-card-muted);border:1px solid var(--apex-border);border-radius:8px;padding:10px}.detail-grid small,.detail-grid strong{display:block}.detail-grid small{color:var(--apex-muted)}.return-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}@media(max-width:800px){.filter-bar,.detail-grid{grid-template-columns:1fr}}
+    .filter-bar{align-items:center;background:var(--apex-bg-surface);border:1px solid var(--apex-border);border-radius:8px;display:grid;gap:8px;grid-template-columns:minmax(260px,1fr) 220px auto;margin-bottom:12px;padding:8px}.filter-bar ion-searchbar{padding:0}td small{color:var(--apex-muted);display:block;font-size:.74rem;margin-top:3px}.detail-card{margin-top:12px}.detail-grid{display:grid;gap:8px;grid-template-columns:repeat(4,1fr)}.detail-grid span{background:var(--apex-card-muted);border:1px solid var(--apex-border);border-radius:8px;padding:10px}.detail-grid small,.detail-grid strong{display:block}.detail-grid small{color:var(--apex-muted)}.return-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}@media(max-width:800px){.filter-bar,.detail-grid{grid-template-columns:1fr}}
   `]
 })
 export class SalesHistoryPage {

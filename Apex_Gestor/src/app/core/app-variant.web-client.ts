@@ -4,3 +4,5 @@ import { ApexAppVariant } from './app-variant.model';
 export const APP_VARIANT: ApexAppVariant = 'web-client';
 export const DEFAULT_PERSONA: Persona = 'cliente';
 export const DEFAULT_HOME_ROUTE: string = '/store';
+export const DEMO_MODE = false;
+export const DEMO_PASSWORD = '';

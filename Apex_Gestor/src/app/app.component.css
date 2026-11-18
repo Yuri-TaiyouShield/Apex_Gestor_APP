@@ -3,20 +3,21 @@
 }
 
 ion-menu {
-  --width: 252px;
-  --background: var(--apex-sidebar);
-  border-right: 0;
+  --width: var(--apex-sidebar-width);
+  --background: transparent;
+  background: var(--apex-bg-sidebar);
+  border-right: 1px solid var(--apex-sidebar-border);
 }
 
 ion-split-pane {
-  --side-max-width: 252px;
-  --side-min-width: 252px;
-  --side-width: 252px;
+  --side-max-width: var(--apex-sidebar-width);
+  --side-min-width: var(--apex-sidebar-width);
+  --side-width: var(--apex-sidebar-width);
 }
 
 .apex-shell-pane {
   display: grid;
-  grid-template-columns: 252px minmax(0, 1fr);
+  grid-template-columns: var(--apex-sidebar-width) minmax(0, 1fr);
   min-height: 100vh;
 }
 
@@ -29,13 +30,17 @@ ion-menu ion-content {
 
 ion-menu {
   grid-column: 1;
-  width: 252px;
+  width: var(--apex-sidebar-width);
 }
 
-ion-menu ion-content,
+ion-menu ion-content {
+  --background: transparent;
+  background: var(--apex-bg-sidebar-glow), var(--apex-bg-sidebar);
+}
+
 ion-menu ion-list {
-  --background: var(--apex-sidebar);
-  background: var(--apex-sidebar);
+  --background: transparent;
+  background: transparent;
 }
 
 ion-menu ion-list,
@@ -43,40 +48,61 @@ ion-menu ion-menu-toggle {
   display: block;
 }
 
+.sidebar-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  padding-bottom: 14px;
+}
+
+.sidebar-nav {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding-bottom: 10px;
+}
+
 ion-menu ion-item {
   --background: transparent;
-  --border-radius: 8px;
+  --border-radius: var(--apex-radius-md);
   --color: var(--apex-sidebar-muted);
   --inner-padding-end: 12px;
-  --min-height: 36px;
+  --min-height: 38px;
   align-items: center;
   display: flex;
   font-size: 0.86rem;
-  margin: 2px 8px;
-  min-height: 36px;
-  padding: 0 9px;
+  font-weight: 550;
+  margin: 2px 10px;
+  min-height: 38px;
+  padding: 0 10px;
+  transition: background var(--apex-duration-fast) var(--apex-ease), color var(--apex-duration-fast) var(--apex-ease);
+}
+
+ion-menu ion-item:hover {
+  --background: rgba(255, 255, 255, 0.06);
+  --color: var(--apex-sidebar-text);
 }
 
 ion-menu ion-item.selected {
-  --background: rgba(255, 255, 255, 0.1);
+  --background: linear-gradient(90deg, rgba(37, 99, 235, 0.92) 0%, rgba(124, 58, 237, 0.88) 58%, rgba(225, 29, 72, 0.82) 100%);
   --color: #ffffff;
+  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.28);
   font-weight: 700;
 }
 
 ion-menu ion-item ion-icon {
   color: currentColor;
-  font-size: 1.1rem;
-  margin-right: 8px;
+  font-size: 1.08rem;
+  margin-right: 10px;
 }
 
 .brand-panel {
   align-items: center;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid var(--apex-sidebar-border);
   display: grid;
-  grid-template-columns: 36px 1fr;
+  grid-template-columns: 38px 1fr;
   gap: 10px;
   margin-bottom: 8px;
-  padding: 14px 12px 10px;
+  padding: 16px 14px 12px;
 }
 
 .brand-panel strong,
@@ -86,20 +112,22 @@ ion-menu ion-item ion-icon {
 
 .brand-panel span {
   color: var(--apex-sidebar-muted);
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   margin-top: 2px;
 }
 
 .brand-mark {
   align-items: center;
-  background: #ffffff;
-  border-radius: 8px;
-  color: var(--apex-primary-strong);
+  background: var(--apex-brand-gradient);
+  border-radius: var(--apex-radius-md);
+  box-shadow: 0 6px 16px rgba(124, 58, 237, 0.35);
+  color: #ffffff;
   display: flex;
-  font-weight: 800;
-  height: 36px;
+  font-size: 1.1rem;
+  font-weight: 850;
+  height: 38px;
   justify-content: center;
-  width: 36px;
+  width: 38px;
 }
 
 .brand-copy {
@@ -114,39 +142,38 @@ ion-menu ion-item ion-icon {
 }
 
 .brand-copy strong {
-  color: #ffffff;
+  color: var(--apex-sidebar-text);
+  font-size: 0.98rem;
+  font-weight: 800;
 }
 
 .tenant-chip {
-  background: rgba(180, 105, 14, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: 8px;
-  color: #ffdca3;
-  font-size: 0.72rem;
-  font-weight: 800;
+  background: rgba(124, 58, 237, 0.24);
+  border: 1px solid rgba(167, 139, 250, 0.32);
+  border-radius: var(--apex-radius-pill);
+  color: #e9d5ff;
+  font-size: 0.7rem;
+  font-weight: 750;
   grid-column: 1 / -1;
   justify-self: start;
-  padding: 5px 7px;
+  padding: 4px 10px;
 }
 
 .nav-label {
-  color: rgba(255, 255, 255, 0.52);
-  font-size: 0.72rem;
-  font-weight: 850;
-  letter-spacing: 0;
-  margin: 12px 16px 5px;
+  color: rgba(203, 213, 225, 0.56);
+  font-size: 0.69rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  margin: 14px 18px 6px;
   text-transform: uppercase;
 }
 
 .sidebar-footer {
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  bottom: 14px;
-  left: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--apex-sidebar-border);
+  border-radius: var(--apex-radius-md);
+  margin: 10px 12px 0;
   padding: 12px;
-  position: absolute;
-  right: 12px;
 }
 
 .sidebar-footer span,
@@ -156,30 +183,35 @@ ion-menu ion-item ion-icon {
 
 .sidebar-footer span {
   color: var(--apex-sidebar-muted);
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   font-weight: 750;
+  letter-spacing: 0.04em;
   margin-bottom: 3px;
   text-transform: uppercase;
 }
 
 .sidebar-footer strong {
-  color: #ffffff;
-  font-size: 0.92rem;
+  color: var(--apex-sidebar-text);
+  font-size: 0.9rem;
 }
 
 .sidebar-footer a {
-  color: #ffdca3;
+  color: #93c5fd;
   display: inline-flex;
   font-size: 0.78rem;
-  font-weight: 800;
+  font-weight: 700;
   margin-top: 8px;
   text-decoration: none;
 }
 
+.sidebar-footer a:hover {
+  color: #ffffff;
+}
+
 .app-header ion-toolbar {
-  --background: #ffffff;
-  --border-color: var(--apex-border);
-  min-height: 50px;
+  --background: var(--apex-bg-header);
+  --border-color: var(--apex-border-subtle);
+  min-height: var(--apex-topbar-height);
 }
 
 .toolbar-title {
@@ -188,53 +220,56 @@ ion-menu ion-item ion-icon {
 }
 
 .toolbar-title strong {
-  color: var(--apex-ink);
+  color: var(--apex-text-primary);
   font-size: 0.96rem;
-  font-weight: 850;
+  font-weight: 800;
 }
 
 .toolbar-title small {
-  color: var(--apex-muted);
-  font-size: 0.75rem;
-  font-weight: 650;
+  color: var(--apex-text-muted);
+  font-size: 0.74rem;
+  font-weight: 600;
 }
 
 .header-actions ion-button {
-  --border-radius: 8px;
-  --color: #ffffff;
+  --border-radius: var(--apex-radius-md);
   --padding-end: 10px;
   --padding-start: 10px;
-  border: 1px solid transparent;
   gap: 6px;
-  height: 34px;
+  height: 36px;
   margin-left: 4px;
-  min-width: 40px;
+  min-height: 36px;
+  min-width: 38px;
   width: auto;
 }
 
+.header-actions ion-button::part(native) {
+  min-height: 36px;
+}
+
 .header-actions ion-button[fill="clear"] {
-  --color: var(--apex-primary-strong);
+  --color: var(--apex-text-secondary);
 }
 
 .header-actions ion-button span {
   font-size: 0.82rem;
-  font-weight: 800;
+  font-weight: 750;
 }
 
 .privacy-badge {
   align-items: center;
-  background: #ecfdf5;
-  border: 1px solid #a7f3d0;
-  border-radius: 8px;
-  color: #065f46;
+  background: var(--apex-status-success-bg);
+  border: 1px solid var(--apex-status-success-border);
+  border-radius: var(--apex-radius-pill);
+  color: var(--apex-status-success);
   display: inline-flex;
-  font-size: 0.76rem;
-  font-weight: 850;
+  font-size: 0.74rem;
+  font-weight: 750;
   gap: 6px;
   height: 28px;
   line-height: 1;
   margin-right: 6px;
-  padding: 0 9px;
+  padding: 0 10px;
   white-space: nowrap;
 }
 
@@ -244,13 +279,13 @@ ion-menu ion-item ion-icon {
 
 .access-banner {
   align-items: center;
-  background: #fff7ed;
-  border-top: 1px solid #fed7aa;
-  color: #9a3412;
+  background: var(--apex-status-warning-bg);
+  border-top: 1px solid var(--apex-status-warning-border);
+  color: var(--apex-status-warning);
   display: flex;
   font-size: 0.82rem;
   gap: 8px;
-  min-height: 34px;
+  min-height: 36px;
   padding: 6px 14px;
 }
 
@@ -261,10 +296,10 @@ ion-menu ion-item ion-icon {
 .access-banner button {
   background: transparent;
   border: 0;
-  color: #7c2d12;
+  color: var(--apex-text-primary);
   cursor: pointer;
   font: inherit;
-  font-weight: 800;
+  font-weight: 750;
 }
 
 .app-header ion-menu-button {
@@ -298,15 +333,19 @@ ion-menu ion-item ion-icon {
     display: block;
   }
 
+  /* O drawer visual (menu-inner) é posicionado pelo Ionic; o host precisa
+     ficar fora do fluxo, senão empurra o conteúdo principal 100vh para baixo. */
   ion-menu {
+    --width: min(86vw, 320px);
     display: block;
+    inset: 0 auto 0 0;
+    position: fixed;
+    pointer-events: none;
     width: min(86vw, 320px);
   }
-}
 
-@media (max-height: 720px) {
-  .sidebar-footer {
-    display: none;
+  ion-menu.show-menu {
+    pointer-events: auto;
   }
 }
 

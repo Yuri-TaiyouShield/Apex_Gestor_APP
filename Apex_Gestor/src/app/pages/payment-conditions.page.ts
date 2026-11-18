@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { IonicModule } from '@ionic/angular';
+import { IonContent, IonButton, IonIcon, IonCard, IonCardHeader, IonCardTitle, IonCardSubtitle, IonCardContent, IonSearchbar, IonItem, IonInput, IonSelect, IonSelectOption } from '@ionic/angular/standalone';
 import { catchError, finalize, of } from 'rxjs';
 
 import { ApexApiService } from '../core/apex-api.service';
@@ -9,7 +9,7 @@ import { CondicaoPagamento } from '../core/models';
 
 @Component({
   standalone: true,
-  imports: [CommonModule, FormsModule, IonicModule],
+  imports: [CommonModule, FormsModule, IonContent, IonButton, IonIcon, IonCard, IonCardHeader, IonCardTitle, IonCardSubtitle, IonCardContent, IonSearchbar, IonItem, IonInput, IonSelect, IonSelectOption],
   template: `
     <ion-content>
       <main class="page payment-page">
@@ -259,8 +259,9 @@ export class PaymentConditionsPage {
       return;
     }
     this.api.patch<CondicaoPagamento>(`/api/condicoes-pagamento/${condition.idCondicaoPagamento}/inativar`)
-      .pipe(catchError(() => of({ ...condition, status: 0 })))
+      .pipe(catchError((error) => { this.offline.set(true); this.message.set(error?.error?.detail || 'Não foi possível inativar a condição com a API.'); return of(null); }))
       .subscribe((updated) => {
+        if (!updated) return;
         this.rows.update((rows) => rows.map((row) => row.idCondicaoPagamento === updated.idCondicaoPagamento ? updated : row));
         this.message.set('Condição inativada.');
       });

@@ -8,41 +8,45 @@
       </ion-header>
 
       <ion-content>
-        <section class="brand-panel">
-          <div class="brand-mark" aria-hidden="true">A</div>
-          <div class="brand-copy">
-            <strong>{{ title() }}</strong>
-            <span>{{ platformLabel() }} | {{ session.roleLabel() }}</span>
-          </div>
-          <span class="tenant-chip">{{ tenantFeatures.context().subscriptionTier }}</span>
-        </section>
+        <div class="sidebar-shell">
+          <section class="brand-panel">
+            <div class="brand-mark" aria-hidden="true">A</div>
+            <div class="brand-copy">
+              <strong>{{ title() }}</strong>
+              <span>{{ platformLabel() }} | {{ session.roleLabel() }}</span>
+            </div>
+            <span class="tenant-chip">{{ tenantFeatures.context().subscriptionTier }}</span>
+          </section>
 
-        @for (section of visibleNavGroups(); track section.group) {
-          <div class="nav-label">{{ section.label }}</div>
-          <ion-list lines="none">
-            @for (item of section.items; track item.path) {
-              <ion-menu-toggle [autoHide]="false">
-                <ion-item
-                  button
-                  detail="false"
-                  [routerLink]="item.path"
-                  routerLinkActive="selected"
-                  [routerLinkActiveOptions]="{ exact: item.path === '/' }"
-                  (click)="closeMenu()"
-                >
-                  <ion-icon slot="start" [name]="item.icon"></ion-icon>
-                  <ion-label>{{ item.label }}</ion-label>
-                </ion-item>
-              </ion-menu-toggle>
+          <nav class="sidebar-nav" aria-label="Menu principal">
+            @for (section of visibleNavGroups(); track section.group) {
+              <div class="nav-label">{{ section.label }}</div>
+              <ion-list lines="none">
+                @for (item of section.items; track item.path) {
+                  <ion-menu-toggle [autoHide]="false">
+                    <ion-item
+                      button
+                      detail="false"
+                      [routerLink]="item.path"
+                      routerLinkActive="selected"
+                      [routerLinkActiveOptions]="{ exact: item.path === '/' }"
+                      (click)="closeMenu()"
+                    >
+                      <ion-icon slot="start" [name]="item.icon"></ion-icon>
+                      <ion-label>{{ item.label }}</ion-label>
+                    </ion-item>
+                  </ion-menu-toggle>
+                }
+              </ion-list>
             }
-          </ion-list>
-        }
+          </nav>
 
-        <section class="sidebar-footer">
-          <span>Ambiente</span>
-          <strong>{{ tenantFeatures.context().tenantName }}</strong>
-          <a routerLink="/login" (click)="closeMenu()">Acesso e troca de perfil</a>
-        </section>
+          <section class="sidebar-footer">
+            <span>Ambiente</span>
+            <strong>{{ tenantFeatures.context().tenantName }}</strong>
+            <a routerLink="/login" (click)="closeMenu()">Acesso e troca de perfil</a>
+          </section>
+        </div>
       </ion-content>
     </ion-menu>
 
@@ -69,6 +73,14 @@
                 <span>PDV</span>
               </ion-button>
             }
+            <ion-button
+              fill="clear"
+              (click)="theme.toggleLightDark()"
+              [attr.aria-label]="theme.isDark() ? 'Alternar para tema claro' : 'Alternar para tema escuro'"
+              [attr.title]="theme.isDark() ? 'Alternar para tema claro' : 'Alternar para tema escuro'"
+            >
+              <ion-icon slot="icon-only" [name]="theme.isDark() ? 'sunny-outline' : 'moon-outline'" aria-hidden="true"></ion-icon>
+            </ion-button>
             <ion-button fill="clear" routerLink="/settings" aria-label="Abrir configurações" title="Configurações">
               <ion-icon slot="icon-only" name="settings-outline" aria-hidden="true"></ion-icon>
             </ion-button>
@@ -86,4 +98,7 @@
       <ion-router-outlet [animated]="false"></ion-router-outlet>
     </div>
   </ion-split-pane>
+
+  <app-dialog-host></app-dialog-host>
+  <app-toast-host></app-toast-host>
 </ion-app>

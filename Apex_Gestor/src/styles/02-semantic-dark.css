@@ -1,0 +1,135 @@
+/* ==========================================================================
+   CAMADA 2B: SEMANTIC TOKENS — DARK EXECUTIVE
+   Multiplas profundidades (Obsidian -> Azul-Marinho Profundo -> Grafite)
+   ========================================================================== */
+:root[data-theme="dark-executive"],
+:root.ion-palette-dark,
+:root.ion-palette-dark.md,
+:root.ion-palette-dark.ios {
+  color-scheme: dark;
+
+  /* --- Superficies em Camadas de Profundidade --- */
+  --apex-bg-canvas: var(--apex-raw-obsidian);
+  --apex-bg-aurora:
+    radial-gradient(58% 360px at 80% -40px, rgba(225, 29, 72, 0.14), transparent 62%),
+    radial-gradient(58% 360px at 42% -60px, rgba(124, 58, 237, 0.18), transparent 65%),
+    radial-gradient(48% 300px at 14% -20px, rgba(37, 99, 235, 0.18), transparent 60%);
+  --apex-bg-surface: var(--apex-raw-navy-900);
+  --apex-bg-surface-elevated: var(--apex-raw-navy-850);
+  --apex-bg-surface-muted: var(--apex-raw-navy-925);
+  --apex-bg-surface-subtle: #141d34;
+  --apex-bg-input: #0b1121;
+  --apex-bg-header: rgba(11, 16, 32, 0.88);
+  --apex-bg-sidebar: linear-gradient(180deg, #090e1c 0%, #0d1326 68%, #15122e 100%);
+  --apex-bg-sidebar-glow:
+    radial-gradient(circle at 20% 94%, rgba(225, 29, 72, 0.18), transparent 55%),
+    radial-gradient(circle at 82% 76%, rgba(34, 211, 238, 0.12), transparent 55%);
+
+  /* --- Bordas Hairline Translucidas & Sombras --- */
+  --apex-border-subtle: rgba(148, 163, 184, 0.10);
+  --apex-border-default: rgba(148, 163, 184, 0.16);
+  --apex-border-strong: rgba(148, 163, 184, 0.28);
+  --apex-shadow-sm: 0 2px 10px rgba(2, 6, 23, 0.40);
+  --apex-shadow-md: 0 14px 32px rgba(2, 6, 23, 0.52);
+  --apex-shadow-lg: 0 24px 56px rgba(2, 6, 23, 0.72);
+
+  /* --- Textos (Contrastes validados >= 4.5:1 AA em #11182c) --- */
+  --apex-text-primary: #f1f5f9;
+  --apex-text-secondary: #cbd5e1;
+  --apex-text-muted: #94a3b8;
+  --apex-text-inverse: #ffffff;
+  --apex-sidebar-text: #f8fafc;
+  --apex-sidebar-muted: #94a3b8;
+  --apex-sidebar-border: rgba(148, 163, 184, 0.14);
+
+  /* --- Marca & Acentos Calibrados (texto/icone vs preenchimento solido) --- */
+  --apex-brand-primary: var(--apex-raw-blue-400);
+  --apex-brand-primary-strong: var(--apex-raw-blue-400);
+  --apex-brand-secondary: var(--apex-raw-violet-400);
+  --apex-brand-accent: var(--apex-raw-rose-400);
+  --apex-brand-cyan: var(--apex-raw-cyan-400);
+  --apex-brand-gradient: var(--apex-raw-grad-dawn-dusk);
+  --apex-brand-gradient-hover: var(--apex-raw-grad-dawn-dusk-hover);
+
+  /* --- Status Semanticos --- */
+  --apex-status-success: var(--apex-raw-emerald-400);
+  --apex-status-success-bg: rgba(16, 185, 129, 0.16);
+  --apex-status-success-border: rgba(52, 211, 153, 0.30);
+
+  --apex-status-warning: var(--apex-raw-amber-400);
+  --apex-status-warning-bg: rgba(245, 158, 11, 0.16);
+  --apex-status-warning-border: rgba(251, 191, 36, 0.30);
+
+  --apex-status-danger: var(--apex-raw-rose-400);
+  --apex-status-danger-bg: rgba(244, 63, 94, 0.18);
+  --apex-status-danger-border: rgba(251, 113, 133, 0.34);
+
+  --apex-status-info: var(--apex-raw-sky-400);
+  --apex-status-info-bg: rgba(56, 189, 248, 0.15);
+  --apex-status-info-border: rgba(56, 189, 248, 0.30);
+
+  --apex-focus-ring: var(--apex-raw-sky-400);
+
+  /* --- Aliases Legados --- */
+  --apex-primary: var(--apex-raw-blue-600);
+  --apex-primary-strong: color-mix(in srgb, var(--apex-primary) 86%, #000000);
+  --apex-text-brand: color-mix(in srgb, var(--apex-primary) 42%, #f8fafc);
+  --apex-primary-soft: color-mix(in srgb, var(--apex-brand-primary) 22%, transparent);
+  --apex-primary-faint: color-mix(in srgb, var(--apex-brand-primary) 12%, transparent);
+
+  /* --- Tokens de Preenchimento Solido para Botoes (AA/AAA com respectivos -contrast) --- */
+  --apex-fill-primary: var(--apex-primary);
+  --apex-fill-primary-hover: var(--apex-primary-strong);
+  --apex-fill-primary-contrast: #ffffff;
+  --apex-fill-success: #047857;
+  --apex-fill-success-hover: #065f46;
+  --apex-fill-success-contrast: #ffffff;
+  --apex-fill-warning: #fbbf24;
+  --apex-fill-warning-hover: #f59e0b;
+  --apex-fill-warning-contrast: #0f172a;
+  --apex-fill-danger: #be123c;
+  --apex-fill-danger-hover: #9f1239;
+  --apex-fill-danger-contrast: #ffffff;
+  --apex-surface: var(--apex-bg-canvas);
+  --apex-card: var(--apex-bg-surface);
+  --apex-card-muted: var(--apex-bg-surface-muted);
+  --apex-sidebar: #090e1c;
+  --apex-ink: var(--apex-text-primary);
+  --apex-muted: var(--apex-text-muted);
+  --apex-border: var(--apex-border-default);
+  --apex-accent: var(--apex-brand-secondary);
+  --apex-accent-soft: var(--apex-status-warning-bg);
+  --apex-coral: var(--apex-brand-accent);
+  --apex-coral-soft: var(--apex-status-danger-bg);
+  --apex-indigo: var(--apex-brand-secondary);
+  --apex-indigo-soft: rgba(139, 92, 246, 0.18);
+  --apex-focus: var(--apex-focus-ring);
+  --apex-success: var(--apex-status-success);
+  --apex-warning: var(--apex-status-warning);
+  --apex-danger: var(--apex-status-danger);
+  --apex-shadow: var(--apex-shadow-md);
+  --apex-shadow-soft: var(--apex-shadow-sm);
+
+  /* --- Mapeamento Ionic 8 Dark --- */
+  --ion-background-color: var(--apex-bg-canvas);
+  --ion-text-color: var(--apex-text-primary);
+  --ion-card-background: var(--apex-bg-surface);
+  --ion-item-background: transparent;
+  --ion-toolbar-background: var(--apex-bg-header);
+  --ion-border-color: var(--apex-border-default);
+  --ion-color-primary: #2563eb;
+  --ion-color-primary-rgb: 37, 99, 235;
+  --ion-color-primary-contrast: #ffffff;
+  --ion-color-primary-shade: #1d4ed8;
+  --ion-color-primary-tint: #3b82f6;
+  --ion-color-secondary: #7c3aed;
+  --ion-color-secondary-rgb: 124, 58, 237;
+  --ion-color-secondary-contrast: #ffffff;
+  --ion-color-success: #047857;
+  --ion-color-success-contrast: #ffffff;
+  --ion-color-warning: #fbbf24;
+  --ion-color-warning-contrast: #0f172a;
+  --ion-color-danger: #be123c;
+  --ion-color-danger-contrast: #ffffff;
+  --ion-color-medium: #94a3b8;
+}

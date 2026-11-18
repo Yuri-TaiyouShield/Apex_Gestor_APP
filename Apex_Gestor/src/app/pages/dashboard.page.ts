@@ -1,57 +1,60 @@
 import { CommonModule } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { IonicModule } from '@ionic/angular';
-import { catchError, of } from 'rxjs';
+import { IonContent, IonBadge, IonButton, IonIcon, IonCard, IonCardHeader, IonCardTitle, IonCardSubtitle, IonCardContent, IonItem, IonLabel } from '@ionic/angular/standalone';
+import { catchError, forkJoin, of } from 'rxjs';
 
 import { ApexApiService } from '../core/apex-api.service';
-import { MOCK_EXPENSES, MOCK_PRODUCTS, MOCK_REPORT, MOCK_USERS } from '../core/mock-data';
-import { DashboardVendedor, RelatorioFinanceiro } from '../core/models';
+import { CaixaSessao, DashboardVendedor, RelatorioFinanceiro } from '../core/models';
 import { SessionService } from '../core/session.service';
 import { currency } from '../core/view-utils';
 
 @Component({
   standalone: true,
-  imports: [CommonModule, IonicModule, RouterLink],
+  imports: [CommonModule, IonContent, IonBadge, IonButton, IonIcon, IonCard, IonCardHeader, IonCardTitle, IonCardSubtitle, IonCardContent, IonItem, IonLabel, RouterLink],
   template: `
     <ion-content>
       <main class="page">
         <header class="page-header">
           <div>
             <span class="page-kicker">Comando operacional</span>
-            <h1>{{ isSellerDashboard() ? 'Dashboard do Vendedor' : 'Painel executivo ' + session.roleLabel() }}</h1>
-            <p>{{ isSellerDashboard()
-              ? 'Metas, vendas e fila de caixa do vendedor autenticado, sem financeiro gerencial.'
-              : 'Indicadores de venda, estoque, caixa e rotina financeira em leitura rapida para gestao.' }}</p>
+            <h1>{{ dashboardTitle() }}</h1>
+            <p>{{ dashboardSubtitle() }}</p>
           </div>
           <div class="header-tools">
             <span class="date-pill">{{ currentMonthLabel }}</span>
-            <ion-badge [color]="apiOffline() ? 'warning' : 'primary'">{{ apiOffline() ? 'Dados locais' : 'API sincronizada' }}</ion-badge>
+            <ion-badge [color]="apiOffline() ? 'warning' : 'primary'">{{ apiOffline() ? 'Dados indisponíveis' : 'API sincronizada' }}</ion-badge>
           </div>
         </header>
 
         <section class="command-bar">
           @if (canOpenPdv()) {
             <ion-button routerLink="/pos">
-              <ion-icon slot="start" name="cash-outline"></ion-icon>
+              <ion-icon slot="start" name="cash-outline" aria-hidden="true"></ion-icon>
               Abrir PDV
+            </ion-button>
+          }
+          @if (canOpenCashier()) {
+            <ion-button fill="outline" routerLink="/cashier">
+              <ion-icon slot="start" name="wallet-outline" aria-hidden="true"></ion-icon>
+              Abrir Caixa
             </ion-button>
           }
           @if (canViewStock()) {
             <ion-button fill="outline" routerLink="/products">
-              <ion-icon slot="start" name="cube-outline"></ion-icon>
+              <ion-icon slot="start" name="cube-outline" aria-hidden="true"></ion-icon>
               Estoque critico
             </ion-button>
           }
           @if (canViewFinance()) {
             <ion-button fill="outline" routerLink="/finance-operations">
-              <ion-icon slot="start" name="receipt-outline"></ion-icon>
+              <ion-icon slot="start" name="receipt-outline" aria-hidden="true"></ion-icon>
               Financeiro
             </ion-button>
           }
           @if (canViewReports()) {
             <ion-button fill="outline" routerLink="/reports">
-              <ion-icon slot="start" name="bar-chart-outline"></ion-icon>
+              <ion-icon slot="start" name="bar-chart-outline" aria-hidden="true"></ion-icon>
               Relatorios
             </ion-button>
           }
@@ -129,6 +132,73 @@ import { currency } from '../core/view-utils';
                 <ion-item lines="none">
                   <span class="action-icon warning"><ion-icon name="return-down-back-outline" aria-hidden="true"></ion-icon></span>
                   <ion-label><strong>{{ sellerRejectedByCashier() }} devolvidas para ajuste</strong><p>Corrija e reenvie pelo histórico de vendas.</p></ion-label>
+                </ion-item>
+              </ion-card-content>
+            </ion-card>
+          </section>
+        } @else if (isCashierDashboard()) {
+          <section class="metric-grid">
+            <article class="metric-card revenue">
+              <header><span>Status do Caixa</span><ion-icon name="radio-button-on-outline" aria-hidden="true"></ion-icon></header>
+              <strong>{{ cashierSession()?.status || 'FECHADO' }}</strong>
+              <small [class.positive]="cashierSession()?.status === 'ABERTO'">
+                {{ cashierSession()?.operadorLogin || 'Nenhuma sessão aberta' }}
+              </small>
+            </article>
+            <article class="metric-card profit">
+              <header><span>Saldo atual</span><ion-icon name="cash-outline" aria-hidden="true"></ion-icon></header>
+              <strong>{{ money(cashierSession()?.saldoAtual || 0) }}</strong>
+              <small>{{ cashierSession()?.status === 'ABERTO' ? 'Saldo esperado na sessão' : 'Abra o caixa para iniciar recebimentos' }}</small>
+            </article>
+            <article class="metric-card expenses">
+              <header><span>Fila aguardando recebimento</span><ion-icon name="hourglass-outline" aria-hidden="true"></ion-icon></header>
+              <strong>{{ cashierPendingCount() }}</strong>
+              <small class="attention">{{ cashierPendingCount() === 1 ? 'venda pendente no caixa' : 'vendas pendentes no caixa' }}</small>
+            </article>
+            <article class="metric-card cost">
+              <header><span>Vendas recebidas na sessão</span><ion-icon name="checkmark-done-outline" aria-hidden="true"></ion-icon></header>
+              <strong>{{ money(cashierSession()?.totalVendas || 0) }}</strong>
+              <small>Suprimentos {{ money(cashierSession()?.totalSuprimentos || 0) }}</small>
+            </article>
+          </section>
+
+          <section class="grid-two dashboard-grid">
+            <ion-card class="data-card">
+              <ion-card-header>
+                <ion-card-title>Atalhos operacionais</ion-card-title>
+                <ion-card-subtitle>Acesso rápido ao Caixa e ao balcão PDV</ion-card-subtitle>
+              </ion-card-header>
+              <ion-card-content class="cashier-shortcuts">
+                <ion-button routerLink="/cashier">
+                  <ion-icon slot="start" name="wallet-outline" aria-hidden="true"></ion-icon>
+                  Ir para o Caixa
+                </ion-button>
+                <ion-button fill="outline" routerLink="/pos">
+                  <ion-icon slot="start" name="cash-outline" aria-hidden="true"></ion-icon>
+                  Ir para o PDV
+                </ion-button>
+              </ion-card-content>
+            </ion-card>
+
+            <ion-card class="data-card">
+              <ion-card-header>
+                <ion-card-title>Resumo do turno</ion-card-title>
+                <ion-card-subtitle>Operação diária de recebimento, sem financeiro gerencial</ion-card-subtitle>
+              </ion-card-header>
+              <ion-card-content class="action-list">
+                <ion-item lines="none">
+                  <span class="action-icon"><ion-icon name="cash-outline" aria-hidden="true"></ion-icon></span>
+                  <ion-label>
+                    <strong>Saldo inicial {{ money(cashierSession()?.saldoInicial || 0) }}</strong>
+                    <p>Sangrias na sessão: {{ money(cashierSession()?.totalSangrias || 0) }}</p>
+                  </ion-label>
+                </ion-item>
+                <ion-item lines="none">
+                  <span class="action-icon warning"><ion-icon name="hourglass-outline" aria-hidden="true"></ion-icon></span>
+                  <ion-label>
+                    <strong>{{ cashierPendingCount() }} aguardando recebimento</strong>
+                    <p>Confira e receba pedidos enviados pelos vendedores no Caixa.</p>
+                  </ion-label>
                 </ion-item>
               </ion-card-content>
             </ion-card>
@@ -216,16 +286,17 @@ import { currency } from '../core/view-utils';
   styles: [`
     .header-tools { align-items: center; display: flex; flex-wrap: wrap; gap: 10px; justify-content: flex-end; }
     .date-pill { background: var(--apex-card); border: 1px solid var(--apex-border); border-radius: 8px; color: var(--apex-muted); display: inline-flex; font-size: 0.82rem; font-weight: 750; padding: 8px 10px; }
-    .command-bar { background: #ffffff; border: 1px solid var(--apex-border); border-radius: 8px; display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; padding: 10px; }
+    .command-bar { background: var(--apex-bg-surface); border: 1px solid var(--apex-border); border-radius: 8px; display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; padding: 10px; }
     .dashboard-grid { margin-top: 16px; }
     .ops-strip { display: grid; gap: 12px; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 12px; }
     .ops-strip .surface-row { justify-content: flex-start; }
-    .ops-strip ion-icon, .channel-icon, .action-icon { align-items: center; background: var(--apex-primary-faint); border-radius: 8px; color: var(--apex-primary); display: flex; justify-content: center; }
+    .ops-strip ion-icon, .channel-icon, .action-icon { align-items: center; background: var(--apex-primary-faint); border-radius: 8px; color: var(--apex-text-brand); display: flex; justify-content: center; }
     .ops-strip ion-icon { flex: 0 0 auto; font-size: 1.1rem; padding: 9px; }
     .metric-card.cost ion-icon { background: var(--apex-indigo-soft); border-color: rgba(79, 70, 229, 0.18); color: var(--apex-indigo); }
     .metric-card.expenses ion-icon { background: var(--apex-accent-soft); border-color: rgba(199, 116, 18, 0.2); color: var(--apex-accent); }
     .metric-card.profit ion-icon { background: rgba(21, 128, 61, 0.1); border-color: rgba(21, 128, 61, 0.18); color: var(--apex-success); }
-    .channel-list, .action-list, .seller-list { display: grid; gap: 12px; }
+    .channel-list, .action-list, .seller-list, .cashier-shortcuts { display: grid; gap: 12px; }
+    .cashier-shortcuts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .channel-row { align-items: center; display: grid; gap: 10px 12px; grid-template-columns: 42px 1fr auto; }
     .channel-icon { border: 1px solid rgba(15, 118, 110, 0.16); height: 42px; width: 42px; }
     .channel-row.accent .channel-icon { background: var(--apex-accent-soft); color: var(--apex-accent); }
@@ -233,7 +304,7 @@ import { currency } from '../core/view-utils';
     .channel-copy span, .channel-copy strong { display: block; }
     .channel-copy span { color: var(--apex-muted); font-size: 0.82rem; margin-bottom: 2px; }
     .channel-copy strong, .channel-row b { color: var(--apex-ink); font-weight: 850; }
-    .progress-track { background: #e6eee9; border-radius: 999px; grid-column: 1 / -1; height: 8px; overflow: hidden; }
+    .progress-track { background: var(--apex-bg-surface-subtle); border-radius: 999px; grid-column: 1 / -1; height: 8px; overflow: hidden; }
     .progress-track i { background: var(--apex-primary); border-radius: inherit; display: block; height: 100%; }
     .channel-row.accent .progress-track i { background: var(--apex-accent); }
     .channel-row.indigo .progress-track i { background: var(--apex-indigo); }
@@ -245,36 +316,60 @@ import { currency } from '../core/view-utils';
     .action-list p { color: var(--apex-muted); margin: 3px 0 0; }
     .seller-row { background: var(--apex-card-muted); border: 1px solid var(--apex-border); border-radius: 8px; display: grid; gap: 4px; padding: 12px; }
     .seller-row span { color: var(--apex-muted); font-size: 0.85rem; }
-    @media (max-width: 991px) { .header-tools { justify-content: flex-start; } .ops-strip { grid-template-columns: 1fr; } }
+    @media (max-width: 991px) { .header-tools { justify-content: flex-start; } .ops-strip, .cashier-shortcuts { grid-template-columns: 1fr; } }
   `]
 })
 export class DashboardPage {
   private readonly api = inject(ApexApiService);
   readonly session = inject(SessionService);
-  readonly report = signal<RelatorioFinanceiro>(MOCK_REPORT);
+  readonly report = signal<RelatorioFinanceiro>({
+    totalVendas: 0,
+    totalCustosProdutos: 0,
+    totalDespesas: 0,
+    lucroLiquido: 0,
+    saldoCaixa: 0
+  });
   readonly apiOffline = signal(false);
   readonly money = currency;
   readonly canOpenPdv = computed(() => this.session.hasAnyRole(['ROLE_SYSADMIN', 'ROLE_DONO_GERENTE', 'ROLE_VENDEDOR', 'ROLE_CAIXA', 'ROLE_ADMIN', 'ROLE_GERENTE']));
+  readonly canOpenCashier = computed(() => this.session.hasAnyRole(['ROLE_SYSADMIN', 'ROLE_DONO_GERENTE', 'ROLE_CAIXA', 'ROLE_ADMIN', 'ROLE_GERENTE']));
   readonly canViewStock = computed(() => this.session.hasAnyRole(['ROLE_SYSADMIN', 'ROLE_DONO_GERENTE', 'ROLE_FINANCEIRO', 'ROLE_VENDEDOR', 'ROLE_CAIXA', 'ROLE_ADMIN', 'ROLE_GERENTE']));
   readonly canViewFinance = computed(() => this.session.hasAnyRole(['ROLE_SYSADMIN', 'ROLE_DONO_GERENTE', 'ROLE_FINANCEIRO', 'ROLE_ADMIN', 'ROLE_GERENTE']));
   readonly canViewReports = computed(() => this.session.hasAnyRole(['ROLE_SYSADMIN', 'ROLE_DONO_GERENTE', 'ROLE_FINANCEIRO', 'ROLE_ADMIN', 'ROLE_GERENTE', 'ROLE_GESTOR']));
   readonly isSellerDashboard = computed(() => this.session.hasAnyRole(['ROLE_VENDEDOR']) && !this.session.hasAnyRole(['ROLE_CAIXA', 'ROLE_GERENTE', 'ROLE_DONO_GERENTE', 'ROLE_SYSADMIN', 'ROLE_ADMIN']));
+  readonly isCashierDashboard = computed(() => this.session.hasAnyRole(['ROLE_CAIXA']) && !this.canViewFinance());
+  readonly dashboardTitle = computed(() => {
+    if (this.isSellerDashboard()) {
+      return 'Dashboard do Vendedor';
+    }
+    if (this.isCashierDashboard()) {
+      return 'Painel operacional do Caixa';
+    }
+    return `Painel executivo ${this.session.roleLabel()}`;
+  });
+  readonly dashboardSubtitle = computed(() => {
+    if (this.isSellerDashboard()) {
+      return 'Metas, vendas e fila de caixa do vendedor autenticado, sem financeiro gerencial.';
+    }
+    if (this.isCashierDashboard()) {
+      return 'Status do caixa, saldo da sessão e fila de recebimentos, sem financeiro gerencial.';
+    }
+    return 'Indicadores de venda, estoque, caixa e rotina financeira em leitura rapida para gestao.';
+  });
   readonly currentMonthLabel = new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric' }).format(new Date());
-  readonly lowStockCount = MOCK_PRODUCTS.filter((product) => product.quantidadeEstoque <= (product.estoqueMinimo ?? 0)).length;
-  readonly expenseCount = MOCK_EXPENSES.length;
-  readonly staffCount = MOCK_USERS.length;
+  readonly lowStockCount = 0;
+  readonly expenseCount = 0;
+  readonly staffCount = 0;
   readonly profitMargin = computed(() => this.percent(this.report().lucroLiquido, this.report().totalVendas));
   readonly costRate = computed(() => this.percent(this.report().totalCustosProdutos, this.report().totalVendas));
-  readonly channelMix = [
-    { label: 'PDV Desktop', share: 54, amount: 'R$ 48,4 mil', icon: 'desktop-outline', tone: 'primary' },
-    { label: 'E-commerce web', share: 31, amount: 'R$ 27,8 mil', icon: 'storefront-outline', tone: 'accent' },
-    { label: 'Mobile cliente', share: 15, amount: 'R$ 13,4 mil', icon: 'phone-portrait-outline', tone: 'indigo' }
-  ];
+  readonly channelMix: Array<{ label: string; share: number; amount: string; icon: string; tone: string }> = [];
   readonly actionItems = [
     { icon: 'cube-outline', color: 'warning', value: `${this.lowStockCount} produtos`, label: 'abaixo do ponto de reposicao' },
     { icon: 'receipt-outline', color: 'danger', value: `${this.expenseCount} despesas`, label: 'pendentes no periodo' },
     { icon: 'people-outline', color: 'primary', value: `${this.staffCount} usuarios`, label: 'com acesso ativo no RBAC' }
   ];
+  readonly cashierSession = signal<CaixaSessao | null>(null);
+  readonly cashierPendingCount = signal(0);
   readonly sellerGoal = signal(0);
   readonly sellerGoalConfigured = signal(false);
   readonly sellerSoldToday = signal(0);
@@ -294,23 +389,59 @@ export class DashboardPage {
   ]);
 
   constructor() {
+    this.loadDashboard();
+  }
+
+  ionViewWillEnter(): void {
+    this.loadDashboard();
+  }
+
+  private loadDashboard(): void {
     if (this.isSellerDashboard()) {
       this.loadSellerDashboard();
       return;
     }
+    if (this.isCashierDashboard()) {
+      this.loadCashierDashboard();
+      return;
+    }
+    if (this.canViewFinance()) {
+      this.loadFinancialReport();
+    }
+  }
+
+  private loadFinancialReport(): void {
     const now = new Date();
     const start = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
     const end = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().slice(0, 10);
     this.api.financialReport(start, end).pipe(catchError(() => {
       this.apiOffline.set(true);
-      return of(MOCK_REPORT);
-    })).subscribe((report) => this.report.set(report));
+      return of(null);
+    })).subscribe((report) => {
+      if (!report) {
+        return;
+      }
+      this.report.set(report);
+      this.apiOffline.set(false);
+    });
   }
 
-  ionViewWillEnter(): void {
-    if (this.isSellerDashboard()) {
-      this.loadSellerDashboard();
-    }
+  private loadCashierDashboard(): void {
+    let failed = false;
+    forkJoin({
+      session: this.api.currentCashier().pipe(catchError(() => {
+        failed = true;
+        return of(null);
+      })),
+      pending: this.api.pendingCashierSales().pipe(catchError(() => {
+        failed = true;
+        return of([]);
+      }))
+    }).subscribe(({ session, pending }) => {
+      this.cashierSession.set(session);
+      this.cashierPendingCount.set(pending.length);
+      this.apiOffline.set(failed);
+    });
   }
 
   private loadSellerDashboard(): void {

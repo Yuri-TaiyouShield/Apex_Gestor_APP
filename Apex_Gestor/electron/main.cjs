@@ -240,7 +240,7 @@ async function createWindow() {
     height: 860,
     minWidth: 1040,
     minHeight: 680,
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#0b1020',
     title: 'Apex Gestor',
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),

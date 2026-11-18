@@ -84,11 +84,14 @@ export class TenantFeatureService {
   }
 
   private applyBranding(state: TenantFeatureState): void {
+    const root = document.documentElement;
     if (!this.isWhiteLabelB2C() || !state.branding) {
+      root.style.removeProperty('--ion-color-primary');
+      root.style.removeProperty('--apex-primary');
+      root.style.removeProperty('--ion-color-secondary');
       return;
     }
 
-    const root = document.documentElement;
     root.style.setProperty('--ion-color-primary', state.branding.primaryColor);
     root.style.setProperty('--apex-primary', state.branding.primaryColor);
     root.style.setProperty('--ion-color-secondary', state.branding.secondaryColor);

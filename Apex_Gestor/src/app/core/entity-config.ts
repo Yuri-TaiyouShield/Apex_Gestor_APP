@@ -152,22 +152,29 @@ export const ENTITY_CONFIGS: Record<string, EntityConfig> = {
   expenses: {
     key: 'expenses',
     title: 'Financeiro',
-    subtitle: 'Despesas, vencimentos, contas e fluxo diario de caixa.',
+    subtitle: 'Despesas, vencimentos, competencia, classificacao gerencial e fluxo diario de caixa.',
     endpoint: '/api/despesas',
     idKey: 'idDespesa',
-    searchKeys: ['idDespesa', 'descricao'],
+    searchKeys: ['idDespesa', 'descricao', 'planoContaNome', 'centroCustoNome'],
     columns: [
       { key: 'idDespesa', label: 'ID' },
       { key: 'descricao', label: 'Descricao' },
       { key: 'valor', label: 'Valor', format: 'currency' },
       { key: 'dataVencimento', label: 'Vencimento', format: 'date' },
+      { key: 'dataCompetencia', label: 'Competencia', format: 'date' },
+      { key: 'planoContaNome', label: 'Conta Gerencial' },
       { key: 'tipoDespesa.nome', label: 'Tipo', format: 'nested' },
       { key: 'status', label: 'Status', format: 'status' }
     ],
     fields: [
-      { key: 'descricao', label: 'Descricao', type: 'text', required: true },
-      { key: 'valor', label: 'Valor', type: 'number', required: true },
-      { key: 'dataVencimento', label: 'Vencimento', type: 'date' }
+      { key: 'descricao', label: 'Descricao', type: 'text', required: true, group: 'Basico' },
+      { key: 'valor', label: 'Valor', type: 'number', required: true, group: 'Basico' },
+      { key: 'dataVencimento', label: 'Vencimento', type: 'date', group: 'Basico' },
+      { key: 'dataCompetencia', label: 'Data de competencia', type: 'date', group: 'Basico' },
+      { key: 'dataEmissao', label: 'Data de emissao', type: 'date', group: 'Basico' },
+      { key: 'tipoDespesaId', label: 'Tipo de despesa', type: 'number', placeholder: 'Opcional - padrao Despesas Gerais', group: 'Classificacao' },
+      { key: 'planoContaId', label: 'Plano de contas', type: 'number', placeholder: 'Opcional - classificacao gerencial', group: 'Classificacao' },
+      { key: 'centroCustoId', label: 'Centro de custo', type: 'number', placeholder: 'Opcional - centro de custo', group: 'Classificacao' }
     ],
     deactivatePath: (id) => `/api/despesas/${id}/cancelar`
   },

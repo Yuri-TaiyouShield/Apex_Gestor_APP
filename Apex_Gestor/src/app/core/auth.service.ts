@@ -4,11 +4,13 @@ import { Observable, from, switchMap, tap } from 'rxjs';
 
 import { ApiConfigService } from './api-config.service';
 import { ApiReadinessService } from './api-readiness.service';
+import { DEMO_MODE } from './app-variant';
 import { AuthResponse, ConsentRequest, LoginRequest, Persona } from './models';
 import { SecureStorageService } from './secure-storage.service';
 import { SessionService } from './session.service';
 
 const ACCESS_TOKEN_KEY = 'apex.accessToken';
+const ACCESS_TOKEN_EXPIRES_AT_KEY = 'apex.accessTokenExpiresAt';
 const REFRESH_TOKEN_KEY = 'apex.refreshToken';
 const USER_KEY = 'apex.authUser';
 const SENSITIVE_CONTEXT_KEYS = [
@@ -16,6 +18,7 @@ const SENSITIVE_CONTEXT_KEYS = [
   'apex.activeFilialId',
   'apex.licenseStatus'
 ];
+const ACCESS_TOKEN_EXPIRY_GRACE_MS = 30_000;
 
 export type LogoutReason = 'manual' | 'expired' | 'forbidden' | 'idle';
 
@@ -27,9 +30,11 @@ export class AuthService {
   private readonly secureStorage = inject(SecureStorageService);
   private readonly session = inject(SessionService);
 
-  readonly accessToken = signal(sessionStorage.getItem(ACCESS_TOKEN_KEY));
+  readonly accessToken = signal<string | null>(this.readStoredAccessToken());
+  private readonly accessExpiresAt = signal<number | null>(this.readStoredAccessExpiry());
   readonly user = signal<AuthResponse | null>(this.readStoredUser());
-  readonly isAuthenticated = computed(() => Boolean(this.accessToken()));
+  private readonly demoAuthenticated = signal(false);
+  readonly isAuthenticated = computed(() => this.isUsableNow() || (DEMO_MODE && this.demoAuthenticated()));
 
   constructor() {
     this.reconcileStoredSession();
@@ -53,18 +58,23 @@ export class AuthService {
     );
   }
 
+  enterDemoSession(roles: string[]): boolean {
+    if (!DEMO_MODE) {
+      return false;
+    }
+    this.clearStoredSession();
+    this.demoAuthenticated.set(true);
+    this.session.setRoles(roles);
+    this.session.setPersona(this.personaFromRoles(roles));
+    this.session.setAccessIssue(null);
+    return true;
+  }
+
   logout(reason: LogoutReason = 'manual'): void {
     // The request is subscribed before the local token is removed so the backend can
     // identify the actor. No token or secret is copied into the audit payload.
     this.http.post(this.apiConfig.apiUrl('/api/auth/logout'), { reason }).subscribe({ error: () => undefined });
-    sessionStorage.removeItem(ACCESS_TOKEN_KEY);
-    localStorage.removeItem(REFRESH_TOKEN_KEY);
-    localStorage.removeItem(USER_KEY);
-    SENSITIVE_CONTEXT_KEYS.forEach((key) => localStorage.removeItem(key));
-    void this.secureStorage.removeItem(REFRESH_TOKEN_KEY);
-    this.accessToken.set(null);
-    this.user.set(null);
-    this.session.clearAuthContext();
+    this.clearStoredSession();
     window.dispatchEvent(new CustomEvent('apex-auth-cleared', { detail: { reason } }));
   }
 
@@ -88,13 +98,34 @@ export class AuthService {
     return 'cliente';
   }
 
+  private clearStoredSession(): void {
+    sessionStorage.removeItem(ACCESS_TOKEN_KEY);
+    sessionStorage.removeItem(ACCESS_TOKEN_EXPIRES_AT_KEY);
+    localStorage.removeItem(REFRESH_TOKEN_KEY);
+    localStorage.removeItem(USER_KEY);
+    SENSITIVE_CONTEXT_KEYS.forEach((key) => localStorage.removeItem(key));
+    void this.secureStorage.removeItem(REFRESH_TOKEN_KEY);
+    this.accessToken.set(null);
+    this.accessExpiresAt.set(null);
+    this.user.set(null);
+    this.demoAuthenticated.set(false);
+    this.session.clearAuthContext();
+  }
+
   private storeSession(response: AuthResponse): void {
     const safeUser = { ...response, refreshToken: '' };
+    const expiresAt = this.parseExpiresAt(response.expiresAt);
+    this.demoAuthenticated.set(false);
     sessionStorage.setItem(ACCESS_TOKEN_KEY, response.accessToken);
-    localStorage.removeItem(REFRESH_TOKEN_KEY);
+    if (expiresAt === null) {
+      sessionStorage.removeItem(ACCESS_TOKEN_EXPIRES_AT_KEY);
+    } else {
+      sessionStorage.setItem(ACCESS_TOKEN_EXPIRES_AT_KEY, String(expiresAt));
+    }
+    this.accessToken.set(response.accessToken);
+    this.accessExpiresAt.set(expiresAt);
     void this.secureStorage.setItem(REFRESH_TOKEN_KEY, response.refreshToken);
     localStorage.setItem(USER_KEY, JSON.stringify(safeUser));
-    this.accessToken.set(response.accessToken);
     this.user.set(safeUser);
     this.session.setRoles(response.roles);
     this.session.setPersona(this.personaFromRoles(response.roles));
@@ -102,20 +133,49 @@ export class AuthService {
   }
 
   private reconcileStoredSession(): void {
-    const token = this.accessToken();
-    const storedUser = this.user();
-    if (!token) {
-      localStorage.removeItem(REFRESH_TOKEN_KEY);
-      localStorage.removeItem(USER_KEY);
-      void this.secureStorage.removeItem(REFRESH_TOKEN_KEY);
-      this.user.set(null);
-      this.session.clearAuthContext();
+    this.demoAuthenticated.set(false);
+    if (!this.isUsableNow()) {
+      this.clearStoredSession();
       return;
     }
+    const storedUser = this.user();
     if (storedUser) {
       this.session.setRoles(storedUser.roles);
       this.session.setPersona(this.personaFromRoles(storedUser.roles));
     }
+  }
+
+  private isUsableNow(): boolean {
+    const token = this.accessToken();
+    if (!token) {
+      return false;
+    }
+    const expiresAt = this.accessExpiresAt();
+    if (expiresAt === null) {
+      return true;
+    }
+    return Date.now() < expiresAt - ACCESS_TOKEN_EXPIRY_GRACE_MS;
+  }
+
+  private parseExpiresAt(expiresAt: string | undefined | null): number | null {
+    if (!expiresAt) {
+      return null;
+    }
+    const numeric = Number(expiresAt);
+    const milliseconds = Number.isFinite(numeric)
+      ? (numeric < 1e12 ? numeric * 1000 : numeric)
+      : Date.parse(expiresAt);
+    return Number.isFinite(milliseconds) ? milliseconds : null;
+  }
+
+  private readStoredAccessToken(): string | null {
+    return sessionStorage.getItem(ACCESS_TOKEN_KEY);
+  }
+
+  private readStoredAccessExpiry(): number | null {
+    const raw = sessionStorage.getItem(ACCESS_TOKEN_EXPIRES_AT_KEY);
+    const parsed = raw ? Number(raw) : NaN;
+    return Number.isFinite(parsed) ? parsed : null;
   }
 
   private readStoredUser(): AuthResponse | null {

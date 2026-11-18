@@ -1,9 +1,9 @@
 import { CommonModule } from '@angular/common';
-import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, computed, effect, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { IonicModule } from '@ionic/angular';
+import { IonContent, IonCard, IonCardHeader, IonCardTitle, IonCardSubtitle, IonCardContent, IonItem, IonInput, IonNote, IonButton, IonIcon, IonSelect, IonSelectOption } from '@ionic/angular/standalone';
 import { catchError, of } from 'rxjs';
 
 import { ApiConfigService } from '../core/api-config.service';
@@ -11,10 +11,12 @@ import { AuthService } from '../core/auth.service';
 import { LicenseService } from '../core/license.service';
 import { LicenseValidationResponse } from '../core/models';
 import { SessionService } from '../core/session.service';
+import { ApexDensityPreference, ApexThemePreference, ThemeService } from '../core/ui/theme.service';
+import { ToastService } from '../core/ui/toast.service';
 
 @Component({
   standalone: true,
-  imports: [CommonModule, FormsModule, IonicModule, RouterLink],
+  imports: [CommonModule, FormsModule, IonContent, IonCard, IonCardHeader, IonCardTitle, IonCardSubtitle, IonCardContent, IonItem, IonInput, IonNote, IonButton, IonIcon, IonSelect, IonSelectOption, RouterLink],
   template: `
     <ion-content>
       <main class="page settings-page">
@@ -55,14 +57,14 @@ import { SessionService } from '../core/session.service';
             </ion-card-header>
             <ion-card-content class="stack">
               <ion-item>
-                <ion-select label="Tema" label-placement="stacked" [(ngModel)]="theme">
-                  <ion-select-option value="system">Sistema</ion-select-option>
-                  <ion-select-option value="light">Claro</ion-select-option>
-                  <ion-select-option value="dense">Operacional denso</ion-select-option>
+                <ion-select label="Tema" label-placement="stacked" [ngModel]="themeService.preference()" (ngModelChange)="onThemeChange($event)">
+                  <ion-select-option value="system">Sistema (automático)</ion-select-option>
+                  <ion-select-option value="light">Claro (Premium Gradient Light)</ion-select-option>
+                  <ion-select-option value="dark">Escuro (Dark Executive)</ion-select-option>
                 </ion-select>
               </ion-item>
               <ion-item>
-                <ion-select label="Densidade" label-placement="stacked" [(ngModel)]="density">
+                <ion-select label="Densidade" label-placement="stacked" [ngModel]="themeService.density()" (ngModelChange)="onDensityChange($event)">
                   <ion-select-option value="compact">Compacta</ion-select-option>
                   <ion-select-option value="comfortable">Confortável</ion-select-option>
                 </ion-select>
@@ -169,6 +171,8 @@ export class SettingsPage {
   readonly license = inject(LicenseService);
   readonly session = inject(SessionService);
   readonly auth = inject(AuthService);
+  readonly themeService = inject(ThemeService);
+  private readonly toast = inject(ToastService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
@@ -182,11 +186,15 @@ export class SettingsPage {
 
   apiBaseUrl = this.apiConfig.baseUrl();
   licenseKey = '';
-  theme = localStorage.getItem('apex.pref.theme') || 'system';
-  density = localStorage.getItem('apex.pref.density') || 'compact';
+  theme: ApexThemePreference = this.themeService.preference();
+  density: ApexDensityPreference = this.themeService.density();
   newPassword = '';
 
   constructor() {
+    effect(() => {
+      this.theme = this.themeService.preference();
+      this.density = this.themeService.density();
+    });
     this.route.data.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((data) => {
       this.mode.set(data['mode'] === 'admin' ? 'admin' : 'personal');
       this.preferenceMessage.set('');
@@ -200,10 +208,21 @@ export class SettingsPage {
     });
   }
 
+  onThemeChange(value: ApexThemePreference): void {
+    this.theme = value;
+    this.themeService.setTheme(value);
+  }
+
+  onDensityChange(value: ApexDensityPreference): void {
+    this.density = value;
+    this.themeService.setDensity(value);
+  }
+
   savePreferences(): void {
-    localStorage.setItem('apex.pref.theme', this.theme);
-    localStorage.setItem('apex.pref.density', this.density);
-    this.preferenceMessage.set('Preferências salvas neste dispositivo.');
+    this.themeService.setTheme(this.theme);
+    this.themeService.setDensity(this.density);
+    this.preferenceMessage.set('Preferências aplicadas e salvas neste dispositivo.');
+    this.toast.success('Preferências de tema e densidade atualizadas.');
   }
 
   saveApiUrl(): void {

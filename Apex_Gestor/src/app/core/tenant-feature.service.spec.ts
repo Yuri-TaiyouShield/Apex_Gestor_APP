@@ -136,5 +136,6 @@ describe('TenantFeatureService', () => {
 
     expect(service.hasFeature('B2C_WHITE_LABEL')).toBeTrue();
     expect(service.isWhiteLabelB2C()).toBeFalse();
+    expect(document.documentElement.style.getPropertyValue('--apex-primary')).toBe('');
   });
 });

@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { IonicModule } from '@ionic/angular';
+import { IonContent, IonButton, IonIcon, IonSegment, IonSegmentButton, IonLabel, IonCard, IonCardHeader, IonCardTitle, IonCardSubtitle, IonCardContent, IonItem, IonSelect, IonSelectOption, IonInput } from '@ionic/angular/standalone';
 import { catchError, finalize, forkJoin, of } from 'rxjs';
 
 import { ApexApiService } from '../core/apex-api.service';
@@ -11,7 +11,7 @@ type FinanceTab = 'receber' | 'pagar' | 'caixas';
 
 @Component({
   standalone: true,
-  imports: [CommonModule, FormsModule, IonicModule],
+  imports: [CommonModule, FormsModule, IonContent, IonButton, IonIcon, IonSegment, IonSegmentButton, IonLabel, IonCard, IonCardHeader, IonCardTitle, IonCardSubtitle, IonCardContent, IonItem, IonSelect, IonSelectOption, IonInput],
   template: `
     <ion-content>
       <main class="page finance-page">

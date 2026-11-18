@@ -10,11 +10,15 @@ import {
   AdmCalcRequest,
   B2cCartMergeRequest,
   CaixaSessao,
+  CentroCustoRequest,
   FinancialDocumentRequest,
   Identifiable,
   LaborCalculationRequest,
+  PlanoContasRequest,
   PricingCalculationRequest,
   RecebimentoPagamento,
+  ReclassificacaoManualRequest,
+  RegraClassificacaoRequest,
   SignFinancialDocumentRequest,
   TaxCalculationRequest
 } from './models';
@@ -436,5 +440,351 @@ describe('ApexApiService', () => {
 
     service.list<unknown>('/api/publico').subscribe();
     expect(http.get).toHaveBeenCalledTimes(1);
+  });
+
+  it('gerencia Plano de Contas Gerencial com filtros opcionais, bootstrap, CRUD e toggle de status', async () => {
+    http.get.and.returnValue(of([]));
+    http.post.and.returnValue(of({ idPlanoConta: 10 }));
+    http.put.and.returnValue(of({ idPlanoConta: 10 }));
+    http.patch.and.returnValue(of({ idPlanoConta: 10, ativo: false }));
+
+    await service.listPlanoContas().toPromise();
+    await service.listPlanoContas(true).toPromise();
+    await service.getPlanoContasTree(false).toPromise();
+    await service.bootstrapPlanoContasPadrao().toPromise();
+
+    const payload: PlanoContasRequest = {
+      codigo: '4.1.01',
+      nome: 'Aluguel',
+      tipoConta: 'DESPESA',
+      natureza: 'DEBITO',
+      classificacaoCusto: 'FIXO',
+      grupoDre: 'DESPESA_INFRAESTRUTURA',
+      aceitaLancamento: true
+    };
+    await service.createPlanoConta(payload).toPromise();
+    await service.updatePlanoConta(10, payload).toPromise();
+    await service.togglePlanoContaStatus(10, false).toPromise();
+
+    expect(http.get.calls.all()[0].args).toEqual(['http://api.test/api/financeiro/plano-contas']);
+    const activeCall = http.get.calls.all()[1];
+    expect(activeCall.args[0]).toBe('http://api.test/api/financeiro/plano-contas');
+    expect((activeCall.args[1] as { params: HttpParams }).params.get('somenteAtivos')).toBe('true');
+
+    const treeCall = http.get.calls.all()[2];
+    expect(treeCall.args[0]).toBe('http://api.test/api/financeiro/plano-contas/arvore');
+    expect((treeCall.args[1] as { params: HttpParams }).params.get('somenteAtivos')).toBe('false');
+
+    expect(http.post.calls.all()[0].args[0]).toBe('http://api.test/api/financeiro/plano-contas/inicializar-padrao');
+    expect(http.post.calls.all()[1].args).toEqual(['http://api.test/api/financeiro/plano-contas', payload]);
+    expect(http.put.calls.mostRecent().args).toEqual(['http://api.test/api/financeiro/plano-contas/10', payload]);
+    expect(http.patch.calls.mostRecent().args).toEqual(['http://api.test/api/financeiro/plano-contas/10/status?ativo=false', {}]);
+  });
+
+  it('gerencia Centros de Custo com filtros, bootstrap, CRUD e status', async () => {
+    http.get.and.returnValue(of([]));
+    http.post.and.returnValue(of([]));
+    http.put.and.returnValue(of({ idCentroCusto: 3 }));
+    http.patch.and.returnValue(of({ idCentroCusto: 3, ativo: true }));
+
+    await service.listCentrosCusto().toPromise();
+    await service.listCentrosCusto(true).toPromise();
+    await service.bootstrapCentrosCustoPadrao().toPromise();
+
+    const payload: CentroCustoRequest = {
+      codigo: 'CC-LOJA',
+      nome: 'Loja Matriz',
+      tipoOperacional: 'LOJA'
+    };
+    await service.createCentroCusto(payload).toPromise();
+    await service.updateCentroCusto(3, payload).toPromise();
+    await service.toggleCentroCustoStatus(3, true).toPromise();
+
+    expect(http.get.calls.all()[0].args).toEqual(['http://api.test/api/financeiro/centros-custo']);
+    expect((http.get.calls.all()[1].args[1] as { params: HttpParams }).params.get('somenteAtivos')).toBe('true');
+    expect(http.post.calls.all()[0].args[0]).toBe('http://api.test/api/financeiro/centros-custo/inicializar-padrao');
+    expect(http.post.calls.all()[1].args).toEqual(['http://api.test/api/financeiro/centros-custo', payload]);
+    expect(http.put.calls.mostRecent().args).toEqual(['http://api.test/api/financeiro/centros-custo/3', payload]);
+    expect(http.patch.calls.mostRecent().args).toEqual(['http://api.test/api/financeiro/centros-custo/3/status?ativo=true', {}]);
+  });
+
+  it('gerencia regras de classificação, pendências, lote automático e reclassificação manual', async () => {
+    http.get.and.returnValue(of([]));
+    http.post.and.returnValue(of({ processados: 2, classificados: 2, naoClassificados: 0, observacoes: [] }));
+    http.put.and.returnValue(of({ idRegraClassificacao: 7 }));
+    http.patch.and.returnValue(of({ idRegraClassificacao: 7, ativo: false }));
+
+    await service.listRegrasClassificacao('DESPESA', true).toPromise();
+    await service.getPendenciasClassificacao().toPromise();
+
+    const regraPayload: RegraClassificacaoRequest = {
+      nome: 'Energia',
+      origemTipo: 'DESPESA',
+      palavraChave: 'ENERGIA',
+      planoContaId: 5,
+      centroCustoId: 2,
+      prioridade: 10
+    };
+    await service.createRegraClassificacao(regraPayload).toPromise();
+    await service.updateRegraClassificacao(7, regraPayload).toPromise();
+    await service.toggleRegraClassificacaoStatus(7, false).toPromise();
+    await service.aplicarClassificacaoAutomatica('DESPESA').toPromise();
+    await service.aplicarClassificacaoAutomatica().toPromise();
+
+    const manualPayload: ReclassificacaoManualRequest = {
+      origemTipo: 'DESPESA',
+      registroId: 99,
+      planoContaId: 5,
+      centroCustoId: 2,
+      motivo: 'Ajuste gerencial'
+    };
+    await service.reclassificarManualmente(manualPayload).toPromise();
+
+    const regrasCall = http.get.calls.all()[0];
+    expect(regrasCall.args[0]).toBe('http://api.test/api/financeiro/classificacoes/regras');
+    const regrasParams = (regrasCall.args[1] as { params: HttpParams }).params;
+    expect(regrasParams.get('origemTipo')).toBe('DESPESA');
+    expect(regrasParams.get('somenteAtivas')).toBe('true');
+    expect(http.get.calls.all()[1].args[0]).toBe('http://api.test/api/financeiro/classificacoes/pendentes');
+
+    expect(http.post.calls.all()[0].args).toEqual(['http://api.test/api/financeiro/classificacoes/regras', regraPayload]);
+    expect(http.put.calls.mostRecent().args).toEqual(['http://api.test/api/financeiro/classificacoes/regras/7', regraPayload]);
+    expect(http.patch.calls.mostRecent().args).toEqual(['http://api.test/api/financeiro/classificacoes/regras/7/status?ativo=false', {}]);
+
+    const autoFiltered = http.post.calls.all()[1];
+    expect(autoFiltered.args[0]).toBe('http://api.test/api/financeiro/classificacoes/aplicar-automatico');
+    expect((autoFiltered.args[2] as { params: HttpParams }).params.get('origemTipo')).toBe('DESPESA');
+    expect(http.post.calls.all()[2].args).toEqual(['http://api.test/api/financeiro/classificacoes/aplicar-automatico', {}]);
+    expect(http.post.calls.all()[3].args).toEqual(['http://api.test/api/financeiro/classificacoes/manual', manualPayload]);
+  });
+
+  it('invalida cache de /api/despesas e /api/financeiro após aplicarClassificacaoAutomatica', async () => {
+    http.get.and.returnValue(of([]));
+    http.post.and.returnValue(of({ processados: 1, classificados: 1, naoClassificados: 0, observacoes: [] }));
+
+    service.list<unknown>('/api/despesas').subscribe();
+    service.list<unknown>('/api/financeiro/operacional/contas-pagar').subscribe();
+    service.list<unknown>('/api/categorias').subscribe();
+    expect(http.get).toHaveBeenCalledTimes(3);
+
+    await service.aplicarClassificacaoAutomatica().toPromise();
+
+    service.list<unknown>('/api/despesas').subscribe();
+    service.list<unknown>('/api/financeiro/operacional/contas-pagar').subscribe();
+    service.list<unknown>('/api/categorias').subscribe();
+    expect(http.get).toHaveBeenCalledTimes(5);
+  });
+
+  it('consulta e recalcula consolidação por competência com parâmetro opcional', async () => {
+    http.get.and.returnValue(of({ competenciaAnoMes: '2026-11' }));
+    http.post.and.returnValue(of({ competenciaAnoMes: '2026-11' }));
+
+    await service.getConsolidacaoCompetencia().toPromise();
+    await service.getConsolidacaoCompetencia('2026-11').toPromise();
+    await service.recalcularConsolidacaoCompetencia('2026-11').toPromise();
+
+    expect(http.get.calls.all()[0].args).toEqual(['http://api.test/api/financeiro/consolidacao/competencia']);
+    expect((http.get.calls.all()[1].args[1] as { params: HttpParams }).params.get('competencia')).toBe('2026-11');
+    const recalcCall = http.post.calls.mostRecent();
+    expect(recalcCall.args[0]).toBe('http://api.test/api/financeiro/consolidacao/competencia/recalcular');
+    expect((recalcCall.args[2] as { params: HttpParams }).params.get('competencia')).toBe('2026-11');
+  });
+
+  it('gerencia tipos de despesa e pagamento de despesa com invalidação de cache', async () => {
+    http.get.and.returnValue(of([]));
+    http.post.and.returnValue(of({ idTipoDespesa: 4, nome: 'Energia' }));
+    http.put.and.returnValue(of({ idTipoDespesa: 4, nome: 'Energia Elétrica' }));
+    http.patch.and.returnValue(of({ idDespesa: 12, dataPagamento: '2026-11-17' }));
+
+    await service.listTiposDespesa().toPromise();
+    await service.createTipoDespesa({ nome: 'Energia' }).toPromise();
+    await service.updateTipoDespesa(4, { nome: 'Energia Elétrica' }).toPromise();
+    await service.pagarDespesa(12, '2026-11-17').toPromise();
+    await service.pagarDespesa(13).toPromise();
+
+    expect(http.get.calls.mostRecent().args[0]).toBe('http://api.test/api/despesas/tipos');
+    expect(http.post.calls.mostRecent().args).toEqual(['http://api.test/api/despesas/tipos', { nome: 'Energia' }]);
+    expect(http.put.calls.mostRecent().args).toEqual(['http://api.test/api/despesas/tipos/4', { nome: 'Energia Elétrica' }]);
+    expect(http.patch.calls.all()[0].args).toEqual(['http://api.test/api/despesas/12/pagar', { dataPagamento: '2026-11-17' }]);
+    expect(http.patch.calls.all()[1].args).toEqual(['http://api.test/api/despesas/13/pagar', {}]);
+  });
+
+  it('consulta DRE Gerencial, lançamentos drill-down, evolução mensal, comparativo de filiais e exportação CSV/JSON', async () => {
+    http.get.and.returnValue(of({}));
+
+    await service.getDreGerencial({
+      tipoPeriodo: 'MENSAL',
+      competencia: '2026-11',
+      compararPeriodoAnterior: true,
+      centroCustoId: 3,
+      consolidarFiliais: false
+    }).toPromise();
+
+    await service.getDreLancamentos({
+      tipoPeriodo: 'MENSAL',
+      competencia: '2026-11',
+      numeroLinha: 8,
+      planoContaId: 12
+    }).toPromise();
+
+    await service.getDreEvolucao({
+      competenciaFim: '2026-11',
+      meses: 6,
+      consolidarFiliais: true
+    }).toPromise();
+
+    await service.getDreComparativoFiliais({
+      tipoPeriodo: 'TRIMESTRAL',
+      ano: 2026,
+      trimestre: 4
+    }).toPromise();
+
+    await service.exportarDreCsv({ tipoPeriodo: 'MENSAL', competencia: '2026-11' }).toPromise();
+    await service.exportarDreJson({ tipoPeriodo: 'MENSAL', competencia: '2026-11' }).toPromise();
+
+    const calls = http.get.calls.all();
+    expect(calls[0].args[0]).toBe('http://api.test/api/financeiro/dre');
+    expect((calls[0].args[1] as { params: HttpParams }).params.get('competencia')).toBe('2026-11');
+    expect((calls[0].args[1] as { params: HttpParams }).params.get('centroCustoId')).toBe('3');
+
+    expect(calls[1].args[0]).toBe('http://api.test/api/financeiro/dre/lancamentos');
+    expect((calls[1].args[1] as { params: HttpParams }).params.get('numeroLinha')).toBe('8');
+    expect((calls[1].args[1] as { params: HttpParams }).params.get('planoContaId')).toBe('12');
+
+    expect(calls[2].args[0]).toBe('http://api.test/api/financeiro/dre/evolucao');
+    expect((calls[2].args[1] as { params: HttpParams }).params.get('meses')).toBe('6');
+
+    expect(calls[3].args[0]).toBe('http://api.test/api/financeiro/dre/comparativo-filiais');
+    expect((calls[3].args[1] as { params: HttpParams }).params.get('trimestre')).toBe('4');
+
+    expect(calls[4].args[0]).toBe('http://api.test/api/financeiro/dre/exportar');
+    expect((calls[4].args[1] as { params: HttpParams }).params.get('formato')).toBe('CSV');
+
+    expect(calls[5].args[0]).toBe('http://api.test/api/financeiro/dre/exportar');
+    expect((calls[5].args[1] as { params: HttpParams }).params.get('formato')).toBe('JSON');
+  });
+
+  it('consulta e opera a Central de Fluxo de Caixa, Parcelas, Transferências, Estornos e Conciliação (Lote 3)', async () => {
+    http.get.and.returnValue(of({}));
+    http.post.and.returnValue(of({}));
+    http.put.and.returnValue(of({}));
+
+    await service.getFluxoCaixaPainel({
+      dataInicio: '2026-11-01',
+      dataFim: '2026-11-30',
+      contaFinanceiraId: 2,
+      centroCustoId: 4,
+      consolidarFiliais: true
+    }).toPromise();
+
+    await service.simularFluxoCaixa(
+      { saidaSimuladaAdicional: 1200, simularAntecipacaoCartao: true },
+      { dataInicio: '2026-11-01', dataFim: '2026-11-30' }
+    ).toPromise();
+
+    await service.listContasFinanceiras(true).toPromise();
+    await service.bootstrapContasFinanceiras().toPromise();
+    await service.createContaFinanceira({
+      codigo: 'BANCO-01',
+      nome: 'Conta Movimento',
+      tipoConta: 'CONTA_CORRENTE',
+      saldoInicial: 1000
+    }).toPromise();
+    await service.updateContaFinanceira(5, {
+      codigo: 'BANCO-01',
+      nome: 'Conta Movimento Atualizada',
+      tipoConta: 'CONTA_CORRENTE'
+    }).toPromise();
+
+    await service.gerarParcelasFluxoCaixa(
+      {
+        natureza: 'RECEBER',
+        descricao: 'Venda Cartão',
+        valorTotal: 900,
+        quantidadeParcelas: 3,
+        intervaloDias: 30,
+        primeiroVencimento: '2026-12-01'
+      },
+      'idem-parc-1'
+    ).toPromise();
+
+    await service.baixarContaReceber(11, { valorLiquidado: 300, valorTaxa: 9 }, 'idem-rec-11').toPromise();
+    await service.baixarContaPagar(22, { valorLiquidado: 450 }, 'idem-pag-22').toPromise();
+    await service.transferirEntreContas(
+      { contaOrigemId: 1, contaDestinoId: 2, valor: 250 },
+      'idem-transf-1'
+    ).toPromise();
+    await service.estornarMovimentacaoFinanceira(33, { motivo: 'Erro de digitação' }, 'idem-est-33').toPromise();
+
+    await service.getConciliacaoFinanceira(2).toPromise();
+    await service.importarExtratoConciliacao(
+      {
+        contaFinanceiraId: 2,
+        tipoConciliacao: 'BANCARIA',
+        formatoOrigem: 'CSV',
+        conteudoArquivo: '2026-11-17;PIX;100.00;CREDITO;ID-1'
+      },
+      'idem-conc-1'
+    ).toPromise();
+    await service.conciliarManualmente({
+      conciliacaoItemId: 44,
+      novoStatus: 'CONCILIADO_MANUAL'
+    }).toPromise();
+
+    const getCalls = http.get.calls.all();
+    expect(getCalls[0].args[0]).toBe('http://api.test/api/financeiro/fluxo-caixa');
+    expect((getCalls[0].args[1] as { params: HttpParams }).params.get('contaFinanceiraId')).toBe('2');
+    expect((getCalls[0].args[1] as { params: HttpParams }).params.get('consolidarFiliais')).toBe('true');
+    expect(getCalls[1].args[0]).toBe('http://api.test/api/financeiro/fluxo-caixa/contas');
+    expect(getCalls[2].args[0]).toBe('http://api.test/api/financeiro/fluxo-caixa/conciliacao');
+
+    const postUrls = http.post.calls.all().map((c) => c.args[0]);
+    expect(postUrls).toEqual([
+      'http://api.test/api/financeiro/fluxo-caixa/simular',
+      'http://api.test/api/financeiro/fluxo-caixa/contas/bootstrap',
+      'http://api.test/api/financeiro/fluxo-caixa/contas',
+      'http://api.test/api/financeiro/fluxo-caixa/parcelas/gerar',
+      'http://api.test/api/financeiro/fluxo-caixa/contas-receber/11/baixar',
+      'http://api.test/api/financeiro/fluxo-caixa/contas-pagar/22/baixar',
+      'http://api.test/api/financeiro/fluxo-caixa/transferencias',
+      'http://api.test/api/financeiro/fluxo-caixa/movimentacoes/33/estornar',
+      'http://api.test/api/financeiro/fluxo-caixa/conciliacao/importar',
+      'http://api.test/api/financeiro/fluxo-caixa/conciliacao/conciliar'
+    ]);
+    expect(http.put.calls.mostRecent().args[0]).toBe('http://api.test/api/financeiro/fluxo-caixa/contas/5');
+  });
+
+  it('integra endpoints do Centro de Inteligência Administrativa (Lote 4)', async () => {
+    http.get.and.returnValue(of({}));
+    http.post.and.returnValue(of({}));
+    http.put.and.returnValue(of({}));
+
+    await service.getIndicadoresPainel({ competencia: '2026-11', consolidarFiliais: true }).toPromise();
+    await service.getIndicadoresParametros().toPromise();
+    await service.getBalancoPatrimonialGerencial('2026-11').toPromise();
+    await service.salvarIndicadoresParametros({} as never).toPromise();
+    await service.salvarBalancoPatrimonialGerencial({ competenciaAnoMes: '2026-11' }).toPromise();
+    await service.simularPrecificacaoInteligente({ custoAquisicaoBase: 100 }).toPromise();
+    await service.aplicarPrecoProdutoAutorizado({
+      produtoId: 10,
+      novoValorVenda: 166.67,
+      justificativa: 'Ajuste P0'
+    }).toPromise();
+    await service.simularInvestimentoIndicadores({ investimentoInicial: 10000 }, '2026-11').toPromise();
+
+    expect(http.get.calls.all().map((c) => c.args[0])).toEqual([
+      'http://api.test/api/financeiro/indicadores',
+      'http://api.test/api/financeiro/indicadores/parametros',
+      'http://api.test/api/financeiro/indicadores/balanco-patrimonial'
+    ]);
+    expect(http.put.calls.all().map((c) => c.args[0])).toEqual([
+      'http://api.test/api/financeiro/indicadores/parametros',
+      'http://api.test/api/financeiro/indicadores/balanco-patrimonial'
+    ]);
+    expect(http.post.calls.all().map((c) => c.args[0])).toEqual([
+      'http://api.test/api/financeiro/indicadores/precificacao/simular',
+      'http://api.test/api/financeiro/indicadores/precificacao/aplicar-preco',
+      'http://api.test/api/financeiro/indicadores/investimentos/simular'
+    ]);
   });
 });

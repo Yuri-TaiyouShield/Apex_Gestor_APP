@@ -85,4 +85,12 @@ describe('ApiConfigService', () => {
 
     expect(service.baseUrl()).toBe('http://localhost:8080');
   });
+
+  it('ignora cache legado na porta 8085 e usa http://localhost:8080', () => {
+    localStorage.setItem('apex.apiBaseUrl', 'http://localhost:8085');
+
+    const service = freshService();
+
+    expect(service.baseUrl()).toBe('http://localhost:8080');
+  });
 });

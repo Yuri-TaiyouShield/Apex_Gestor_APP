@@ -1,15 +1,7 @@
 /**
  * PostCSS Configuration
  *
- * Tailwind CSS v4 (via @tailwindcss/vite) automatically sets up all required
- * PostCSS plugins — you do NOT need to include `tailwindcss` or `autoprefixer` here.
- *
- * This file only exists for adding additional PostCSS plugins, if needed.
- * For example:
- *
- * import postcssNested from 'postcss-nested'
- * export default { plugins: [postcssNested()] }
- *
- * Otherwise, you can leave this file empty.
+ * O Apex Gestor 2.0 utiliza CSS Custom Properties nativas em tres camadas,
+ * utilitarios proprios e integracao nativa com Ionic 8 — sem Tailwind CSS.
  */
-export default {}
+export default {};
