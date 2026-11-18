@@ -32,32 +32,47 @@ function readArgValue(name) {
   return undefined;
 }
 
-function normalizeBaseUrl(value) {
-  return String(value || 'http://localhost:8080').trim().replace(/\/$/, '');
-}
-
-function validateTargetUrl(rawUrl) {
-  const parsed = new URL(rawUrl);
-  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
-    throw new Error(`Invalid protocol: ${parsed.protocol}`);
-  }
-  const hostname = parsed.hostname;
-  const isLoopback = hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1';
-  if (!isLoopback && !hostname.endsWith('.local') && !/^[\w.-]+$/.test(hostname)) {
-    throw new Error(`Untrusted host: ${hostname}`);
-  }
-  return parsed.href;
-}
-
 loadLocalEnv();
 
-const apiBaseUrl = normalizeBaseUrl(
-  readArgValue('--api-url')
+function resolveSafeHealthTarget() {
+  const rawInput = readArgValue('--api-url')
+    || process.env.APEX_API_HEALTH_URL
     || process.env.APEX_API_BASE_URL
     || process.env.ELECTRON_API_URL
     || process.env.API_BASE_URL
-);
-const healthUrl = validateTargetUrl(process.env.APEX_API_HEALTH_URL || `${apiBaseUrl}/actuator/health`);
+    || '';
+
+  let host = 'localhost';
+  let port = 8080;
+
+  if (rawInput) {
+    try {
+      const urlStr = rawInput.startsWith('http://') || rawInput.startsWith('https://')
+        ? rawInput
+        : `http://${rawInput}`;
+      const parsed = new URL(urlStr);
+      if (parsed.hostname === '127.0.0.1') {
+        host = '127.0.0.1';
+      } else if (parsed.hostname === 'backend-api') {
+        host = 'backend-api';
+      } else {
+        host = 'localhost';
+      }
+
+      const parsedPort = Number.parseInt(parsed.port, 10);
+      if (Number.isInteger(parsedPort) && parsedPort >= 1 && parsedPort <= 65535) {
+        port = parsedPort;
+      }
+    } catch {
+      host = 'localhost';
+      port = 8080;
+    }
+  }
+
+  return { host, port };
+}
+
+const target = resolveSafeHealthTarget();
 const timeoutMs = 120000;
 const intervalMs = 1500;
 const deadline = Date.now() + timeoutMs;
@@ -68,7 +83,8 @@ async function sleep(ms) {
 
 async function isUp() {
   try {
-    const response = await fetch(healthUrl);
+    const url = `http://${target.host}:${target.port}/actuator/health`;
+    const response = await fetch(url);
     if (!response.ok) {
       return false;
     }
@@ -80,6 +96,7 @@ async function isUp() {
 }
 
 (async () => {
+  const healthUrl = `http://${target.host}:${target.port}/actuator/health`;
   while (Date.now() < deadline) {
     if (await isUp()) {
       console.log(`API ready: ${healthUrl}`);
