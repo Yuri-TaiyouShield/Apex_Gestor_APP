@@ -95,7 +95,7 @@ async function isUp() {
   }
 }
 
-(async () => {
+void (async () => {
   const healthUrl = `http://${target.host}:${target.port}/actuator/health`;
   while (Date.now() < deadline) {
     if (await isUp()) {
@@ -106,4 +106,7 @@ async function isUp() {
   }
   console.error(`API did not become healthy before timeout: ${healthUrl}`);
   process.exit(1);
-})();
+})().catch((err) => {
+  console.error('Wait API error:', err);
+  process.exit(1);
+});

@@ -1012,7 +1012,15 @@ export class ApexApiService {
 
   private newIdempotencyKey(): string {
     const browserCrypto = globalThis.crypto as Crypto & { randomUUID?: () => string };
-    return browserCrypto.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    if (typeof browserCrypto?.randomUUID === 'function') {
+      return browserCrypto.randomUUID();
+    }
+    const bytes = new Uint8Array(16);
+    if (typeof browserCrypto?.getRandomValues === 'function') {
+      browserCrypto.getRandomValues(bytes);
+      return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+    }
+    return `${Date.now()}-${performance.now()}`;
   }
 }
 

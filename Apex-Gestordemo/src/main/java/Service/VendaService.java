@@ -168,7 +168,7 @@ public class VendaService {
             item.setProduto(produto);
             item.setId(new ProdutoVendaId(produto.getIdProduto(), salva.getIdVenda()));
             item.setQuantidade(recebido.getQuantidade());
-            item.setCustoUnitario(produto.getCusto());
+            item.setCustoUnitario(produto.getCusto() != null ? produto.getCusto() : BigDecimal.ZERO);
             item.setPrecoUnitario(produto.getValorVenda());
             item.setPrecoTotal(produto.getValorVenda().multiply(BigDecimal.valueOf(recebido.getQuantidade())));
             salva.getItens().add(item);
@@ -262,8 +262,12 @@ public class VendaService {
                     .orElseThrow(() -> new IllegalArgumentException("Forma de pagamento nao encontrada no tenant."));
             formas.add(forma);
             if (isDinheiro(forma)) dinheiroRecebido = dinheiroRecebido.add(solicitado.valor());
-            if (isCreditoVale(forma)) creditoClienteService.usar(solicitado.creditoId(), venda,
-                    solicitado.valor(), request);
+            if (isCreditoVale(forma)) {
+                if (solicitado.creditoId() == null) {
+                    throw new IllegalArgumentException("Pagamento com credito/vale exige o identificador do credito (creditoId).");
+                }
+                creditoClienteService.usar(solicitado.creditoId(), venda, solicitado.valor(), request);
+            }
         }
         if (troco.signum() > 0 && dinheiroRecebido.compareTo(troco) < 0) {
             throw new IllegalArgumentException("Troco so pode ser gerado sobre a parcela em dinheiro.");
@@ -521,6 +525,9 @@ public class VendaService {
         }
         if (produto.getCodigoBarras() == null || produto.getCodigoBarras().isBlank()) {
             throw new IllegalArgumentException("Produto vendavel exige codigo de barras.");
+        }
+        if (produto.getValorVenda() == null || produto.getValorVenda().compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("Produto exige valor de venda valido.");
         }
         if (produto.getQuantidadeEstoque() < quantidade) {
             throw new IllegalArgumentException("Estoque insuficiente para o produto " + produto.getDescricao() + ".");
