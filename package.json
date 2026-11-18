@@ -10,8 +10,8 @@
     "frontend:lint": "npm --prefix Apex_Gestor run lint",
     "frontend:test": "npm --prefix Apex_Gestor run test -- --watch=false --browsers=ChromeHeadless",
     "frontend:build:web": "npm --prefix Apex_Gestor run build:web:client:secure",
-    "frontend:build:mobile:staff": "npm --prefix Apex_Gestor run build:mobile:staff",
-    "frontend:build:mobile:client": "npm --prefix Apex_Gestor run build:mobile:client",
+    "frontend:build:mobile:staff": "npm --prefix Apex_Gestor run build:mobile:staff:sync",
+    "frontend:build:mobile:client": "npm --prefix Apex_Gestor run build:mobile:client:sync",
     "desktop:build": "npm --prefix Apex_Gestor run build:electron:secure:dir",
     "quality": "node scripts/audit-spring-data-jpa.cjs && npm run backend:test && npm run frontend:lint && npm run frontend:test"
   },

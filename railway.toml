@@ -11,6 +11,6 @@ restartPolicyMaxRetries = 3
 [variables]
 PORT = "8080"
 RAILWAY_DOCKERFILE_PATH = "Apex-Gestordemo/Dockerfile"
-JPA_DDL_AUTO = "update"
-APEX_SECURITY_REQUIRE_AUTH = "false"
+JPA_DDL_AUTO = "validate"
+APEX_SECURITY_REQUIRE_AUTH = "true"
 APEX_CORS_ALLOWED_ORIGINS = "https://yuri-taiyoushield.github.io"

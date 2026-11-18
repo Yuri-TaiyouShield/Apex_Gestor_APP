@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { IonicModule } from '@ionic/angular';
+import { IonContent, IonBadge, IonCard, IonCardHeader, IonCardTitle, IonCardSubtitle, IonCardContent, IonItem, IonInput, IonButton, IonNote } from '@ionic/angular/standalone';
 import { catchError, of } from 'rxjs';
 
 import { AuthService } from '../core/auth.service';
@@ -9,7 +9,7 @@ import { PrivacyService } from '../core/privacy.service';
 
 @Component({
   standalone: true,
-  imports: [CommonModule, FormsModule, IonicModule],
+  imports: [CommonModule, FormsModule, IonContent, IonBadge, IonCard, IonCardHeader, IonCardTitle, IonCardSubtitle, IonCardContent, IonItem, IonInput, IonButton, IonNote],
   template: `
     <ion-content>
       <main class="page">
@@ -31,9 +31,16 @@ import { PrivacyService } from '../core/privacy.service';
               <ion-item>
                 <ion-input type="number" label="ID do cliente" label-placement="stacked" [(ngModel)]="clienteId"></ion-input>
               </ion-item>
+              <ion-item>
+                <ion-input label="Justificativa formal (mínimo 10 caracteres)" label-placement="stacked" [(ngModel)]="justificativa"></ion-input>
+              </ion-item>
               <ion-button expand="block" (click)="requestExport()">Solicitar exportação</ion-button>
-              <ion-button expand="block" color="danger" fill="outline" (click)="requestDeletion()">Solicitar exclusão/anonimização</ion-button>
+              <ion-button expand="block" color="warning" fill="outline" (click)="requestDeletion()">Solicitar anonimização/exclusão</ion-button>
               <ion-button expand="block" fill="outline" (click)="downloadExport()">Baixar exportação agora</ion-button>
+              <ion-button expand="block" fill="outline" (click)="simulateAnonymization()">Simular anonimização</ion-button>
+              @if (simulacaoHash()) {
+                <ion-button expand="block" color="danger" (click)="confirmAnonymization()">Confirmar anonimização irreversível</ion-button>
+              }
               @if (message()) {
                 <ion-note color="primary">{{ message() }}</ion-note>
               }
@@ -68,7 +75,7 @@ import { PrivacyService } from '../core/privacy.service';
         @if (exportJson()) {
           <ion-card class="data-card">
             <ion-card-header>
-              <ion-card-title>Exportação do titular</ion-card-title>
+              <ion-card-title>Exportação / Simulação do titular</ion-card-title>
             </ion-card-header>
             <ion-card-content>
               <pre>{{ exportJson() }}</pre>
@@ -80,7 +87,7 @@ import { PrivacyService } from '../core/privacy.service';
   `,
   styles: [`
     .masked-box {
-      background: #f8fafc;
+      background: var(--apex-bg-surface-muted);
       border: 1px solid var(--apex-border);
       border-radius: 8px;
       display: grid;
@@ -89,7 +96,7 @@ import { PrivacyService } from '../core/privacy.service';
     }
 
     .masked-box span {
-      color: #64748b;
+      color: var(--apex-text-muted);
       font-size: 0.82rem;
     }
 
@@ -108,30 +115,73 @@ export class PrivacyPage {
   readonly auth = inject(AuthService);
   readonly message = signal('');
   readonly exportJson = signal('');
+  readonly simulacaoHash = signal('');
   clienteId = 1;
+  justificativa = '';
   documento = '123.456.789-09';
   email = 'cliente@email.com';
 
   requestExport(): void {
-    this.privacy.request({ titularId: String(this.clienteId), tipo: 'EXPORTACAO' })
-      .pipe(catchError(() => of({ offline: true })))
-      .subscribe((response) => this.message.set(`Solicitação de exportação registrada: ${JSON.stringify(response)}`));
+    const just = this.validJustificativa();
+    if (!just) return;
+    this.privacy.request({ titularId: String(this.clienteId), tipoTitular: 'CLIENTE', tipo: 'EXPORTACAO', justificativa: just })
+      .pipe(catchError((error) => { this.message.set(error?.error?.detail || 'Não foi possível registrar a solicitação na API.'); return of(null); }))
+      .subscribe((response) => { if (response) this.message.set(`Solicitação de exportação registrada: ${JSON.stringify(response)}`); });
   }
 
   requestDeletion(): void {
-    this.privacy.request({ titularId: String(this.clienteId), tipo: 'EXCLUSAO' })
-      .pipe(catchError(() => of({ offline: true })))
-      .subscribe((response) => this.message.set(`Solicitação de exclusão registrada: ${JSON.stringify(response)}`));
+    const just = this.validJustificativa();
+    if (!just) return;
+    this.privacy.request({ titularId: String(this.clienteId), tipoTitular: 'CLIENTE', tipo: 'ANONIMIZACAO', justificativa: just })
+      .pipe(catchError((error) => { this.message.set(error?.error?.detail || 'Não foi possível registrar a solicitação na API.'); return of(null); }))
+      .subscribe((response) => { if (response) this.message.set(`Solicitação de anonimização registrada: ${JSON.stringify(response)}`); });
   }
 
   downloadExport(): void {
-    this.privacy.exportCliente(Number(this.clienteId))
-      .pipe(catchError(() => of({ message: 'Exportação indisponível sem API autenticada.' })))
+    const just = this.validJustificativa();
+    if (!just) return;
+    this.privacy.exportCliente(Number(this.clienteId), just)
+      .pipe(catchError((error) => of({ message: error?.error?.detail || 'Exportação indisponível ou restrita a proprietário/SYSADMIN.' })))
       .subscribe((response) => this.exportJson.set(JSON.stringify(response, null, 2)));
+  }
+
+  simulateAnonymization(): void {
+    this.privacy.simularAnonimizacao(Number(this.clienteId))
+      .pipe(catchError((error) => { this.message.set(error?.error?.detail || 'Falha ao simular anonimização.'); return of(null); }))
+      .subscribe((sim) => {
+        if (!sim) return;
+        this.simulacaoHash.set(sim.simulacaoHash);
+        this.exportJson.set(JSON.stringify(sim, null, 2));
+        this.message.set(sim.elegivelAnonimizacaoPessoal
+          ? 'Simulação elegível. Informe justificativa e confirme explicitamente se aplicável.'
+          : `Bloqueio ativo: ${sim.obrigacoesRetencao.join(' | ')}`);
+      });
+  }
+
+  confirmAnonymization(): void {
+    const just = this.validJustificativa();
+    const hash = this.simulacaoHash();
+    if (!just || !hash) return;
+    this.privacy.anonymizeCliente(Number(this.clienteId), {
+      confirmadoExplicito: true,
+      justificativa: just,
+      simulacaoHash: hash
+    })
+      .pipe(catchError((error) => { this.message.set(error?.error?.detail || 'Não foi possível concluir a anonimização.'); return of(null); }))
+      .subscribe((res) => { if (res) this.message.set(`Anonimização executada: ${JSON.stringify(res)}`); });
   }
 
   logout(): void {
     this.auth.logout();
     this.message.set('Sessão encerrada.');
+  }
+
+  private validJustificativa(): string | null {
+    const just = this.justificativa.trim();
+    if (just.length < 10) {
+      this.message.set('Informe uma justificativa formal com pelo menos 10 caracteres.');
+      return null;
+    }
+    return just;
   }
 }

@@ -1,4 +1,4 @@
-FROM eclipse-temurin:21-jdk-jammy AS build
+FROM eclipse-temurin:25-jdk-jammy AS build
 
 WORKDIR /workspace
 COPY .mvn .mvn
@@ -9,7 +9,7 @@ RUN ./mvnw -q -DskipTests dependency:go-offline
 COPY src src
 RUN ./mvnw -q -DskipTests package
 
-FROM eclipse-temurin:21-jre-jammy
+FROM eclipse-temurin:25-jre-jammy
 
 RUN apt-get update \
   && apt-get install -y --no-install-recommends curl \

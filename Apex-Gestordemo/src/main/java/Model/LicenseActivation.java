@@ -63,4 +63,16 @@ public class LicenseActivation {
 
     @Column(name = "valid_until", nullable = false)
     private LocalDateTime validUntil;
+
+    @Column(name = "empresa_id")
+    private Long empresaId;
+
+    @Column(name = "tenant_code", length = 64)
+    private String tenantCode;
+
+    @Column(name = "subscription_tier", nullable = false, length = 32)
+    private String subscriptionTier = "ESSENTIAL";
+
+    @Column(name = "licensed_features", nullable = false, length = 500)
+    private String licensedFeatures = "BASIC_PRICING,FINANCIAL_CORE";
 }

@@ -19,6 +19,8 @@
     "build:web:client:secure": "ng build --configuration production,web-client && javascript-obfuscator dist/apex-gestor/browser --output dist/apex-gestor/browser --compact true --string-array true --string-array-threshold 0.2 --target browser --ignore-imports true && node scripts/security-manifest.cjs",
     "lint": "eslint \"src/**/*.{ts,html}\" \"electron/**/*.cjs\" \"scripts/**/*.cjs\"",
     "test": "ng test",
+    "test:coverage": "ng test --watch=false --browsers=ChromeHeadless --code-coverage",
+    "e2e": "playwright test",
     "wait:api": "node scripts/wait-api.cjs",
     "start:electron": "concurrently -k \"ng serve --host 0.0.0.0 --port 4200 --proxy-config proxy.conf.json\" \"npm run wait:api && wait-on http://localhost:4200 && electron .\"",
     "build:electron": "ng build --configuration production && node scripts/electron-package.cjs",
@@ -26,7 +28,11 @@
     "build:electron:secure": "ng build --configuration production && javascript-obfuscator dist/apex-gestor/browser --output dist/apex-gestor/browser --compact true --string-array true --string-array-threshold 0.2 --target browser --ignore-imports true && node scripts/security-manifest.cjs && node scripts/electron-package.cjs",
     "build:electron:secure:dir": "ng build --configuration production && javascript-obfuscator dist/apex-gestor/browser --output dist/apex-gestor/browser --compact true --string-array true --string-array-threshold 0.2 --target browser --ignore-imports true && node scripts/security-manifest.cjs && node scripts/electron-package.cjs --dir",
     "cap:sync": "ng build --configuration production && capacitor sync",
-    "cap:run:android": "ng build --configuration production && capacitor run android",
+    "build:mobile:staff:sync": "ng build --configuration production,mobile-staff && capacitor sync android",
+    "build:mobile:client:sync": "ng build --configuration production,mobile-client && capacitor sync android",
+    "cap:run:android:staff": "npm run build:mobile:staff:sync && capacitor run android --flavor staff",
+    "cap:run:android:client": "npm run build:mobile:client:sync && capacitor run android --flavor client",
+    "cap:run:android": "npm run cap:run:android:staff",
     "cap:open:android": "capacitor open android"
   },
   "dependencies": {
@@ -52,6 +58,7 @@
     "@capacitor/android": "8.3.4",
     "@capacitor/cli": "8.3.4",
     "@ionic/angular-toolkit": "12.3.0",
+    "@playwright/test": "^1.61.0",
     "@types/jasmine": "~5.1.0",
     "@types/node": "^22.10.2",
     "angular-eslint": "^19.8.1",
@@ -73,9 +80,7 @@
   "overrides": {
     "pacote": "20.0.1",
     "serialize-javascript": "7.0.5",
-    "tar": "7.5.15",
-    "uuid": "11.1.1",
-    "webpack-dev-server": "5.2.4"
+    "tar": "7.5.15"
   },
   "build": {
     "appId": "br.com.apexgestor.desktop",

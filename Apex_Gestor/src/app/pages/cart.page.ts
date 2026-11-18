@@ -1,14 +1,14 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { IonicModule } from '@ionic/angular';
+import { IonContent, IonCard, IonCardContent, IonItem, IonIcon, IonLabel, IonButton, IonBadge, IonCardHeader, IonCardTitle } from '@ionic/angular/standalone';
 
 import { CartService } from '../core/cart.service';
 import { currency } from '../core/view-utils';
 
 @Component({
   standalone: true,
-  imports: [CommonModule, IonicModule, RouterLink],
+  imports: [CommonModule, IonContent, IonCard, IonCardContent, IonItem, IonIcon, IonLabel, IonButton, IonBadge, IonCardHeader, IonCardTitle, RouterLink],
   template: `
     <ion-content>
       <main class="page">

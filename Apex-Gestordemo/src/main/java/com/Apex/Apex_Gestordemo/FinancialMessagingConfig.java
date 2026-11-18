@@ -14,12 +14,12 @@ import org.springframework.context.annotation.Configuration;
 public class FinancialMessagingConfig {
 
     @Bean
-    DirectExchange apexEventsExchange(@Value("${apex.messaging.rabbit.exchange}") String exchange) {
+    DirectExchange apexEventsExchange(@Value("${apex.messaging.rabbit.exchange:apex.events}") String exchange) {
         return new DirectExchange(exchange, true, false);
     }
 
     @Bean
-    Queue financialDocumentQueue(@Value("${apex.messaging.rabbit.document-queue}") String queue) {
+    Queue financialDocumentQueue(@Value("${apex.messaging.rabbit.document-queue:apex.financial.documents}") String queue) {
         return new Queue(queue, true);
     }
 
@@ -27,7 +27,7 @@ public class FinancialMessagingConfig {
     Binding financialDocumentBinding(
             DirectExchange apexEventsExchange,
             Queue financialDocumentQueue,
-            @Value("${apex.messaging.rabbit.document-routing-key}") String routingKey
+            @Value("${apex.messaging.rabbit.document-routing-key:financial.document.signed}") String routingKey
     ) {
         return BindingBuilder.bind(financialDocumentQueue).to(apexEventsExchange).with(routingKey);
     }

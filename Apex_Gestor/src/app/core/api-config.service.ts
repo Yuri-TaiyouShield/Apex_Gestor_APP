@@ -1,28 +1,7 @@
 import { Injectable, signal } from '@angular/core';
+import { Capacitor } from '@capacitor/core';
 
 const STORAGE_KEY = 'apex.apiBaseUrl';
-
-declare global {
-  interface Window {
-    apexDesktop?: {
-      defaultApiUrl?: string;
-      isDesktop?: boolean;
-      platform?: string;
-      getDeviceInfo?: () => Promise<{
-        defaultApiUrl: string;
-        deviceFingerprint: string;
-        deviceLabel: string;
-        isDesktop: boolean;
-        platform: string;
-      }>;
-      secureStorage?: {
-        getItem: (key: string) => Promise<string | null>;
-        setItem: (key: string, value: string) => Promise<boolean>;
-        removeItem: (key: string) => Promise<boolean>;
-      };
-    };
-  }
-}
 
 @Injectable({ providedIn: 'root' })
 export class ApiConfigService {
@@ -50,17 +29,31 @@ export class ApiConfigService {
   }
 
   private readInitialBaseUrl(): string {
-    return localStorage.getItem(STORAGE_KEY) ?? this.defaultBaseUrl();
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored === null || stored === 'http://localhost:8085' || stored === 'http://127.0.0.1:8085') {
+      return this.defaultBaseUrl();
+    }
+    return stored;
   }
 
   private defaultBaseUrl(): string {
     const protocol = globalThis.location?.protocol ?? 'http:';
-    if (window.apexDesktop?.defaultApiUrl) {
-      return window.apexDesktop.defaultApiUrl;
+    const desktopApiUrl = globalThis.window?.apexDesktop?.defaultApiUrl;
+    if (desktopApiUrl) {
+      return desktopApiUrl;
     }
-    if (protocol === 'capacitor:' || protocol === 'ionic:' || protocol === 'app:') {
+
+    if (Capacitor.isNativePlatform() || protocol === 'capacitor:' || protocol === 'ionic:' || protocol === 'app:') {
+      const androidEmulatorHost = '10.0.2.2';
+      return Capacitor.getPlatform() === 'android' ? `http://${androidEmulatorHost}:8080` : 'http://localhost:8080'; // NOSONAR
+    }
+
+    const host = globalThis.location?.hostname ?? '';
+    if (host === 'localhost' || host === '127.0.0.1') {
       return 'http://localhost:8080';
     }
+
+    // Hosted web deployments can keep the API on the same origin behind a reverse proxy.
     return '';
   }
 }

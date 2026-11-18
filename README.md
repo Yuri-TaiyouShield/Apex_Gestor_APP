@@ -1,112 +1,132 @@
-# Apex Gestor 4.0
+# Apex Gestor
 
-Sistema hibrido de ERP, PDV, e-commerce e compliance financeiro para empresas de comercio em geral. A arquitetura atual usa Angular/Ionic para web e mobile, Electron para desktop e Spring Boot/MySQL no backend, com governanca v4 para monorepo enterprise, Flyway, Envers, RabbitMQ opcional, CI/CD e gates SecDevOps.
+Sistema de gestao para lojas de materiais de construcao, com backend Java/Spring Boot, banco MySQL e artefatos de frontend/mobile/desktop baseados em Angular/Ionic/Capacitor/Electron.
 
-## Plataformas
+Este repositorio esta sendo organizado para uma evolucao de produto comercial no Brasil. A meta e sair de uma base de demonstracao para uma plataforma confiavel de operacao, suporte, auditoria, fiscal, financeiro, estoque, vendas e gestao.
 
-- Web Cliente: e-commerce Angular/Ionic para consumidor final.
-- Mobile Cliente: APK Android Ionic/Capacitor para compras, carrinho e rastreio.
-- Mobile Empresa: APK Android Ionic/Capacitor para funcionarios, estoque, vendas rapidas e indicadores.
-- Desktop Empresa: Electron para PDV, caixa e administracao pesada.
-- Backend: Spring Boot com JWT, BCrypt, RBAC, LGPD, licenciamento e API REST.
+## Estado Executivo
 
-## Mapa rapido do repositorio
+Status em 2026-06-18: **v1 operacional homologada localmente; ainda nao aprovada para lancamento fiscal nacional**.
 
-- `Apex-Gestordemo/`: backend Spring Boot que a pipeline atual compila.
-- `Apex_Gestor/`: frontend Angular/Ionic e cliente Electron/Capacitor que a pipeline atual compila.
-- `apps/`: topologia alvo do monorepo por plataforma, com READMEs de cada app.
-- `packages/shared/`: contratos e utilitarios compartilhados planejados.
-- `docs/`: documentacao funcional, tecnica, operacional, banco e governanca.
-- `docs/database/`: modelo/dump historico do banco e scripts SQL de referencia.
-- `scripts/`: automacoes locais, auditorias e scripts auxiliares.
-- `.github/workflows/`: CI/CD e publicacao de artefatos no GitHub.
+O backend versionado possui modulos essenciais de cadastro, estoque, vendas, nota fiscal de entrada, despesas e relatorios. Ele compila e os testes atuais passam. Ainda existem bloqueios de produto e governanca antes de vender como software oficial:
 
-Veja o mapa completo em [Mapa do Repositorio](docs/00_MAPA_DO_REPOSITORIO.md) e a separacao das branches em [Branches e Versoes](docs/branches/README.md).
+- o frontend `Apex_Gestor/` possui fluxo operacional Vendedor -> Caixa, financeiro inicial e E2E Playwright;
+- JWT, RBAC, tenant scope, auditoria e LGPD transversal estao protegidos por testes H2, MySQL/Testcontainers e navegador;
+- emissao fiscal brasileira, NFC-e/NF-e/SAT quando aplicavel, SPED e integracoes contabeis ainda precisam de especificacao, homologacao e validacao por UF;
+- CI/CD atual do repositorio estava focado em GitHub Pages, nao em qualidade de produto;
+- migrations Flyway V2-V5 e variante MySQL estao validadas; backup/restore e observabilidade de producao continuam pendentes.
 
-## Documentacao
+Leia primeiro:
 
-- [Documentacao Apex Gestor 3.0](docs/APEX_GESTOR_3_0_DOCUMENTACAO.md)
-- [Roadmap de Producao](docs/ROADMAP_PRODUCAO.md)
-- [Guia GitHub Releases](docs/GUIA_GITHUB_RELEASES.md)
-- [Guia de Execucao e Testes pelo GitHub](docs/GUIA_EXECUCAO_TESTES_GITHUB.md)
-- [Runbook de Orquestracao e Resiliencia](docs/RUNBOOK_ORQUESTRACAO_APEX.md)
-- [Guia de Seguranca](SECURITY.md)
-- [Guia de Banco de Dados Local](docs/GUIA_BANCO_DADOS_LOCAL.md)
-- [Guia de Escalabilidade do Banco](docs/GUIA_ESCALABILIDADE_BANCO.md)
-- [Modulo Financeiro AdmCalc](docs/MODULO_FINANCEIRO_ADMCALC.md)
-- [Arquitetura Enterprise v4](docs/ARQUITETURA_ENTERPRISE_V4.md)
-- [Repository Spring Data JPA v4](docs/REPOSITORY_SPRING_DATA_JPA_V4.md)
-- [DevEx Bootstrap Windows](docs/DEVEX_BOOTSTRAP_WINDOWS.md)
-- [Mapa do Repositorio](docs/00_MAPA_DO_REPOSITORIO.md)
-- [Branches e Versoes](docs/branches/README.md)
+- [Roadmap versionado ERP/PDV](docs/VERSIONED_EVOLUTION_ROADMAP.md)
+- [Matriz RBAC, auditoria e operacoes criticas](docs/RBAC_AUDIT_MATRIX.md)
+- [Rastreabilidade dos casos de uso](docs/USE_CASE_TRACEABILITY.md)
+- [Plano CTO de lancamento Brasil](docs/CTO_LAUNCH_PLAN_BR.md)
+- [Auditoria de prontidao 2026-05-26](docs/LAUNCH_READINESS_AUDIT_2026-05-26.md)
+- [Checklist de go-live Brasil](docs/GO_LIVE_CHECKLIST_BR.md)
+- [Arquitetura e operacao](docs/ARCHITECTURE_AND_OPERATIONS.md)
+- [Como contribuir](CONTRIBUTING.md)
+- [Homologacao operacional v1](docs/HOMOLOGACAO_V1.md)
 
-## Ambiente completo com Docker
+## Estrutura
 
-```bash
-docker compose up -d --build
+```text
+.
+├── Apex-Gestordemo/          # Backend Spring Boot
+├── Apex_Gestor/              # Artefatos frontend/mobile/desktop no checkout atual
+├── docs/                     # Documentacao executiva, tecnica e operacional
+├── tools/audit/              # Scripts de auditoria local
+├── docker-compose.yml        # MySQL + backend API para desenvolvimento
+└── .github/workflows/        # CI e workflows GitHub
 ```
 
-Depois abra:
+## Backend
 
-- Web: `http://localhost:4200`
-- API: `http://localhost:8080/actuator/health`
-- MySQL: `localhost:2705`
-- RabbitMQ Management: `http://localhost:15672`
+Principais dominios versionados:
 
-Licencas demo para desenvolvimento:
+- produtos, categorias, fornecedores e enderecos;
+- clientes e usuarios;
+- vendas, itens de venda e pagamentos;
+- nota fiscal de entrada e custo medio;
+- despesas, tipos de despesa e relatorio financeiro;
+- seguranca configuravel por ambiente;
+- auditoria automatizada basica em PowerShell.
 
-- `APEX-DEMO-ALL`: libera todos os apps.
-- `APEX-DEMO-DESKTOP`: libera somente Desktop.
-- `APEX-DEMO-EMPRESA`: libera somente Mobile Empresa.
-- `APEX-DEMO-CLIENTE`: libera somente Mobile Cliente.
-- `APEX-DEMO-WEB`: libera somente Web Cliente.
-- `APEX-DEMO-DUO`: libera Desktop + Mobile Empresa.
-- `APEX-DEMO-TRIO`: libera Desktop + Mobile Empresa + Web Cliente.
+### Rodar testes
 
-Em producao, configure `APEX_LICENSE_CATALOG` no backend no formato `CHAVE|apps|limite_dispositivos|validade_dias`. Exemplo: `CLIENTE-001|desktop+mobile-staff|2|365`.
+```powershell
+cd Apex-Gestordemo
+cmd /c mvnw.cmd -q test
+```
 
-## Modulo financeiro AdmCalc
+Com Docker Desktop ativo, o mesmo comando executa o fluxo isolado em MySQL 8.4 via Testcontainers. Sem Docker, somente essa classe e marcada como indisponivel.
 
-O Apex possui a tela `/finance` para calculos trabalhistas, tributarios, indicadores do AdmCalc, auditoria antifraude e workflow de documentos assinados. O backend expoe os endpoints protegidos em `/api/financeiro/**` e registra cada operacao nas tabelas `financial_calculation`, `financial_audit_event`, `financial_digital_document`, `financial_document_outbox` e nas tabelas Envers `_AUD`.
+### Frontend e E2E
 
-Na v4, alteracoes de schema ficam em Flyway: `Apex-Gestordemo/src/main/resources/db/migration`.
-
-## Desenvolvimento manual
-
-```bash
+```powershell
 cd Apex_Gestor
-npm ci --legacy-peer-deps
-npm run start:web
+npm test -- --watch=false --browsers=ChromeHeadless
 npm run build:web
-npm run test -- --watch=false
+npm run e2e
 ```
 
-Backend:
+O E2E usa Chrome instalado e espera frontend em `127.0.0.1:4200` e backend em `127.0.0.1:8080`.
 
-```bash
-docker compose up -d apex-mysql
-cd Apex-Gestordemo
-./mvnw spring-boot:run
+### Auditoria local
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tools\audit\apex-enterprise-audit.ps1 -SkipBuild
 ```
 
-O MySQL local sobe na porta `2705`, banco `apex_db`, usuario `root` e senha de desenvolvimento `apex_dev_2026`. Para diagnostico de conexao e variaveis de ambiente, veja [Guia de Banco de Dados Local](docs/GUIA_BANCO_DADOS_LOCAL.md).
+Para incluir build/test no script:
 
-Validacao backend:
-
-```bash
-cd Apex-Gestordemo
-./mvnw test
-./mvnw -Dtest=PdvVendaEstoqueEnversIntegrationTests test
-./mvnw -DskipTests package
+```powershell
+powershell -ExecutionPolicy Bypass -File tools\audit\apex-enterprise-audit.ps1
 ```
 
-## Releases automatizadas
+## Ambiente Local
 
-O workflow `.github/workflows/main.yml` compila e publica:
+Crie um `.env` a partir de `.env.example` e ajuste as variaveis.
 
-- App Site Web (`.zip` com a pasta `App Site Web`)
-- App Desktop (`.zip` com a pasta `App Desktop` e instalador Windows `.exe`)
-- App Mobile Empresa (`.zip` com a pasta `App Mobile Empresa` e APK Android)
-- App Mobile Cliente (`.zip` com a pasta `App Mobile Cliente` e APK Android)
+```powershell
+copy .env.example .env
+docker compose up --build
+```
 
-Push em `main` gera artifacts na aba Actions. Tags `v*`, como `v4.0.0`, publicam os arquivos na aba Releases.
+Endpoints principais:
+
+- API: `http://localhost:8080`
+- Health: `http://localhost:8080/actuator/health`
+- MySQL local: porta `2705` por padrao
+
+## Decisoes de Produto
+
+Para competir com ERPs estabelecidos de material de construcao, o Apex Gestor deve ser lancado por fases:
+
+1. **v1-desktop-core**: PDV, caixa, financeiro basico, estoque, inventario, cadastros, RBAC, auditoria, soft delete e multiempresa preparado.
+2. **v2-admCalc**: motor de calculos empresariais, precificacao, simulacoes, dashboard gerencial e alertas operacionais.
+3. **v3-logistica-delivery**: delivery, entregadores, rotas, frete, status em tempo real e comprovante digital.
+4. **Piloto pago controlado**: 3 a 5 lojas reais, suporte proximo, sem promessa nacional.
+5. **Release Brasil v1 comercial**: fiscal, LGPD, backup, suporte, contrato, onboarding e estabilidade.
+
+O objetivo nao e apenas copiar ADM Santri ou SoftCosmos. O objetivo e entregar profundidade de varejo de construcao com produto mais simples de implantar, mais moderno de usar e mais confiavel de operar.
+
+## Padrao de Qualidade
+
+Toda mudanca relevante deve passar por:
+
+- testes automatizados do backend;
+- auditoria local em `tools/audit`;
+- revisao de seguranca para autenticacao, dados pessoais e permissao;
+- atualizacao de documentacao quando houver mudanca de produto, operacao ou API;
+- plano de rollback quando mexer em banco, pagamento, fiscal ou estoque.
+
+## Licenca e Comercializacao
+
+Antes do lancamento oficial, validar:
+
+- licenca do codigo e dependencias;
+- contratos de uso e suporte;
+- politica de privacidade LGPD;
+- termos de responsabilidade fiscal;
+- estrategia de marca, dominio e canal de atendimento.

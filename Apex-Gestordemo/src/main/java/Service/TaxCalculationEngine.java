@@ -20,31 +20,65 @@ public class TaxCalculationEngine {
     private static final BigDecimal ONE = BigDecimal.ONE;
 
     public Map<String, BigDecimal> calculate(TaxCalculationRequestDTO request) {
+        if (request == null) {
+            throw new IllegalArgumentException("Requisicao tributaria nao pode ser nula");
+        }
         Map<String, BigDecimal> results = new LinkedHashMap<>();
-        BigDecimal salarioBruto = valueOr(request.salarioBruto(), ZERO);
-        BigDecimal inss = valueOr(request.inssEmpregado(), ZERO);
-        int dependentes = valueOr(request.dependentes(), 0);
-        BigDecimal deducaoDependentes = valueOr(request.deducaoLegalDependente(), ZERO).multiply(BigDecimal.valueOf(dependentes), MC);
-        BigDecimal pensao = valueOr(request.pensao(), ZERO);
+        BigDecimal salarioBruto = valueOr(nonNegative(request.salarioBruto(), "salarioBruto"), ZERO);
+        BigDecimal inss = valueOr(nonNegative(request.inssEmpregado(), "inssEmpregado"), ZERO);
+        int dependentes = nonNegativeInt(request.dependentes(), 0, "dependentes");
+        BigDecimal deducaoDependentes = valueOr(nonNegative(request.deducaoLegalDependente(), "deducaoLegalDependente"), ZERO)
+                .multiply(BigDecimal.valueOf(dependentes), MC);
+        BigDecimal pensao = valueOr(nonNegative(request.pensao(), "pensao"), ZERO);
+        validateBrackets(request.tabelaIrrf());
         BigDecimal baseIrrf = salarioBruto.subtract(inss).subtract(deducaoDependentes).subtract(pensao).max(ZERO);
         results.put("baseIrrf", money(baseIrrf));
         results.put("irrf", money(calculateDeductibleTax(baseIrrf, request.tabelaIrrf())));
 
-        BigDecimal folha = valueOr(request.folhaSalarios(), ZERO);
-        BigDecimal proLabore = valueOr(request.proLabore(), ZERO);
-        BigDecimal receitaBruta = valueOr(request.receitaBruta(), ZERO);
+        BigDecimal folha = valueOr(nonNegative(request.folhaSalarios(), "folhaSalarios"), ZERO);
+        BigDecimal proLabore = valueOr(nonNegative(request.proLabore(), "proLabore"), ZERO);
+        BigDecimal receitaBruta = valueOr(nonNegative(request.receitaBruta(), "receitaBruta"), ZERO);
         BigDecimal fatorR = receitaBruta.signum() == 0 ? ZERO : folha.add(proLabore).divide(receitaBruta, MC);
         results.put("fatorR", percentDisplay(fatorR));
 
-        BigDecimal receitaPresumido = valueOr(request.receitaLucroPresumido(), receitaBruta);
+        BigDecimal receitaPresumido = valueOr(nonNegative(request.receitaLucroPresumido(), "receitaLucroPresumido"), receitaBruta);
         BigDecimal baseIrpj = receitaPresumido.multiply(BigDecimal.valueOf(0.32), MC);
-        BigDecimal limiteAdicional = valueOr(request.limiteAdicionalIrpj(), BigDecimal.valueOf(20000));
+        BigDecimal limiteAdicional = valueOr(nonNegative(request.limiteAdicionalIrpj(), "limiteAdicionalIrpj"), BigDecimal.valueOf(20000));
         results.put("lucroPresumidoBaseIrpj", money(baseIrpj));
         results.put("lucroPresumidoIrpj", money(baseIrpj.multiply(BigDecimal.valueOf(0.15), MC)));
         results.put("lucroPresumidoCsll", money(baseIrpj.multiply(BigDecimal.valueOf(0.09), MC)));
         results.put("lucroPresumidoPisCofins", money(receitaPresumido.multiply(BigDecimal.valueOf(0.0365), MC)));
         results.put("lucroPresumidoAdicionalIrpj", money(baseIrpj.subtract(limiteAdicional).max(ZERO).multiply(BigDecimal.valueOf(0.10), MC)));
         return results;
+    }
+
+    private void validateBrackets(List<TaxBracketDTO> brackets) {
+        if (brackets == null) {
+            return;
+        }
+        for (TaxBracketDTO bracket : brackets) {
+            if (bracket == null) {
+                throw new IllegalArgumentException("tabelaIrrf nao pode conter faixas nulas");
+            }
+            nonNegative(bracket.limite(), "tabelaIrrf.limite");
+            nonNegative(bracket.aliquota(), "tabelaIrrf.aliquota");
+            nonNegative(bracket.parcelaDeduzir(), "tabelaIrrf.parcelaDeduzir");
+        }
+    }
+
+    private BigDecimal nonNegative(BigDecimal value, String field) {
+        if (value != null && value.compareTo(ZERO) < 0) {
+            throw new IllegalArgumentException(field + " nao pode ser negativo");
+        }
+        return value;
+    }
+
+    private int nonNegativeInt(Integer value, int fallback, String field) {
+        int resolved = valueOr(value, fallback);
+        if (resolved < 0) {
+            throw new IllegalArgumentException(field + " nao pode ser negativo");
+        }
+        return resolved;
     }
 
     private BigDecimal calculateDeductibleTax(BigDecimal base, List<TaxBracketDTO> brackets) {

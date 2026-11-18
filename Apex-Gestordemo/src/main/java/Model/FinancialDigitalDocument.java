@@ -60,15 +60,19 @@ public class FinancialDigitalDocument {
     @Column(name = "conteudo_hash", nullable = false, length = 128)
     private String conteudoHash;
 
-    @Lob
-    @Column(nullable = false)
+    @Column(name = "empresa_id")
+    private Long empresaId;
+
+    @Column(name = "filial_id")
+    private Long filialId;
+
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String conteudo;
 
     @Column(name = "assunto_email", length = 180)
     private String assuntoEmail;
 
-    @Lob
-    @Column(name = "mensagem_email")
+    @Column(name = "mensagem_email", columnDefinition = "TEXT")
     private String mensagemEmail;
 
     @Column(length = 120)

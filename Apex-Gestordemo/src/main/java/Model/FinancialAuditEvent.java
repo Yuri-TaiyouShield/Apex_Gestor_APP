@@ -37,8 +37,7 @@ public class FinancialAuditEvent {
     @Column(name = "valor_novo", length = 255)
     private String valorNovo;
 
-    @Lob
-    @Column(name = "metadados")
+    @Column(name = "metadados", columnDefinition = "TEXT")
     private String metadados;
 
     @Column(name = "metadados_hash", length = 128)
@@ -46,4 +45,10 @@ public class FinancialAuditEvent {
 
     @Column(name = "criado_em", nullable = false)
     private LocalDateTime criadoEm;
+
+    @Column(name = "empresa_id")
+    private Long empresaId;
+
+    @Column(name = "filial_id")
+    private Long filialId;
 }

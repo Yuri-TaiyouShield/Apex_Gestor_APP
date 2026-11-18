@@ -1,0 +1,116 @@
+/* ==========================================================================
+   CAMADA 1: PRIMITIVE TOKENS
+   Valores brutos agnosticos de tema (cores, tipografia, escala, raios, tempo).
+   ========================================================================== */
+:root {
+  /* --- Paleta Primitiva: Neutros Frios (Slate / Navy-Obsidian) --- */
+  --apex-raw-white: #ffffff;
+  --apex-raw-slate-25: #f9fbff;
+  --apex-raw-slate-50: #f2f5fc;
+  --apex-raw-slate-100: #e8edf8;
+  --apex-raw-slate-200: #d5deef;
+  --apex-raw-slate-300: #b5c2db;
+  --apex-raw-slate-400: #94a3b8;
+  --apex-raw-slate-500: #64748b;
+  --apex-raw-slate-600: #475569;
+  --apex-raw-slate-700: #334155;
+  --apex-raw-slate-800: #1e293b;
+  --apex-raw-navy-850: #172038;
+  --apex-raw-navy-900: #11182c;
+  --apex-raw-navy-925: #0d1323;
+  --apex-raw-navy-950: #0b1020;
+  --apex-raw-obsidian: #070b14;
+
+  /* --- Paleta Primitiva: Identidade Cromatica Amanhecer -> Anoitecer --- */
+  --apex-raw-blue-50: #eff6ff;
+  --apex-raw-blue-100: #dbeafe;
+  --apex-raw-blue-400: #60a5fa;
+  --apex-raw-blue-500: #3b82f6;
+  --apex-raw-blue-600: #2563eb;
+  --apex-raw-blue-700: #1d4ed8;
+
+  --apex-raw-violet-50: #f5f3ff;
+  --apex-raw-violet-100: #ede9fe;
+  --apex-raw-violet-400: #a78bfa;
+  --apex-raw-violet-500: #8b5cf6;
+  --apex-raw-violet-600: #7c3aed;
+  --apex-raw-violet-700: #6d28d9;
+
+  --apex-raw-rose-50: #fff1f2;
+  --apex-raw-rose-100: #ffe4e6;
+  --apex-raw-rose-400: #fb7185;
+  --apex-raw-rose-500: #f43f5e;
+  --apex-raw-rose-600: #e11d48;
+  --apex-raw-rose-700: #be123c;
+
+  --apex-raw-cyan-50: #ecfeff;
+  --apex-raw-cyan-400: #22d3ee;
+  --apex-raw-cyan-500: #06b6d4;
+  --apex-raw-cyan-600: #0891b2;
+  --apex-raw-cyan-700: #0e7490;
+
+  --apex-raw-emerald-50: #ecfdf5;
+  --apex-raw-emerald-400: #34d399;
+  --apex-raw-emerald-500: #10b981;
+  --apex-raw-emerald-700: #047857;
+
+  --apex-raw-amber-50: #fffbeb;
+  --apex-raw-amber-400: #fbbf24;
+  --apex-raw-amber-500: #f59e0b;
+  --apex-raw-amber-700: #b45309;
+
+  --apex-raw-sky-400: #38bdf8;
+  --apex-raw-sky-700: #0369a1;
+
+  /* --- Gradientes Assinatura (Uso Estrategico) --- */
+  --apex-raw-grad-dawn-dusk: linear-gradient(135deg, #2563eb 0%, #7c3aed 52%, #e11d48 100%);
+  --apex-raw-grad-dawn-dusk-hover: linear-gradient(135deg, #1d4ed8 0%, #6d28d9 52%, #be123c 100%);
+  --apex-raw-grad-blue-violet: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+  --apex-raw-grad-violet-rose: linear-gradient(135deg, #7c3aed 0%, #e11d48 100%);
+  --apex-raw-grad-cyan-blue: linear-gradient(135deg, #06b6d4 0%, #2563eb 100%);
+
+  /* --- Tipografia --- */
+  --apex-font-sans: 'Inter Variable', 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --apex-font-mono: ui-monospace, 'Cascadia Code', 'JetBrains Mono', SFMono-Regular, Menlo, Consolas, monospace;
+
+  --apex-font-size-2xs: 0.7rem;
+  --apex-font-size-xs: 0.75rem;
+  --apex-font-size-sm: 0.84rem;
+  --apex-font-size-md: 0.94rem;
+  --apex-font-size-lg: 1.125rem;
+  --apex-font-size-xl: 1.375rem;
+  --apex-font-size-2xl: 1.75rem;
+  --apex-font-size-3xl: 2.25rem;
+
+  /* --- Escala de Espacamento (Base 4px) --- */
+  --apex-space-1: 4px;
+  --apex-space-2: 8px;
+  --apex-space-3: 12px;
+  --apex-space-4: 16px;
+  --apex-space-5: 20px;
+  --apex-space-6: 24px;
+  --apex-space-8: 32px;
+  --apex-space-10: 40px;
+  --apex-space-12: 48px;
+
+  /* --- Raios de Borda --- */
+  --apex-radius-xs: 4px;
+  --apex-radius-sm: 6px;
+  --apex-radius-md: 10px;
+  --apex-radius-lg: 14px;
+  --apex-radius-xl: 18px;
+  --apex-radius-pill: 9999px;
+
+  /* --- Movimento & Z-Index --- */
+  --apex-duration-fast: 110ms;
+  --apex-duration: 180ms;
+  --apex-duration-slow: 280ms;
+  --apex-ease: cubic-bezier(0.2, 0.65, 0.2, 1);
+
+  --apex-z-sticky: 20;
+  --apex-z-dropdown: 40;
+  --apex-z-backdrop: 60;
+  --apex-z-drawer: 70;
+  --apex-z-modal: 80;
+  --apex-z-toast: 100;
+}

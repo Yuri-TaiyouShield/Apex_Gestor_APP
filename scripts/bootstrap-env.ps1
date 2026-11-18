@@ -13,12 +13,22 @@ Use -CheckOnly para auditar sem alterar variaveis do sistema.
 [CmdletBinding()]
 param(
     [switch]$CheckOnly,
+    [ValidateSet("User", "Machine")]
+    [string]$Scope = "User",
     [switch]$SkipNpmGlobalInstall,
-    [string]$NpmGlobalPrefix = "$env:ProgramData\npm-global"
+    [string]$NpmGlobalPrefix = ""
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
+
+if ([string]::IsNullOrWhiteSpace($NpmGlobalPrefix)) {
+    if ($Scope -eq "Machine") {
+        $NpmGlobalPrefix = "$env:ProgramData\npm-global"
+    } else {
+        $NpmGlobalPrefix = "$env:LOCALAPPDATA\npm-global"
+    }
+}
 
 $Script:Changes = New-Object System.Collections.Generic.List[string]
 $Script:Health = New-Object System.Collections.Generic.List[object]
@@ -74,37 +84,50 @@ function Test-PathEntryExists([string[]]$Entries, [string]$Candidate) {
     return $false
 }
 
-function Set-MachineEnvironment([string]$Name, [string]$Value) {
-    $current = [Environment]::GetEnvironmentVariable($Name, "Machine")
+function Set-ScopedEnvironment([string]$Name, [string]$Value) {
+    $current = [Environment]::GetEnvironmentVariable($Name, $Scope)
     if ($current -eq $Value) {
-        $Script:Changes.Add("$Name ja esta configurado.")
+        $Script:Changes.Add("$Name ($Scope) ja esta configurado.")
     } elseif ($CheckOnly) {
-        $Script:Changes.Add("CHECKONLY: configuraria $Name=$Value")
+        $Script:Changes.Add("CHECKONLY: configuraria $Name=$Value ($Scope)")
     } else {
-        [Environment]::SetEnvironmentVariable($Name, $Value, "Machine")
-        $Script:Changes.Add("Configurado $Name=$Value")
+        [Environment]::SetEnvironmentVariable($Name, $Value, $Scope)
+        $Script:Changes.Add("Configurado $Name=$Value ($Scope)")
     }
 
     Set-Item -Path "Env:$Name" -Value $Value
 }
 
-function Add-MachinePathEntry([string]$Entry) {
+function Add-ScopedPathEntry([string]$Entry) {
     $expanded = [Environment]::ExpandEnvironmentVariables($Entry)
     if (-not (Test-Path -LiteralPath $expanded)) {
         $Script:Changes.Add("Ignorado PATH inexistente: $Entry")
         return
     }
 
-    $machinePath = [Environment]::GetEnvironmentVariable("Path", "Machine")
-    $entries = @(Split-PathList $machinePath)
+    $existingPath = [Environment]::GetEnvironmentVariable("Path", $Scope)
+    $entries = @(Split-PathList $existingPath)
     if (Test-PathEntryExists $entries $Entry) {
-        $Script:Changes.Add("PATH ja contem $Entry")
+        $Script:Changes.Add("PATH ($Scope) ja contem $Entry")
     } elseif ($CheckOnly) {
-        $Script:Changes.Add("CHECKONLY: adicionaria $Entry ao PATH de maquina")
+        $Script:Changes.Add("CHECKONLY: adicionaria $Entry ao PATH ($Scope)")
     } else {
         $newPath = (@($entries) + $Entry) -join ';'
-        [Environment]::SetEnvironmentVariable("Path", $newPath, "Machine")
-        $Script:Changes.Add("Adicionado ao PATH de maquina: $Entry")
+        if ($Scope -eq "User") {
+            $key = [Microsoft.Win32.Registry]::CurrentUser.OpenSubKey("Environment", $true)
+            if ($null -ne $key) {
+                try {
+                    $key.SetValue("Path", $newPath, [Microsoft.Win32.RegistryValueKind]::ExpandString)
+                } finally {
+                    $key.Close()
+                }
+            } else {
+                [Environment]::SetEnvironmentVariable("Path", $newPath, "User")
+            }
+        } else {
+            [Environment]::SetEnvironmentVariable("Path", $newPath, "Machine")
+        }
+        $Script:Changes.Add("Adicionado ao PATH ($Scope): $Entry")
     }
 
     $processEntry = [Environment]::ExpandEnvironmentVariables($Entry)
@@ -164,9 +187,13 @@ function Find-JdkHome {
         "$env:ProgramFiles\Java",
         "$env:ProgramFiles\Microsoft",
         "$env:ProgramFiles\BellSoft",
-        "$env:ProgramFiles\Zulu"
+        "$env:ProgramFiles\Zulu",
+        "C:\DevTools",
+        "F:\DevTools",
+        "F:\DevTools\temurin25-portable\unpacked\jdk-25.0.4.1+1"
     )) {
         if (Test-Path -LiteralPath $root) {
+            $candidates.Add($root)
             Get-ChildItem -LiteralPath $root -Directory -ErrorAction SilentlyContinue |
                 Where-Object { $_.Name -match 'jdk|java|temurin|zulu|liberica' } |
                 ForEach-Object { $candidates.Add($_.FullName) }
@@ -188,7 +215,7 @@ function Find-JdkHome {
 
 function Find-NodeHome {
     $candidates = New-Object System.Collections.Generic.List[string]
-    foreach ($value in @($env:NODE_HOME, [Environment]::GetEnvironmentVariable("NODE_HOME", "Machine"), "$env:ProgramFiles\nodejs", "${env:ProgramFiles(x86)}\nodejs")) {
+    foreach ($value in @($env:NODE_HOME, [Environment]::GetEnvironmentVariable("NODE_HOME", "User"), [Environment]::GetEnvironmentVariable("NODE_HOME", "Machine"), "F:\nodejs", "C:\nodejs", "$env:ProgramFiles\nodejs", "${env:ProgramFiles(x86)}\nodejs")) {
         if (-not [string]::IsNullOrWhiteSpace($value)) {
             $candidates.Add($value)
         }
@@ -230,7 +257,7 @@ function Find-DockerHome {
 
 function Find-MavenHome {
     $candidates = New-Object System.Collections.Generic.List[string]
-    foreach ($value in @($env:MAVEN_HOME, [Environment]::GetEnvironmentVariable("MAVEN_HOME", "Machine"))) {
+    foreach ($value in @($env:MAVEN_HOME, [Environment]::GetEnvironmentVariable("MAVEN_HOME", "User"), [Environment]::GetEnvironmentVariable("MAVEN_HOME", "Machine"), "F:\DevTools\maven\apache-maven-3.9.16", "C:\DevTools\maven\apache-maven-3.9.16")) {
         if (-not [string]::IsNullOrWhiteSpace($value)) {
             $candidates.Add($value)
         }
@@ -241,8 +268,9 @@ function Find-MavenHome {
         $candidates.Add((Split-Path -Parent (Split-Path -Parent $mvnCommand.Source)))
     }
 
-    foreach ($root in @("$env:ProgramFiles\Apache", "C:\tools", "C:\ProgramData\chocolatey\lib\maven")) {
+    foreach ($root in @("$env:ProgramFiles\Apache", "C:\tools", "C:\ProgramData\chocolatey\lib\maven", "C:\DevTools\maven", "F:\DevTools\maven")) {
         if (Test-Path -LiteralPath $root) {
+            $candidates.Add($root)
             Get-ChildItem -LiteralPath $root -Directory -Recurse -Depth 2 -ErrorAction SilentlyContinue |
                 Where-Object { $_.Name -match 'maven|apache-maven' } |
                 ForEach-Object { $candidates.Add($_.FullName) }
@@ -359,19 +387,19 @@ function Add-DirectHealthProbe([string]$Tool, [string]$ExecutablePath, [string[]
     }
 }
 
-if (-not $CheckOnly -and -not (Test-IsAdmin)) {
-    throw "Execute este script em um PowerShell aberto como Administrador ou use -CheckOnly para auditoria sem alteracoes."
+if (-not $CheckOnly -and $Scope -eq "Machine" -and -not (Test-IsAdmin)) {
+    throw "Para configurar o escopo Machine, execute este script em um PowerShell aberto como Administrador. Ou utilize -Scope User para o escopo do usuario atual."
 }
 
-Write-Step "Iniciando provisionamento de ambiente Apex Gestor"
+Write-Step "Iniciando provisionamento de ambiente Apex Gestor (Escopo: $Scope)"
 if ($CheckOnly) {
     Write-Step "Modo CheckOnly ativo: nenhuma variavel de sistema sera alterada."
 }
 
 $dockerHome = Find-DockerHome
 if ($null -ne $dockerHome) {
-    Set-MachineEnvironment "DOCKER_HOME" $dockerHome
-    Add-MachinePathEntry "%DOCKER_HOME%\resources\bin"
+    Set-ScopedEnvironment "DOCKER_HOME" $dockerHome
+    Add-ScopedPathEntry "$dockerHome\resources\bin"
 } else {
     $Script:Changes.Add("Docker Desktop/Engine nao localizado. Instale Docker Desktop e rode novamente.")
 }
@@ -380,34 +408,34 @@ $jdk = Find-JdkHome
 if ($null -eq $jdk) {
     throw "JDK 17+ nao localizado. Instale Temurin/Microsoft/OpenJDK 17 ou superior e rode novamente."
 }
-Set-MachineEnvironment "JAVA_HOME" $jdk.Home
-Add-MachinePathEntry "%JAVA_HOME%\bin"
+Set-ScopedEnvironment "JAVA_HOME" $jdk.Home
+Add-ScopedPathEntry "$($jdk.Home)\bin"
 
 $nodeHome = Find-NodeHome
 if ($null -eq $nodeHome) {
     throw "Node.js com npm nao localizado. Instale Node.js 22 LTS ou superior e rode novamente."
 }
-Set-MachineEnvironment "NODE_HOME" $nodeHome
-Add-MachinePathEntry "%NODE_HOME%"
+Set-ScopedEnvironment "NODE_HOME" $nodeHome
+Add-ScopedPathEntry $nodeHome
 
 if (-not (Test-Path -LiteralPath $NpmGlobalPrefix) -and -not $CheckOnly) {
     New-Item -ItemType Directory -Path $NpmGlobalPrefix -Force | Out-Null
 }
-Set-MachineEnvironment "NPM_CONFIG_PREFIX" $NpmGlobalPrefix
+Set-ScopedEnvironment "NPM_CONFIG_PREFIX" $NpmGlobalPrefix
 if ($CheckOnly -and -not (Test-Path -LiteralPath $NpmGlobalPrefix)) {
     $Script:Changes.Add("CHECKONLY: criaria pasta $NpmGlobalPrefix")
-    $Script:Changes.Add("CHECKONLY: adicionaria %NPM_CONFIG_PREFIX% ao PATH de maquina")
+    $Script:Changes.Add("CHECKONLY: adicionaria $NpmGlobalPrefix ao PATH ($Scope)")
     if (-not (Test-PathEntryExists @(Split-PathList $env:Path) $NpmGlobalPrefix)) {
         $env:Path = (@(Split-PathList $env:Path) + $NpmGlobalPrefix) -join ';'
     }
 } else {
-    Add-MachinePathEntry "%NPM_CONFIG_PREFIX%"
+    Add-ScopedPathEntry $NpmGlobalPrefix
 }
 
 $mavenHome = Find-MavenHome
 if ($null -ne $mavenHome) {
-    Set-MachineEnvironment "MAVEN_HOME" $mavenHome
-    Add-MachinePathEntry "%MAVEN_HOME%\bin"
+    Set-ScopedEnvironment "MAVEN_HOME" $mavenHome
+    Add-ScopedPathEntry "$mavenHome\bin"
 } else {
     $mvnw = Join-Path $RepoRoot "Apex-Gestordemo\mvnw.cmd"
     if (Test-Path -LiteralPath $mvnw) {
@@ -417,7 +445,7 @@ if ($null -ne $mavenHome) {
     }
 }
 
-Ensure-NpmGlobalTool "@angular/cli@18" @("ng.cmd", "ng") "Angular CLI"
+Ensure-NpmGlobalTool "@angular/cli@19" @("ng.cmd", "ng") "Angular CLI"
 Ensure-NpmGlobalTool "@ionic/cli" @("ionic.cmd", "ionic") "Ionic CLI"
 Ensure-NpmGlobalTool "electron" @("electron.cmd", "electron") "Electron CLI"
 Ensure-NpmGlobalTool "electron-builder" @("electron-builder.cmd", "electron-builder") "Electron Builder"

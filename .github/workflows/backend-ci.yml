@@ -1,0 +1,50 @@
+name: Backend CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - "codex/**"
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    name: Audit and test backend
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Set up Java
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
+        with:
+          distribution: temurin
+          java-version: "25"
+          cache: maven
+
+      - name: Run repository audit
+        shell: pwsh
+        run: ./tools/audit/apex-enterprise-audit.ps1 -SkipBuild -Strict
+
+      - name: Test backend
+        working-directory: Apex-Gestordemo
+        run: |
+          chmod +x mvnw || true
+          if command -v mvn >/dev/null 2>&1; then
+            mvn -q test
+          else
+            ./mvnw -q test
+          fi
+
+      - name: Package backend
+        working-directory: Apex-Gestordemo
+        run: |
+          if command -v mvn >/dev/null 2>&1; then
+            mvn -q -DskipTests package
+          else
+            ./mvnw -q -DskipTests package
+          fi

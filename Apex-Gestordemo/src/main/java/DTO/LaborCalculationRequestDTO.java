@@ -1,6 +1,8 @@
 package DTO;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -25,7 +27,7 @@ public record LaborCalculationRequestDTO(
         Integer diasFalta,
         Integer dsrSemanaFalta,
         BigDecimal salarioContribuicao,
-        List<TaxBracketDTO> tabelaInss,
+        @Size(max = 120) List<@Valid TaxBracketDTO> tabelaInss,
         Integer anosCompletosTrabalhados,
         BigDecimal saldoFgts,
         BigDecimal percentualMultaFgts,

@@ -1,41 +1,70 @@
-# Node, Angular, Ionic and Electron
+# Apex Gestor - generated/runtime files
+
+# Java / Maven
+**/target/
+**/.mvn/wrapper/maven-wrapper.jar
+
+# Node / Angular / Ionic / Electron
 **/node_modules/
-**/.angular/cache/
 **/dist/
-**/out-tsc/
-**/coverage/
 **/release/
 **/release-check/
+**/.angular/
+**/.cache/
 **/.electron-package/
-
-# Java and Maven
-**/target/
-Apex-Gestordemo/demo/
+**/playwright-report/
+**/test-results/
 
 # Native/mobile build outputs
-**/android/.gradle/
 **/android/app/build/
+**/android/.gradle/
 **/android/build/
+**/android/app/src/main/assets/public/
 
-# Local database exports and generated archives
-*.local.sql
-*.dump.sql
-*.backup.sql
-!Apex-Gestordemo/src/main/resources/db/
-!Apex-Gestordemo/src/main/resources/db/migration/
-!Apex-Gestordemo/src/main/resources/db/migration/*.sql
-!docs/database/**/*.sql
-*.zip
+# Local databases, dumps and backups
+**/dumps/
+**/backups/
+*.dump
+*.bak
+*.backup
+*.sql.gz
+*.db
+*.sqlite
+*.sqlite3
+
+# Private keys, certificates and local credentials
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+*.crt
+*.cer
+secrets.*
+credentials.*
+application-local-secrets.properties
+
+# Local IDE/runtime files
+**/.idea/
+**/.vscode/
+**/nbproject/private/
+run-logs/
+runtime-logs/
 tools/mysql-workbench-*/
-
-# Local editor and OS files
-.idea/
-**/nbproject/
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
-.DS_Store
-Thumbs.db
 *.log
+*.pid
+
+# Accidental local scaffolds
+Apex-Gestordemo/demo/
+
+# Local environment and private delivery documents
+.env
+.env.*
+!.env.example
+private-docs/
+docs-private/
+
+# OS files
+Thumbs.db
+Desktop.ini

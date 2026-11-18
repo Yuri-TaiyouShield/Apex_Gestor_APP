@@ -28,4 +28,8 @@ public class Endereco {
     private String numero;
     @Column(length = 100)
     private String complemento;
+    @Column(name = "empresa_id")
+    private Long empresaId;
+    @Column(name = "filial_id")
+    private Long filialId;
 }

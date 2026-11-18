@@ -25,6 +25,10 @@ public class Usuario {
     private LocalDate dataNascimento;
     @Column(nullable = false)
     private int status;
+    @Column(name = "empresa_id")
+    private Long empresaId;
+    @Column(name = "filial_id")
+    private Long filialId;
     @ManyToOne
     @JoinColumn(name = "perfil_id", nullable = false)
     private Perfil perfil;
