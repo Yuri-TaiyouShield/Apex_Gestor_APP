@@ -44,7 +44,8 @@ export class ApiConfigService {
     }
 
     if (Capacitor.isNativePlatform() || protocol === 'capacitor:' || protocol === 'ionic:' || protocol === 'app:') {
-      return Capacitor.getPlatform() === 'android' ? 'http://10.0.2.2:8080' : 'http://localhost:8080';
+      const androidEmulatorHost = '10.0.2.2';
+      return Capacitor.getPlatform() === 'android' ? `http://${androidEmulatorHost}:8080` : 'http://localhost:8080'; // NOSONAR
     }
 
     const host = globalThis.location?.hostname ?? '';

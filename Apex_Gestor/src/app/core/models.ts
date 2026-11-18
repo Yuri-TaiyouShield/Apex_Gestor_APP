@@ -892,8 +892,8 @@ export interface ResumoCompetenciaItem {
   planoContaId: number | null;
   planoContaCodigo?: string;
   planoContaNome?: string;
-  grupoDre?: GrupoDreGerencial | string;
-  classificacaoCusto?: ClassificacaoCusto | string;
+  grupoDre?: GrupoDreGerencial | (string & {});
+  classificacaoCusto?: ClassificacaoCusto | (string & {});
   centroCustoId: number | null;
   centroCustoCodigo?: string;
   centroCustoNome?: string;
@@ -926,10 +926,10 @@ export interface DreContaDetalhe {
   contaPaiId?: number | null;
   codigo: string;
   nome: string;
-  tipoConta?: TipoContaGerencial | string | null;
-  natureza?: NaturezaContaGerencial | string | null;
-  classificacaoCusto?: ClassificacaoCusto | string | null;
-  grupoDre?: GrupoDreGerencial | string | null;
+  tipoConta?: TipoContaGerencial | (string & {}) | null;
+  natureza?: NaturezaContaGerencial | (string & {}) | null;
+  classificacaoCusto?: ClassificacaoCusto | (string & {}) | null;
+  grupoDre?: GrupoDreGerencial | (string & {}) | null;
   sintetica: boolean;
   valor: number;
   analiseVerticalPercentual?: number | null;
@@ -946,7 +946,7 @@ export interface DreLinha {
   titulo: string;
   tipoLinha: 'RECEITA' | 'DEDUCAO' | 'CUSTO' | 'DESPESA' | 'SUBTOTAL' | 'RESULTADO' | string;
   sinalDemonstracao: '+' | '-' | '=' | '+/-' | string;
-  gruposAssociados: (GrupoDreGerencial | string)[];
+  gruposAssociados: (GrupoDreGerencial | (string & {}))[];
   valor: number;
   analiseVerticalPercentual?: number | null;
   valorComparacao?: number | null;
@@ -1007,7 +1007,7 @@ export interface DreDiagnosticoGerencial {
 }
 
 export interface DreGerencialResponse {
-  tipoPeriodo: DreTipoPeriodo | string;
+  tipoPeriodo: DreTipoPeriodo | (string & {});
   rotuloPeriodo: string;
   dataInicio: string;
   dataFim: string;
@@ -1046,7 +1046,7 @@ export interface DreLancamentoOrigem {
   planoContaId?: number | null;
   planoContaCodigo: string;
   planoContaNome: string;
-  grupoDre: GrupoDreGerencial | string;
+  grupoDre: GrupoDreGerencial | (string & {});
   centroCustoId?: number | null;
   centroCustoCodigo?: string | null;
   centroCustoNome?: string | null;
@@ -1063,7 +1063,7 @@ export interface DreDrillDownResponse {
   tituloLinhaFiltro?: string | null;
   planoContaIdFiltro?: number | null;
   planoContaNomeFiltro?: string | null;
-  grupoDreFiltro?: GrupoDreGerencial | string | null;
+  grupoDreFiltro?: GrupoDreGerencial | (string & {}) | null;
   centroCustoIdFiltro?: number | null;
   filialIdFiltro?: number | null;
   consolidadoEmpresa: boolean;
@@ -1136,7 +1136,7 @@ export interface DreComparativoFiliaisResponse {
 }
 
 export interface DreQueryParams {
-  tipoPeriodo?: DreTipoPeriodo | string;
+  tipoPeriodo?: DreTipoPeriodo | (string & {});
   competencia?: string;
   ano?: number;
   trimestre?: number;
@@ -1216,7 +1216,7 @@ export interface ContaFinanceiraResponse {
   filialNome?: string | null;
   codigo: string;
   nome: string;
-  tipoConta: TipoContaFinanceira | string;
+  tipoConta: TipoContaFinanceira | (string & {});
   bancoCodigo?: string | null;
   bancoNome?: string | null;
   agencia?: string | null;
@@ -1273,7 +1273,7 @@ export interface GerarParcelasRequest {
   planoContaId?: number | null;
   centroCustoId?: number | null;
   contaFinanceiraId?: number | null;
-  modalidadeRecebivel?: ModalidadeRecebivel | string | null;
+  modalidadeRecebivel?: ModalidadeRecebivel | (string & {}) | null;
   taxaPercentualCartao?: number | null;
   prazoRepasseDias?: number | null;
   recorrente?: boolean | null;
@@ -1286,8 +1286,8 @@ export interface MovimentacaoFinanceiraResponse {
   filialId: number;
   contaFinanceiraId?: number | null;
   contaFinanceiraNome: string;
-  tipoMovimentacao: TipoMovimentacaoFinanceira | string;
-  origemTipo: OrigemMovimentacaoFinanceira | string;
+  tipoMovimentacao: TipoMovimentacaoFinanceira | (string & {});
+  origemTipo: OrigemMovimentacaoFinanceira | (string & {});
   origemId?: number | null;
   descricao: string;
   documentoReferencia?: string | null;
@@ -1320,7 +1320,7 @@ export interface FluxoCaixaPrevistoItem {
   dataPrevistaLiquidacao: string;
   numeroParcela: number;
   totalParcelas: number;
-  modalidade: ModalidadeRecebivel | string;
+  modalidade: ModalidadeRecebivel | (string & {});
   situacaoVencimento: 'A_VENCER' | 'VENCE_HOJE' | 'VENCIDO' | string;
   diasAtrasoOuPrazo: number;
   valorBruto: number;
@@ -1424,7 +1424,7 @@ export interface ConciliacaoItemResponse {
   descricaoExtrato: string;
   valorExtrato: number;
   naturezaExtrato: 'CREDITO' | 'DEBITO' | string;
-  statusConciliacao: StatusConciliacaoFinanceira | string;
+  statusConciliacao: StatusConciliacaoFinanceira | (string & {});
   movimentacaoVinculadaId?: number | null;
   documentoOrigemTipo?: string | null;
   documentoOrigemId?: number | null;
@@ -1499,7 +1499,7 @@ export interface ConciliacaoManualRequest {
   movimentacaoVinculadaId?: number | null;
   documentoOrigemTipo?: string | null;
   documentoOrigemId?: number | null;
-  novoStatus?: StatusConciliacaoFinanceira | string | null;
+  novoStatus?: StatusConciliacaoFinanceira | (string & {}) | null;
   observacao?: string | null;
 }
 
@@ -1548,7 +1548,7 @@ export interface IndicadorDetalhado {
   dataAtualizacao: string;
   interpretacaoGerencial: string;
   limitacoes: string;
-  statusConfiabilidade: StatusConfiabilidadeIndicador | string;
+  statusConfiabilidade: StatusConfiabilidadeIndicador | (string & {});
   dependenciasFaltantes: string[];
 }
 
@@ -1642,7 +1642,7 @@ export interface PontoEquilibrioPainel {
   margemSegurancaContabilPercentual: number | null;
   grauAlavancagemOperacional: number | null;
   metodologiaExplicita: string;
-  statusConfiabilidade: StatusConfiabilidadeIndicador | string;
+  statusConfiabilidade: StatusConfiabilidadeIndicador | (string & {});
   porFilial: PontoEquilibrioFilialCategoria[];
   porCategoria: PontoEquilibrioFilialCategoria[];
 }
@@ -1732,8 +1732,8 @@ export interface CapitalGiroPainel {
     | 'TENSAO_DEPENDENCIA_CAPITAL_TERCEIROS'
     | 'EFEITO_TESOURA_CRITICO'
     | string;
-  statusConfiabilidadeCgl: StatusConfiabilidadeIndicador | string;
-  statusConfiabilidadeNcg: StatusConfiabilidadeIndicador | string;
+  statusConfiabilidadeCgl: StatusConfiabilidadeIndicador | (string & {});
+  statusConfiabilidadeNcg: StatusConfiabilidadeIndicador | (string & {});
   interpretacaoCapitalGiro: string;
   fatoresPressaoCapitalGiro: string[];
 }
@@ -1769,10 +1769,10 @@ export interface PrazosCiclosPainel {
   cicloFinanceiroDias: number | null;
   pagaFornecedorAntesDeReceber: boolean;
   descompassoCaixaDias: number;
-  statusConfiabilidadePme: StatusConfiabilidadeIndicador | string;
-  statusConfiabilidadePmr: StatusConfiabilidadeIndicador | string;
-  statusConfiabilidadePmp: StatusConfiabilidadeIndicador | string;
-  statusConfiabilidadeCicloFinanceiro: StatusConfiabilidadeIndicador | string;
+  statusConfiabilidadePme: StatusConfiabilidadeIndicador | (string & {});
+  statusConfiabilidadePmr: StatusConfiabilidadeIndicador | (string & {});
+  statusConfiabilidadePmp: StatusConfiabilidadeIndicador | (string & {});
+  statusConfiabilidadeCicloFinanceiro: StatusConfiabilidadeIndicador | (string & {});
   tendenciaCicloFinanceiro: string;
   interpretacaoPrazosCiclos: string;
   evolucaoMensal: PrazosCiclosEvolucaoPonto[];
@@ -1878,8 +1878,8 @@ export interface LiquidezEndividamentoPainel {
   composicaoEndividamentoCurtoPrazoPercentual: number | null;
   relacaoDividaPatrimonioLiquidoPercentual: number | null;
   coberturaObrigacoesCurtoPrazo: number | null;
-  statusConfiabilidadeLiquidezImediata: StatusConfiabilidadeIndicador | string;
-  statusConfiabilidadePatrimonial: StatusConfiabilidadeIndicador | string;
+  statusConfiabilidadeLiquidezImediata: StatusConfiabilidadeIndicador | (string & {});
+  statusConfiabilidadePatrimonial: StatusConfiabilidadeIndicador | (string & {});
   dependenciasPatrimoniaisFaltantes: string[];
   interpretacaoLiquidezEndividamento: string;
 }
@@ -1909,8 +1909,8 @@ export interface InvestimentosRetornoPainel {
   investimentoViavelEconomicamente: boolean;
   capacidadeFinanceiraCaixaParaInvestir: boolean;
   disponibilidadeCaixaAposReserva: number;
-  statusConfiabilidadeRoaRoe: StatusConfiabilidadeIndicador | string;
-  statusConfiabilidadeSimulacao: StatusConfiabilidadeIndicador | string;
+  statusConfiabilidadeRoaRoe: StatusConfiabilidadeIndicador | (string & {});
+  statusConfiabilidadeSimulacao: StatusConfiabilidadeIndicador | (string & {});
   separacaoContabilVsCaixaExplicacao: string;
   alertasInvestimento: string[];
 }
@@ -1925,7 +1925,7 @@ export interface DiagnosticoAdministrativoItem {
   interpretacao: string;
   possivelConsequencia: string;
   recomendacaoGerencial: string;
-  grauConfiabilidade: StatusConfiabilidadeIndicador | string;
+  grauConfiabilidade: StatusConfiabilidadeIndicador | (string & {});
 }
 
 export interface ParametroInteligenciaAdministrativa {

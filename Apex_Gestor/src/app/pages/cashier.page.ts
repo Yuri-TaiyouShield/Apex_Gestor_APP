@@ -113,19 +113,163 @@ export class CashierPage {
     this.paymentLines.set(defaultMethod?.idFormaPagamento ? [{ key: ++this.lineKey, formaPagamentoId: defaultMethod.idFormaPagamento, valor: sale.valorTotal, numeroParcelas: 1 }] : []);
     this.api.cashierCredits(sale.clienteId).pipe(catchError(() => of([]))).subscribe((value) => this.credits.set(value));
   }
-  addPayment(): void { const used = new Set(this.paymentLines().map((line) => line.formaPagamentoId)); const method = this.paymentMethods().find((item) => !used.has(item.idFormaPagamento ?? 0)); if (!method?.idFormaPagamento) { this.warn('Todas as formas disponíveis já foram adicionadas.'); return; } this.paymentLines.update((lines) => [...lines, { key: ++this.lineKey, formaPagamentoId: method.idFormaPagamento!, valor: this.remaining(), numeroParcelas: 1 }]); }
-  removePayment(index: number): void { this.paymentLines.update((lines) => lines.filter((_, i) => i !== index)); }
-  updateLine(index: number, field: 'formaPagamentoId' | 'valor' | 'creditoId', value: number | string | null): void { this.paymentLines.update((lines) => lines.map((line, i) => i === index ? { ...line, [field]: field === 'valor' ? Math.max(0, Number(value || 0)) : Number(value || 0) || undefined } : line)); }
-  isCreditMethod(id?: number): boolean { const method = this.paymentMethods().find((item) => item.idFormaPagamento === id); const name = this.normalized(method?.nome || ''); return name.includes('credito') || name.includes('vale'); }
-  canReceive(): boolean { return Boolean(this.cashierOpen() && !this.loading() && this.selectedSale() && this.paymentLines().length && this.remaining() === 0 && !this.hasCreditWithoutOrigin()); }
-  receiveSelected(): void { const sale = this.selectedSale(); if (!sale || !this.canReceive()) return; const payments = this.paymentLines().map((line) => { const { key, ...payload } = line; void key; return payload; }); this.loading.set(true); this.api.receiveCashierSale(sale.idVenda, payments).pipe(catchError((e) => { this.warn(e?.error?.detail || 'Recebimento não concluído.'); return of(null); }), finalize(() => this.loading.set(false))).subscribe((result) => { if (!result) return; this.message.set(`Venda ${result.numeroVenda || result.idVenda} finalizada. Troco: ${this.money(result.troco || 0)}.`); this.tone.set('success'); this.selectedSale.set(null); this.paymentLines.set([]); this.load(); }); }
-  rejectSelected(): void { const sale = this.selectedSale(); if (!sale) return; const motivo = window.prompt('Motivo obrigatório para devolver a venda ao Vendedor:')?.trim(); if (!motivo) { this.warn('Informe o motivo da recusa.'); return; } this.loading.set(true); this.api.rejectCashierSale(sale.idVenda, motivo).pipe(catchError((e) => { this.warn(e?.error?.detail || 'Recusa não registrada.'); return of(null); }), finalize(() => this.loading.set(false))).subscribe((result) => { if (!result) return; this.message.set('Venda devolvida ao Vendedor para ajuste.'); this.tone.set('success'); this.selectedSale.set(null); this.load(); }); }
-  openCashier(): void { this.run(this.api.openCashier(Math.max(0, Number(this.amount || 0))), 'Caixa aberto.'); }
-  supply(): void { const c = this.cashier(); if (c) this.run(this.api.cashierSupply(c.idCaixaSessao, this.safeAmount(), this.note), 'Suprimento registrado.'); }
-  withdraw(): void { const c = this.cashier(); if (c && window.confirm(`Registrar sangria de ${this.money(this.safeAmount())}?`)) this.run(this.api.cashierWithdraw(c.idCaixaSessao, this.safeAmount(), this.note), 'Sangria registrada.'); }
-  close(): void { const c = this.cashier(); if (c && window.confirm('Fechar e conciliar este caixa?')) this.run(this.api.closeCashier(c.idCaixaSessao, Number(this.countedBalance || 0)), 'Caixa fechado e conciliado.'); }
-  private run(action: Observable<CaixaSessao>, success: string): void { this.loading.set(true); action.pipe(catchError((e) => { this.warn(e?.error?.detail || 'Operação de caixa não concluída.'); return of(null); }), finalize(() => this.loading.set(false))).subscribe((value) => { if (!value) return; this.cashier.set(value); this.message.set(success); this.tone.set('success'); this.load(); }); }
-  private warn(value: string): void { this.message.set(value); this.tone.set('warning'); }
-  private safeAmount(): number { return Math.max(0, Number(this.amount || 0)); }
-  private normalized(value: string): string { return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase(); }
+  addPayment(): void {
+    const used = new Set(this.paymentLines().map((line) => line.formaPagamentoId));
+    const method = this.paymentMethods().find((item) => !used.has(item.idFormaPagamento ?? 0));
+    if (!method?.idFormaPagamento) {
+      this.warn('Todas as formas disponíveis já foram adicionadas.');
+      return;
+    }
+    this.paymentLines.update((lines) => [
+      ...lines,
+      { key: ++this.lineKey, formaPagamentoId: method.idFormaPagamento!, valor: this.remaining(), numeroParcelas: 1 }
+    ]);
+  }
+
+  removePayment(index: number): void {
+    this.paymentLines.update((lines) => lines.filter((_, i) => i !== index));
+  }
+
+  updateLine(index: number, field: 'formaPagamentoId' | 'valor' | 'creditoId', value: number | string | null): void {
+    this.paymentLines.update((lines) => lines.map((line, i) => {
+      if (i !== index) {
+        return line;
+      }
+      return {
+        ...line,
+        [field]: field === 'valor' ? Math.max(0, Number(value || 0)) : Number(value || 0) || undefined
+      };
+    }));
+  }
+
+  isCreditMethod(id?: number): boolean {
+    const method = this.paymentMethods().find((item) => item.idFormaPagamento === id);
+    const name = this.normalized(method?.nome || '');
+    return name.includes('credito') || name.includes('vale');
+  }
+
+  canReceive(): boolean {
+    return Boolean(
+      this.cashierOpen() &&
+      !this.loading() &&
+      this.selectedSale() &&
+      this.paymentLines().length &&
+      this.remaining() === 0 &&
+      !this.hasCreditWithoutOrigin()
+    );
+  }
+
+  receiveSelected(): void {
+    const sale = this.selectedSale();
+    if (!sale || !this.canReceive()) {
+      return;
+    }
+    const payments = this.paymentLines().map((line) => {
+      const { key, ...payload } = line;
+      void key;
+      return payload;
+    });
+    this.loading.set(true);
+    this.api.receiveCashierSale(sale.idVenda, payments).pipe(
+      catchError((e) => {
+        this.warn(e?.error?.detail || 'Recebimento não concluído.');
+        return of(null);
+      }),
+      finalize(() => this.loading.set(false))
+    ).subscribe((result) => {
+      if (!result) {
+        return;
+      }
+      this.message.set(`Venda ${result.numeroVenda || result.idVenda} finalizada. Troco: ${this.money(result.troco || 0)}.`);
+      this.tone.set('success');
+      this.selectedSale.set(null);
+      this.paymentLines.set([]);
+      this.load();
+    });
+  }
+
+  rejectSelected(): void {
+    const sale = this.selectedSale();
+    if (!sale) {
+      return;
+    }
+    const motivo = window.prompt('Motivo obrigatório para devolver a venda ao Vendedor:')?.trim();
+    if (!motivo) {
+      this.warn('Informe o motivo da recusa.');
+      return;
+    }
+    this.loading.set(true);
+    this.api.rejectCashierSale(sale.idVenda, motivo).pipe(
+      catchError((e) => {
+        this.warn(e?.error?.detail || 'Recusa não registrada.');
+        return of(null);
+      }),
+      finalize(() => this.loading.set(false))
+    ).subscribe((result) => {
+      if (!result) {
+        return;
+      }
+      this.message.set('Venda devolvida ao Vendedor para ajuste.');
+      this.tone.set('success');
+      this.selectedSale.set(null);
+      this.load();
+    });
+  }
+
+  openCashier(): void {
+    this.run(this.api.openCashier(Math.max(0, Number(this.amount || 0))), 'Caixa aberto.');
+  }
+
+  supply(): void {
+    const c = this.cashier();
+    if (c) {
+      this.run(this.api.cashierSupply(c.idCaixaSessao, this.safeAmount(), this.note), 'Suprimento registrado.');
+    }
+  }
+
+  withdraw(): void {
+    const c = this.cashier();
+    if (c && window.confirm(`Registrar sangria de ${this.money(this.safeAmount())}?`)) {
+      this.run(this.api.cashierWithdraw(c.idCaixaSessao, this.safeAmount(), this.note), 'Sangria registrada.');
+    }
+  }
+
+  close(): void {
+    const c = this.cashier();
+    if (c && window.confirm('Fechar e conciliar este caixa?')) {
+      this.run(this.api.closeCashier(c.idCaixaSessao, Number(this.countedBalance || 0)), 'Caixa fechado e conciliado.');
+    }
+  }
+
+  private run(action: Observable<CaixaSessao>, success: string): void {
+    this.loading.set(true);
+    action.pipe(
+      catchError((e) => {
+        this.warn(e?.error?.detail || 'Operação de caixa não concluída.');
+        return of(null);
+      }),
+      finalize(() => this.loading.set(false))
+    ).subscribe((value) => {
+      if (!value) {
+        return;
+      }
+      this.cashier.set(value);
+      this.message.set(success);
+      this.tone.set('success');
+      this.load();
+    });
+  }
+
+  private warn(value: string): void {
+    this.message.set(value);
+    this.tone.set('warning');
+  }
+
+  private safeAmount(): number {
+    return Math.max(0, Number(this.amount || 0));
+  }
+
+  private normalized(value: string): string {
+    return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  }
 }
