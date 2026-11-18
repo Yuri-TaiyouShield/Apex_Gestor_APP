@@ -27,7 +27,7 @@ services:
       DB_USERNAME: root
       DB_PASSWORD: ${DB_PASSWORD:-change_me_before_use}
       JPA_DDL_AUTO: ${JPA_DDL_AUTO:-update}
-      FLYWAY_LOCATIONS: ${FLYWAY_LOCATIONS:-classpath:db/migration}
+      FLYWAY_LOCATIONS: ${FLYWAY_LOCATIONS:-classpath:db/migration-mysql}
       APEX_SECURITY_REQUIRE_AUTH: ${APEX_SECURITY_REQUIRE_AUTH:-true}
       APEX_JWT_SECRET: ${APEX_JWT_SECRET:-replace-with-at-least-32-random-characters}
       APEX_JWT_ISSUER: ${APEX_JWT_ISSUER:-apex-gestor}

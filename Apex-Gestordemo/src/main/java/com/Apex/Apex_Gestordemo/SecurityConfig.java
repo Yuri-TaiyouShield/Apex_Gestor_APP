@@ -123,7 +123,7 @@ public class SecurityConfig {
         http
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers("/actuator/health/**", "/actuator/info").permitAll()
+                        .requestMatchers("/actuator/health", "/actuator/health/**", "/actuator/info").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/login", "/api/auth/refresh", "/api/privacy/consents",
                                 "/api/licenses/validate").permitAll()
                         .requestMatchers("/api/privacy/admin/**", "/api/privacy/requests", "/api/privacy/export/**",
