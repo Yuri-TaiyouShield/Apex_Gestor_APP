@@ -1,0 +1,91 @@
+/* ==========================================================================
+   CAMADA 4: UTILITARIOS CSS PROPRIOS E REUTILIZAVEIS
+   Sem dependencias externas; nomes prefixados para zero colisao com Ionic.
+   ========================================================================== */
+.apex-sr-only {
+  border: 0;
+  clip: rect(0, 0, 0, 0);
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  padding: 0;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
+}
+
+.apex-tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+.apex-gradient-text {
+  background: var(--apex-brand-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.apex-gradient-accent-bar {
+  background: var(--apex-brand-gradient);
+  border-radius: var(--apex-radius-pill);
+  height: 3px;
+}
+
+.apex-btn-gradient {
+  --background: var(--apex-brand-gradient);
+  --background-hover: var(--apex-brand-gradient-hover);
+  --color: #ffffff;
+  background: var(--apex-brand-gradient);
+  border: 0;
+  color: #ffffff;
+}
+
+.apex-surface-card {
+  background: var(--apex-bg-surface);
+  border: 1px solid var(--apex-border-default);
+  border-radius: var(--apex-radius-lg);
+  box-shadow: var(--apex-shadow-sm);
+}
+
+.apex-surface-elevated {
+  background: var(--apex-bg-surface-elevated);
+  border: 1px solid var(--apex-border-strong);
+  border-radius: var(--apex-radius-lg);
+  box-shadow: var(--apex-shadow-md);
+}
+
+.apex-pill {
+  align-items: center;
+  border: 1px solid var(--apex-border-default);
+  border-radius: var(--apex-radius-pill);
+  display: inline-flex;
+  font-size: var(--apex-font-size-xs);
+  font-weight: 700;
+  gap: 6px;
+  line-height: 1;
+  padding: 5px 10px;
+}
+
+.apex-pill--info {
+  background: var(--apex-status-info-bg);
+  border-color: var(--apex-status-info-border);
+  color: var(--apex-status-info);
+}
+
+.apex-pill--success {
+  background: var(--apex-status-success-bg);
+  border-color: var(--apex-status-success-border);
+  color: var(--apex-status-success);
+}
+
+.apex-pill--warning {
+  background: var(--apex-status-warning-bg);
+  border-color: var(--apex-status-warning-border);
+  color: var(--apex-status-warning);
+}
+
+.apex-pill--danger {
+  background: var(--apex-status-danger-bg);
+  border-color: var(--apex-status-danger-border);
+  color: var(--apex-status-danger);
+}

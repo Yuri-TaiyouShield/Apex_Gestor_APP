@@ -2,18 +2,18 @@ import { CommonModule } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { IonicModule } from '@ionic/angular';
+import { IonContent, IonSearchbar, IonButton, IonIcon, IonChip, IonLabel, IonBadge } from '@ionic/angular/standalone';
 import { catchError, of } from 'rxjs';
 
 import { ApexApiService } from '../core/apex-api.service';
+import { ApiConfigService } from '../core/api-config.service';
 import { CartService } from '../core/cart.service';
-import { MOCK_PRODUCTS } from '../core/mock-data';
 import { Produto } from '../core/models';
 import { currency } from '../core/view-utils';
 
 @Component({
   standalone: true,
-  imports: [CommonModule, FormsModule, IonicModule, RouterLink],
+  imports: [CommonModule, FormsModule, IonContent, IonSearchbar, IonButton, IonIcon, IonChip, IonLabel, IonBadge, RouterLink],
   template: `
     <ion-content>
       <main class="store-page">
@@ -44,7 +44,11 @@ import { currency } from '../core/view-utils';
           @for (product of filteredProducts(); track product.idProduto) {
             <article class="commerce-card product-card">
               <div class="product-media">
-                <ion-icon name="cube-outline"></ion-icon>
+                @if (product.imagemUrl) {
+                  <img [src]="productImageUrl(product)" [alt]="product.descricao" loading="lazy">
+                } @else {
+                  <ion-icon name="cube-outline"></ion-icon>
+                }
               </div>
               <div class="product-body">
                 <ion-badge color="success" *ngIf="product.quantidadeEstoque > 0">Disponível</ion-badge>
@@ -101,7 +105,7 @@ import { currency } from '../core/view-utils';
     }
 
     .hero-actions ion-searchbar {
-      --background: #ffffff;
+      --background: var(--apex-bg-input);
       --border-radius: 8px;
       padding: 0;
     }
@@ -126,14 +130,21 @@ import { currency } from '../core/view-utils';
 
     .product-media {
       align-items: center;
-      background: linear-gradient(135deg, #f1f5f9, #dbeafe);
+      background: linear-gradient(135deg, var(--apex-bg-surface-muted), var(--apex-primary-soft));
       display: flex;
       height: 160px;
       justify-content: center;
     }
 
+    .product-media img {
+      height: 100%;
+      object-fit: contain;
+      padding: 12px;
+      width: 100%;
+    }
+
     .product-media ion-icon {
-      color: #0f766e;
+      color: var(--apex-text-brand);
       font-size: 52px;
     }
 
@@ -152,7 +163,7 @@ import { currency } from '../core/view-utils';
 
     .product-body p,
     .product-body small {
-      color: #64748b;
+      color: var(--apex-text-muted);
       margin: 0;
     }
 
@@ -176,9 +187,10 @@ import { currency } from '../core/view-utils';
 })
 export class StorefrontPage {
   private readonly api = inject(ApexApiService);
+  private readonly apiConfig = inject(ApiConfigService);
   readonly cart = inject(CartService);
   readonly money = currency;
-  readonly products = signal<Produto[]>(MOCK_PRODUCTS);
+  readonly products = signal<Produto[]>([]);
   readonly query = signal('');
   readonly selectedCategory = signal('Todos');
 
@@ -197,6 +209,13 @@ export class StorefrontPage {
   });
 
   constructor() {
-    this.api.products().pipe(catchError(() => of(MOCK_PRODUCTS))).subscribe((products) => this.products.set(products));
+    this.api.products().pipe(catchError(() => of([] as Produto[]))).subscribe((products) => this.products.set(products));
+  }
+
+  productImageUrl(product: Produto): string {
+    if (!product.imagemUrl) {
+      return '';
+    }
+    return product.imagemUrl.startsWith('/') ? this.apiConfig.apiUrl(product.imagemUrl) : product.imagemUrl;
   }
 }

@@ -22,20 +22,31 @@ public class FinancialDocumentMessagingService {
         this.mailSenderProvider = mailSenderProvider;
     }
 
-    public boolean sendSignedDocument(FinancialDigitalDocument document) {
+    public DeliveryResult sendSignedDocument(FinancialDigitalDocument document) {
         if (!emailEnabled) {
-            return false;
+            return DeliveryResult.SKIPPED;
         }
         JavaMailSender mailSender = mailSenderProvider.getIfAvailable();
         if (mailSender == null) {
-            return false;
+            return DeliveryResult.SKIPPED;
         }
         SimpleMailMessage message = new SimpleMailMessage();
-        message.setFrom(from);
-        message.setTo(document.getFuncionarioEmail());
-        message.setSubject(document.getAssuntoEmail());
-        message.setText(document.getMensagemEmail() + "\n\nAssinatura digital: " + document.getAssinaturaDigitalHash() + "\n\n" + document.getConteudo());
+        message.setFrom(stripHeaderInjection(from));
+        message.setTo(stripHeaderInjection(document.getFuncionarioEmail()));
+        message.setSubject(stripHeaderInjection(document.getAssuntoEmail()));
+        message.setText(document.getMensagemEmail()
+                + "\n\nAssinatura digital: " + document.getAssinaturaDigitalHash()
+                + "\n\n" + document.getConteudo());
         mailSender.send(message);
-        return true;
+        return DeliveryResult.SENT;
+    }
+
+    private String stripHeaderInjection(String value) {
+        return value == null ? null : value.replaceAll("[\\r\\n]+", " ").trim();
+    }
+
+    public enum DeliveryResult {
+        SENT,
+        SKIPPED
     }
 }

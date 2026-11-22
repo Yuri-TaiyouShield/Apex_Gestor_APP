@@ -1,0 +1,311 @@
+.login-page {
+  align-items: center;
+  display: flex;
+  min-height: 100%;
+  justify-content: center;
+  padding: 24px;
+}
+
+.login-shell {
+  align-items: stretch;
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(300px, 0.86fr) minmax(360px, 500px);
+  max-width: 1080px;
+  width: 100%;
+}
+
+.login-context,
+.login-panel {
+  background: var(--apex-bg-surface);
+  border: 1px solid var(--apex-border);
+  border-radius: 8px;
+  box-shadow: var(--apex-shadow);
+}
+
+.login-context {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 610px;
+  padding: clamp(24px, 5vw, 46px);
+}
+
+.login-context h1 {
+  color: var(--apex-ink);
+  font-size: clamp(2rem, 4vw, 3.25rem);
+  font-weight: 850;
+  letter-spacing: 0;
+  line-height: 1;
+  margin: 10px 0 14px;
+  max-width: 620px;
+}
+
+.login-context p {
+  color: var(--apex-muted);
+  font-size: 1rem;
+  line-height: 1.55;
+  margin: 0;
+  max-width: 560px;
+}
+
+.context-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 34px;
+}
+
+.context-grid span {
+  background: var(--apex-card-muted);
+  border: 1px solid var(--apex-border);
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.context-grid strong,
+.context-grid small {
+  display: block;
+}
+
+.context-grid strong {
+  color: var(--apex-text-brand);
+  font-size: 0.95rem;
+}
+
+.context-grid small {
+  color: var(--apex-muted);
+  font-size: 0.76rem;
+  line-height: 1.3;
+  margin-top: 4px;
+}
+
+.login-panel {
+  align-self: center;
+  display: grid;
+  gap: 12px;
+  padding: 24px;
+  width: 100%;
+}
+
+.panel-title span {
+  color: var(--apex-text-brand);
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 850;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+}
+
+.panel-title h2 {
+  color: var(--apex-ink);
+  font-size: 1.38rem;
+  font-weight: 850;
+  margin: 0 0 4px;
+}
+
+.brand-mark {
+  align-items: center;
+  background: var(--apex-primary);
+  border-radius: 8px;
+  color: #fff;
+  display: flex;
+  font-size: 1.4rem;
+  font-weight: 800;
+  height: 52px;
+  justify-content: center;
+  margin-bottom: 22px;
+  width: 52px;
+}
+
+.field {
+  display: grid;
+  gap: 6px;
+}
+
+.field span,
+.check-row span {
+  color: var(--apex-muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.field input {
+  background: var(--apex-card-muted);
+  border: 1px solid var(--apex-border);
+  border-radius: 8px;
+  color: var(--apex-ink);
+  font: inherit;
+  min-height: 46px;
+  outline: none;
+  padding: 10px 12px;
+  width: 100%;
+}
+
+.field input:focus,
+.check-row:focus-within,
+.soft-button:focus-visible,
+.primary-action:focus-visible,
+.secondary-action:focus-visible,
+.segmented-control button:focus-visible {
+  border-color: var(--apex-focus);
+  box-shadow: 0 0 0 3px rgba(199, 116, 18, 0.16);
+}
+
+.check-row {
+  align-items: center;
+  background: var(--apex-card-muted);
+  border: 1px solid var(--apex-border);
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  gap: 10px;
+  min-height: 44px;
+  padding: 10px 12px;
+}
+
+.check-row input {
+  accent-color: var(--apex-primary);
+  height: 18px;
+  width: 18px;
+}
+
+.auth-message {
+  color: var(--apex-text-brand);
+  display: block;
+  line-height: 1.45;
+  margin: 2px 0;
+  white-space: pre-line;
+}
+
+.auth-message.danger {
+  color: var(--apex-danger);
+}
+
+.credential-help {
+  background: var(--apex-primary-faint);
+  border: 1px solid rgba(15, 118, 110, 0.18);
+  border-radius: 8px;
+  color: var(--apex-muted);
+  display: grid;
+  gap: 8px;
+  font-size: 0.9rem;
+  padding: 12px;
+}
+
+.credential-help strong,
+.credential-help span {
+  display: block;
+}
+
+code {
+  background: var(--apex-bg-surface-subtle);
+  border-radius: 6px;
+  color: var(--apex-ink);
+  font-weight: 700;
+  padding: 2px 6px;
+}
+
+.preset-grid {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+}
+
+.soft-button,
+.primary-action,
+.secondary-action,
+.segmented-control button {
+  align-items: center;
+  border-radius: 8px;
+  cursor: pointer;
+  display: inline-flex;
+  font: inherit;
+  font-weight: 800;
+  justify-content: center;
+  min-height: 40px;
+  text-align: center;
+}
+
+.soft-button,
+.secondary-action {
+  background: var(--apex-bg-surface);
+  border: 1px solid var(--apex-border-strong);
+  color: var(--apex-text-brand);
+  padding: 8px 10px;
+}
+
+.primary-action {
+  background: var(--apex-primary);
+  border: 1px solid var(--apex-primary);
+  color: #ffffff;
+  padding: 12px 14px;
+  width: 100%;
+}
+
+.primary-action:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
+}
+
+.demo-details {
+  border-top: 1px solid var(--apex-border);
+  padding-top: 10px;
+}
+
+.demo-details summary {
+  color: var(--apex-ink);
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.demo-panel {
+  display: grid;
+  gap: 12px;
+  padding: 12px 0 0;
+}
+
+.segmented-control {
+  background: var(--apex-card-muted);
+  border: 1px solid var(--apex-border);
+  border-radius: 8px;
+  display: grid;
+  gap: 4px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  padding: 4px;
+}
+
+.segmented-control button {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--apex-muted);
+  min-height: 36px;
+  padding: 6px 8px;
+}
+
+.segmented-control button.selected {
+  background: var(--apex-bg-surface);
+  border-color: var(--apex-border);
+  box-shadow: var(--apex-shadow-soft);
+  color: var(--apex-text-brand);
+}
+
+@media (max-width: 900px) {
+  .login-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .login-context {
+    min-height: auto;
+  }
+}
+
+@media (max-width: 560px) {
+  .login-page {
+    padding: 12px;
+  }
+
+  .context-grid {
+    grid-template-columns: 1fr;
+  }
+}

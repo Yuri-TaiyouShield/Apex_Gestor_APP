@@ -2,6 +2,7 @@ package Service;
 
 import Model.Endereco;
 import Repository.EnderecoRepository;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.util.List;
@@ -27,8 +28,28 @@ public class EnderecoService {
 
     public void deletar(Long id) {
         if (!enderecoRepository.existsById(id)) {
-            throw new RuntimeException("Endereço não encontrado");
+            throw new EntityNotFoundException("Endereço não encontrado");
         }
         enderecoRepository.deleteById(id);
+    }
+
+    public List<Endereco> listarTodos(Long empresaId, Long filialId) {
+        return enderecoRepository.findByEmpresaIdAndFilialIdOrderByCidadeAsc(empresaId, filialId);
+    }
+
+    public Optional<Endereco> buscarPorId(Long id, Long empresaId, Long filialId) {
+        return enderecoRepository.findByIdEnderecoAndEmpresaIdAndFilialId(id, empresaId, filialId);
+    }
+
+    public Endereco salvar(Endereco endereco, Long empresaId, Long filialId) {
+        endereco.setEmpresaId(empresaId);
+        endereco.setFilialId(filialId);
+        return enderecoRepository.save(endereco);
+    }
+
+    public void deletar(Long id, Long empresaId, Long filialId) {
+        Endereco endereco = buscarPorId(id, empresaId, filialId)
+                .orElseThrow(() -> new IllegalArgumentException("Endereco nao encontrado no tenant."));
+        enderecoRepository.delete(endereco);
     }
 }

@@ -1,5 +1,7 @@
 package DTO;
 
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -9,7 +11,7 @@ public record TaxCalculationRequestDTO(
         Integer dependentes,
         BigDecimal deducaoLegalDependente,
         BigDecimal pensao,
-        List<TaxBracketDTO> tabelaIrrf,
+        @Size(max = 120) List<@Valid TaxBracketDTO> tabelaIrrf,
         BigDecimal folhaSalarios,
         BigDecimal proLabore,
         BigDecimal receitaBruta,

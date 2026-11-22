@@ -2,30 +2,35 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit, computed, inject } from '@angular/core';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { filter, map, startWith } from 'rxjs';
-import { IonicModule, MenuController } from '@ionic/angular';
+import { catchError, filter, map, of, startWith } from 'rxjs';
+import { IonApp, IonSplitPane, IonMenu, IonHeader, IonToolbar, IonTitle, IonContent, IonList, IonItem, IonIcon, IonLabel, IonMenuToggle, IonMenuButton, IonButtons, IonButton, IonRouterOutlet, MenuController } from '@ionic/angular/standalone';
 
 import { DEFAULT_HOME_ROUTE } from './core/app-variant';
+import { AuthService } from './core/auth.service';
+import { APEX_NAV_ITEMS, ApexNavItem } from './core/feature-menu.config';
+import { LicenseService } from './core/license.service';
 import { SessionService } from './core/session.service';
-
-interface NavItem {
-  label: string;
-  path: string;
-  icon: string;
-  audience: 'cliente' | 'staff' | 'both';
-}
+import { SessionTimeoutService } from './core/session-timeout.service';
+import { TenantFeatureService } from './core/tenant-feature.service';
+import { ThemeService } from './core/ui/theme.service';
+import { ApexDialogHostComponent, ApexToastHostComponent } from './shared/ui';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, IonicModule, RouterLink, RouterLinkActive],
+  imports: [CommonModule, IonApp, IonSplitPane, IonMenu, IonHeader, IonToolbar, IonTitle, IonContent, IonList, IonItem, IonIcon, IonLabel, IonMenuToggle, IonMenuButton, IonButtons, IonButton, IonRouterOutlet, RouterLink, RouterLinkActive, ApexDialogHostComponent, ApexToastHostComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })
 export class AppComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly menu = inject(MenuController);
+  private readonly sessionTimeout = inject(SessionTimeoutService);
+  private readonly auth = inject(AuthService, { optional: true });
+  private readonly licenseService = inject(LicenseService, { optional: true });
   readonly session = inject(SessionService);
+  readonly tenantFeatures = inject(TenantFeatureService);
+  readonly theme = inject(ThemeService);
 
   private readonly currentUrl = toSignal(
     this.router.events.pipe(
@@ -39,6 +44,9 @@ export class AppComponent implements OnInit {
   readonly isCommerce = computed(() => ['/store', '/cart', '/checkout'].some((path) => this.currentUrl().startsWith(path)));
 
   readonly platformLabel = computed(() => {
+    if (globalThis.window?.apexDesktop?.isDesktop) {
+      return 'Desktop';
+    }
     const protocol = globalThis.location?.protocol ?? 'http:';
     if (protocol === 'app:') {
       return 'Desktop';
@@ -49,31 +57,46 @@ export class AppComponent implements OnInit {
     return 'Web';
   });
 
-  readonly title = computed(() => (this.isCommerce() ? 'Apex Store' : 'Apex Gestor'));
-
-  readonly navItems: NavItem[] = [
-    { label: 'Loja Online', path: '/store', icon: 'storefront-outline', audience: 'both' },
-    { label: 'Carrinho', path: '/cart', icon: 'cart-outline', audience: 'cliente' },
-    { label: 'Dashboard', path: '/', icon: 'bar-chart-outline', audience: 'staff' },
-    { label: 'PDV / Caixa', path: '/pos', icon: 'cash-outline', audience: 'staff' },
-    { label: 'Produtos', path: '/products', icon: 'cube-outline', audience: 'staff' },
-    { label: 'Clientes CRM', path: '/clients', icon: 'people-outline', audience: 'staff' },
-    { label: 'Fornecedores', path: '/suppliers', icon: 'business-outline', audience: 'staff' },
-    { label: 'Funcionários', path: '/users', icon: 'person-circle-outline', audience: 'staff' },
-    { label: 'Entrada XML NF', path: '/invoice-entry', icon: 'document-text-outline', audience: 'staff' },
-    { label: 'Despesas', path: '/expenses', icon: 'receipt-outline', audience: 'staff' },
-    { label: 'Financeiro Pro', path: '/finance', icon: 'calculator-outline', audience: 'staff' },
-    { label: 'Tipos de Despesa', path: '/expense-types', icon: 'pricetags-outline', audience: 'staff' },
-    { label: 'Privacidade LGPD', path: '/privacy', icon: 'shield-checkmark-outline', audience: 'both' },
-    { label: 'Configurações', path: '/settings', icon: 'settings-outline', audience: 'staff' }
-  ];
+  readonly title = computed(() => {
+    if (this.isCommerce() && this.tenantFeatures.isWhiteLabelB2C()) {
+      return this.tenantFeatures.context().branding?.storefrontName ?? this.tenantFeatures.context().tenantName;
+    }
+    return this.isCommerce() ? 'Apex Store' : 'Apex Gestor';
+  });
 
   readonly visibleNavItems = computed(() => {
     const persona = this.session.persona();
-    return this.navItems.filter((item) => item.audience === 'both' || item.audience === persona || persona !== 'cliente');
+    return APEX_NAV_ITEMS.filter((item) => {
+      const audienceAllowed = item.audience === 'both' || item.audience === persona || (persona !== 'cliente' && item.audience === 'staff');
+      const roleAllowed = this.session.hasAnyRole(item.allowedRoles);
+      return audienceAllowed && roleAllowed && this.tenantFeatures.hasAll(item.requiredFeatures);
+    });
+  });
+
+  readonly canOpenPdv = computed(() => this.visibleNavItems().some((item) => item.path === '/pos'));
+
+  readonly visibleNavGroups = computed(() => {
+    const labels: Record<NonNullable<ApexNavItem['group']>, string> = {
+      principal: 'Principal',
+      operacao: 'Operação',
+      gestao: 'Gestão',
+      admin: 'Administração'
+    };
+    return (['principal', 'operacao', 'gestao', 'admin'] as const)
+      .map((group) => ({
+        group,
+        label: labels[group],
+        items: this.visibleNavItems().filter((item) => (item.group ?? 'operacao') === group)
+      }))
+      .filter((section) => section.items.length > 0);
   });
 
   ngOnInit(): void {
+    this.tenantFeatures.refreshFromCache();
+    this.sessionTimeout.start();
+    if (this.auth?.isAuthenticated() && this.licenseService) {
+      this.licenseService.loadEntitlement().pipe(catchError(() => of(null))).subscribe();
+    }
     if (DEFAULT_HOME_ROUTE !== '/' && this.router.url === '/') {
       this.router.navigateByUrl(DEFAULT_HOME_ROUTE, { replaceUrl: true });
     }

@@ -4,3 +4,5 @@ import { ApexAppVariant } from './app-variant.model';
 export const APP_VARIANT: ApexAppVariant = 'staff';
 export const DEFAULT_PERSONA: Persona = 'gerente';
 export const DEFAULT_HOME_ROUTE: string = '/';
+export const DEMO_MODE = false;
+export const DEMO_PASSWORD = '';

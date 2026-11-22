@@ -1,6 +1,10 @@
 package Service;
 
+import jakarta.annotation.PostConstruct;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
+import org.springframework.core.env.Profiles;
 import org.springframework.stereotype.Service;
 
 import java.nio.charset.StandardCharsets;
@@ -12,13 +16,27 @@ import java.util.regex.Pattern;
 @Service
 public class DataProtectionService {
 
-    private static final Pattern EMAIL = Pattern.compile("([A-Za-z0-9._%+-])[A-Za-z0-9._%+-]*(@[A-Za-z0-9.-]+)");
+    private static final String DEFAULT_LOCAL_PEPPER = "local-only-non-secret-pepper";
+    private static final Pattern EMAIL = Pattern.compile("\\b([a-zA-Z0-9])[a-zA-Z0-9._%+-]*+(@[a-zA-Z0-9.-]+)");
     private static final Pattern DOCUMENT = Pattern.compile("\\b\\d{3}\\.?\\d{3}\\.?\\d{3}-?\\d{2}\\b|\\b\\d{2}\\.?\\d{3}\\.?\\d{3}/?\\d{4}-?\\d{2}\\b");
     private static final Pattern PHONE = Pattern.compile("\\b(?:\\+?55\\s?)?(?:\\(?\\d{2}\\)?\\s?)?\\d{4,5}-?\\d{4}\\b");
     private static final Pattern BEARER = Pattern.compile("Bearer\\s+[A-Za-z0-9._~+/-]+=*", Pattern.CASE_INSENSITIVE);
 
-    @Value("${apex.privacy.hash-pepper}")
-    private String pepper;
+    @Value("${apex.privacy.hash-pepper:" + DEFAULT_LOCAL_PEPPER + "}")
+    private String pepper = DEFAULT_LOCAL_PEPPER;
+
+    @Autowired(required = false)
+    private Environment environment;
+
+    @PostConstruct
+    void validatePepperConfiguration() {
+        if (environment != null && environment.acceptsProfiles(Profiles.of("prod"))) {
+            if (pepper == null || pepper.isBlank() || DEFAULT_LOCAL_PEPPER.equals(pepper)) {
+                throw new IllegalStateException(
+                        "apex.privacy.hash-pepper deve ser configurado com segredo proprio quando o perfil prod estiver ativo.");
+            }
+        }
+    }
 
     public String hash(String value) {
         if (value == null || value.isBlank()) {

@@ -18,4 +18,16 @@ public class Categoria {
 
     @Column(nullable = false)
     private int status;
+
+    @Column(name = "empresa_id")
+    private Long empresaId;
+
+    @Column(name = "filial_id")
+    private Long filialId;
+
+    @Column(name = "plano_conta_id")
+    private Long planoContaId;
+
+    @Column(name = "centro_custo_id")
+    private Long centroCustoId;
 }

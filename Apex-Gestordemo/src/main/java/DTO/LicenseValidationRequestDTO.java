@@ -8,6 +8,17 @@ public record LicenseValidationRequestDTO(
         String deviceLabel,
         String platform,
         String appVersion,
-        String appId
+        String appId,
+        String tenantCode,
+        Long empresaId
 ) {
+    public LicenseValidationRequestDTO(
+            String licenseKey,
+            String deviceFingerprint,
+            String deviceLabel,
+            String platform,
+            String appVersion,
+            String appId) {
+        this(licenseKey, deviceFingerprint, deviceLabel, platform, appVersion, appId, null, null);
+    }
 }

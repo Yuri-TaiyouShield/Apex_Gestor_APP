@@ -1,0 +1,653 @@
+/* ==========================================================================
+   CAMADA 3: COMPONENT TOKENS, DENSIDADE & INTEGRACAO IONIC 8 (Shadow DOM)
+   ========================================================================== */
+:root {
+  --apex-radius: var(--apex-radius-md);
+  --apex-radius-lg: 14px;
+
+  --apex-control-height: 40px;
+  --apex-control-height-sm: 34px;
+  --apex-control-height-lg: 46px;
+  --apex-card-pad: 16px;
+  --apex-card-header-pad: 14px 16px 8px;
+  --apex-page-pad: 18px;
+  --apex-table-cell-py: 10px;
+  --apex-table-cell-px: 12px;
+  --apex-sidebar-width: 256px;
+  --apex-sidebar-collapsed-width: 76px;
+  --apex-topbar-height: 58px;
+}
+
+:root[data-density="compact"] {
+  --apex-control-height: 36px;
+  --apex-control-height-sm: 30px;
+  --apex-card-pad: 14px;
+  --apex-card-header-pad: 12px 14px 6px;
+  --apex-page-pad: 14px;
+  --apex-table-cell-py: 8px;
+  --apex-table-cell-px: 10px;
+}
+
+:root[data-density="comfortable"] {
+  --apex-control-height: 44px;
+  --apex-control-height-sm: 36px;
+  --apex-card-pad: 20px;
+  --apex-card-header-pad: 16px 20px 10px;
+  --apex-page-pad: 22px;
+  --apex-table-cell-py: 12px;
+  --apex-table-cell-px: 14px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  background-color: var(--apex-bg-canvas);
+  color: var(--apex-text-primary);
+  font-family: var(--apex-font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+ion-app {
+  background-color: var(--apex-bg-canvas);
+  background-image: var(--apex-bg-aurora);
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
+
+ion-content {
+  --background: transparent;
+  --color: var(--apex-text-primary);
+}
+
+/* --- Ionic Cards --- */
+ion-card {
+  --background: var(--apex-bg-surface);
+  --color: var(--apex-text-primary);
+  background: var(--apex-bg-surface);
+  border: 1px solid var(--apex-border-default);
+  border-radius: var(--apex-radius-lg);
+  box-shadow: var(--apex-shadow-sm);
+  display: block;
+  margin: 0;
+}
+
+ion-card-header {
+  display: block;
+  padding: var(--apex-card-header-pad);
+}
+
+ion-card-content {
+  color: var(--apex-text-secondary);
+  display: block;
+  padding: var(--apex-card-pad);
+}
+
+ion-card-title {
+  color: var(--apex-text-primary);
+  display: block;
+  font-size: 1rem;
+  font-weight: 750;
+  letter-spacing: -0.01em;
+}
+
+ion-card-subtitle {
+  color: var(--apex-text-muted);
+  display: block;
+  font-size: var(--apex-font-size-xs);
+  letter-spacing: 0;
+  margin-top: 3px;
+  text-transform: none;
+}
+
+/* --- Estrutura & Shell Ionic --- */
+ion-header,
+ion-toolbar,
+ion-title,
+ion-buttons,
+ion-list,
+ion-item,
+ion-label,
+ion-router-outlet {
+  display: block;
+}
+
+ion-toolbar {
+  --background: var(--apex-bg-header);
+  --color: var(--apex-text-primary);
+  --border-color: var(--apex-border-subtle);
+  align-items: center;
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--apex-border-subtle);
+  display: flex;
+  gap: 10px;
+  min-height: var(--apex-topbar-height);
+  padding: 0 14px;
+}
+
+ion-title {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+ion-buttons {
+  align-items: center;
+  display: flex;
+  flex: 0 0 auto;
+}
+
+ion-item {
+  --background: transparent;
+  --color: var(--apex-text-primary);
+  --border-color: var(--apex-border-subtle);
+  --padding-start: 10px;
+  --inner-padding-end: 10px;
+  min-height: var(--apex-control-height);
+}
+
+ion-input,
+ion-select,
+ion-textarea {
+  --color: var(--apex-text-primary);
+  --placeholder-color: var(--apex-text-muted);
+  --highlight-color-focused: var(--apex-brand-primary);
+  color: var(--apex-text-primary);
+}
+
+ion-note {
+  color: var(--apex-text-muted);
+  font-size: var(--apex-font-size-xs);
+}
+
+ion-note[color="warning"] { color: var(--apex-status-warning); }
+ion-note[color="danger"]  { color: var(--apex-status-danger); }
+ion-note[color="success"] { color: var(--apex-status-success); }
+ion-note[color="primary"] { color: var(--apex-brand-primary); }
+
+ion-segment {
+  background: var(--apex-bg-surface-muted);
+  border: 1px solid var(--apex-border-default);
+  border-radius: var(--apex-radius-md);
+  min-height: var(--apex-control-height);
+  padding: 3px;
+}
+
+ion-segment-button {
+  --color: var(--apex-text-muted);
+  --color-checked: var(--apex-text-primary);
+  --indicator-color: var(--apex-bg-surface);
+  --border-radius: var(--apex-radius-sm);
+  font-weight: 650;
+  min-height: calc(var(--apex-control-height) - 8px);
+}
+
+/* --- Roteamento Ionic --- */
+app-root ion-router-outlet {
+  flex: 1 1 auto;
+  display: block;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+app-root ion-router-outlet > .ion-page {
+  contain: initial !important;
+  display: flex !important;
+  flex-direction: column;
+  inset: 0 !important;
+  min-height: 0;
+  overflow: hidden;
+  position: absolute !important;
+  width: 100%;
+}
+
+app-root ion-router-outlet > .ion-page > ion-content {
+  flex: 1 1 auto;
+  height: 100%;
+  min-height: 0;
+  position: relative;
+}
+
+app-root ion-router-outlet > .ion-page.ion-page-hidden,
+app-root ion-router-outlet > .ion-page-invisible {
+  display: none !important;
+  pointer-events: none;
+}
+
+/* --- Searchbar --- */
+ion-searchbar {
+  --background: var(--apex-bg-input);
+  --border-radius: var(--apex-radius-md);
+  --box-shadow: inset 0 0 0 1px var(--apex-border-default);
+  --color: var(--apex-text-primary);
+  --icon-color: var(--apex-text-muted);
+  --placeholder-color: var(--apex-text-muted);
+  padding: 0;
+}
+
+/* --- Ionic Buttons via CSS Custom Properties & ::part(native) --- */
+ion-button {
+  --background: var(--apex-fill-primary);
+  --background-hover: var(--apex-fill-primary-hover);
+  --background-activated: var(--apex-fill-primary-hover);
+  --color: var(--apex-fill-primary-contrast);
+  --border-radius: var(--apex-radius-md);
+  --border-width: 1px;
+  --border-style: solid;
+  --border-color: transparent;
+  --box-shadow: none;
+  --padding-start: 14px;
+  --padding-end: 14px;
+  display: inline-flex;
+  font-weight: 700;
+  letter-spacing: -0.005em;
+  min-height: var(--apex-control-height);
+  text-transform: none;
+  transition: transform var(--apex-duration-fast) var(--apex-ease), opacity var(--apex-duration-fast) var(--apex-ease);
+}
+
+ion-button::part(native) {
+  border-radius: var(--apex-radius-md);
+  min-height: var(--apex-control-height);
+}
+
+ion-button[color="danger"] {
+  --background: var(--apex-fill-danger);
+  --background-hover: var(--apex-fill-danger-hover);
+  --background-activated: var(--apex-fill-danger-hover);
+  --color: var(--apex-fill-danger-contrast);
+}
+
+ion-button[color="warning"] {
+  --background: var(--apex-fill-warning);
+  --background-hover: var(--apex-fill-warning-hover);
+  --background-activated: var(--apex-fill-warning-hover);
+  --color: var(--apex-fill-warning-contrast);
+}
+
+ion-button[color="success"] {
+  --background: var(--apex-fill-success);
+  --background-hover: var(--apex-fill-success-hover);
+  --background-activated: var(--apex-fill-success-hover);
+  --color: var(--apex-fill-success-contrast);
+}
+
+ion-button[fill="outline"] {
+  --background: var(--apex-bg-surface);
+  --background-hover: var(--apex-bg-surface-muted);
+  --color: var(--apex-text-primary);
+  --border-color: var(--apex-border-strong);
+}
+
+ion-button[fill="outline"][color="danger"] {
+  --background: transparent;
+  --color: var(--apex-status-danger);
+  --border-color: var(--apex-status-danger-border);
+}
+
+ion-button[fill="outline"][color="warning"] {
+  --background: transparent;
+  --color: var(--apex-status-warning);
+  --border-color: var(--apex-status-warning-border);
+}
+
+ion-button[fill="clear"] {
+  --background: transparent;
+  --background-hover: var(--apex-primary-faint);
+  --color: var(--apex-text-brand);
+  --border-color: transparent;
+}
+
+ion-button[fill="clear"][color="danger"] {
+  --color: var(--apex-status-danger);
+}
+
+ion-button[expand="block"] {
+  display: flex;
+  width: 100%;
+}
+
+ion-button[size="small"] {
+  --padding-start: 10px;
+  --padding-end: 10px;
+  font-size: var(--apex-font-size-xs);
+  min-height: var(--apex-control-height-sm);
+}
+
+ion-button[size="small"]::part(native) {
+  min-height: var(--apex-control-height-sm);
+}
+
+ion-button[size="large"] {
+  min-height: var(--apex-control-height-lg);
+}
+
+ion-button[size="large"]::part(native) {
+  min-height: var(--apex-control-height-lg);
+}
+
+ion-button[disabled] {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+ion-badge {
+  border-radius: var(--apex-radius-pill);
+  font-size: var(--apex-font-size-xs);
+  font-weight: 750;
+  letter-spacing: 0;
+  padding: 5px 10px;
+}
+
+/* --- Foco Visivel (WCAG 2.2 AA) --- */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+ion-button:focus-visible,
+ion-item:focus-visible {
+  outline: 2px solid var(--apex-focus-ring);
+  outline-offset: 2px;
+}
+
+/* --- Estrutura Compartilhada das Paginas --- */
+.page {
+  margin: 0 auto;
+  max-width: 1560px;
+  min-height: 100%;
+  padding: var(--apex-page-pad);
+}
+
+.page-header {
+  align-items: center;
+  display: flex;
+  gap: 14px;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.page-header h1 {
+  color: var(--apex-text-primary);
+  font-size: clamp(1.3rem, 1.8vw, 1.7rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  margin: 0;
+}
+
+.page-header p {
+  color: var(--apex-text-muted);
+  font-size: var(--apex-font-size-sm);
+  line-height: 1.45;
+  margin: 4px 0 0;
+  max-width: 760px;
+}
+
+.page-kicker {
+  align-items: center;
+  color: var(--apex-text-brand);
+  display: inline-flex;
+  font-size: var(--apex-font-size-2xs);
+  font-weight: 800;
+  gap: 7px;
+  letter-spacing: 0.04em;
+  margin-bottom: 5px;
+  text-transform: uppercase;
+}
+
+.page-kicker::before {
+  background: var(--apex-brand-gradient);
+  border-radius: var(--apex-radius-pill);
+  content: "";
+  height: 7px;
+  width: 7px;
+}
+
+.toolbar-card,
+.data-card,
+.metric-card,
+.commerce-card {
+  background: var(--apex-bg-surface);
+  border: 1px solid var(--apex-border-default);
+  border-radius: var(--apex-radius-lg);
+  box-shadow: var(--apex-shadow-sm);
+}
+
+/* --- KPI Metric Grid --- */
+.metric-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.metric-card {
+  display: grid;
+  gap: 8px;
+  min-height: 106px;
+  padding: var(--apex-card-pad);
+  transition: border-color var(--apex-duration-fast) var(--apex-ease), box-shadow var(--apex-duration-fast) var(--apex-ease);
+}
+
+.metric-card:hover {
+  border-color: var(--apex-border-strong);
+  box-shadow: var(--apex-shadow-md);
+}
+
+.metric-card header {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+}
+
+.metric-card ion-icon,
+.metric-icon {
+  align-items: center;
+  background: var(--apex-primary-soft);
+  border: 1px solid color-mix(in srgb, var(--apex-primary) 22%, transparent);
+  border-radius: var(--apex-radius-md);
+  color: var(--apex-text-brand);
+  display: inline-flex;
+  font-size: 1.15rem;
+  height: 36px;
+  justify-content: center;
+  width: 36px;
+}
+
+.metric-card span {
+  color: var(--apex-text-muted);
+  display: block;
+  font-size: var(--apex-font-size-xs);
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.metric-card strong {
+  color: var(--apex-text-primary);
+  display: block;
+  font-size: clamp(1.25rem, 2vw, 1.72rem);
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+}
+
+.metric-card small {
+  color: var(--apex-text-muted);
+  display: inline-flex;
+  font-size: var(--apex-font-size-xs);
+  gap: 5px;
+}
+
+.metric-card small.positive { color: var(--apex-status-success); font-weight: 600; }
+.metric-card small.attention { color: var(--apex-status-warning); font-weight: 600; }
+.metric-card small.danger { color: var(--apex-status-danger); font-weight: 600; }
+
+/* --- Grid & Tabelas --- */
+.grid-two {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(0, 1.5fr) minmax(320px, 0.8fr);
+}
+
+.table-wrap {
+  max-height: min(58vh, 620px);
+  overflow: auto;
+}
+
+table {
+  border-collapse: collapse;
+  min-width: 760px;
+  width: 100%;
+}
+
+th,
+td {
+  border-bottom: 1px solid var(--apex-border-subtle);
+  padding: var(--apex-table-cell-py) var(--apex-table-cell-px);
+  text-align: left;
+  vertical-align: middle;
+}
+
+th {
+  background: var(--apex-bg-surface-muted);
+  color: var(--apex-text-muted);
+  font-size: 0.72rem;
+  font-weight: 750;
+  letter-spacing: 0.04em;
+  position: sticky;
+  text-transform: uppercase;
+  top: 0;
+  z-index: 1;
+}
+
+td {
+  color: var(--apex-text-secondary);
+  font-size: var(--apex-font-size-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+tbody tr {
+  transition: background var(--apex-duration-fast) var(--apex-ease);
+}
+
+tbody tr:hover {
+  background: var(--apex-primary-faint);
+}
+
+.table-actions {
+  align-items: center;
+  display: flex;
+  gap: 4px;
+}
+
+/* --- Status Pills & Rows --- */
+.status-pill {
+  border: 1px solid transparent;
+  border-radius: var(--apex-radius-pill);
+  display: inline-flex;
+  font-size: 0.74rem;
+  font-weight: 750;
+  padding: 4px 10px;
+}
+
+.status-pill.active {
+  background: var(--apex-status-success-bg);
+  border-color: var(--apex-status-success-border);
+  color: var(--apex-status-success);
+}
+
+.status-pill.inactive {
+  background: var(--apex-bg-surface-subtle);
+  border-color: var(--apex-border-default);
+  color: var(--apex-text-muted);
+}
+
+.stack {
+  display: grid;
+  gap: 14px;
+}
+
+.surface-row {
+  align-items: center;
+  background: var(--apex-bg-surface-muted);
+  border: 1px solid var(--apex-border-subtle);
+  border-radius: var(--apex-radius-md);
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  padding: 12px 14px;
+}
+
+.surface-row strong,
+.surface-row span {
+  display: block;
+}
+
+.surface-row strong {
+  color: var(--apex-text-primary);
+}
+
+.surface-row span {
+  color: var(--apex-text-muted);
+  font-size: var(--apex-font-size-xs);
+  margin-top: 2px;
+}
+
+.empty-state {
+  align-items: center;
+  color: var(--apex-text-muted);
+  display: flex;
+  justify-content: center;
+  min-height: 124px;
+  padding: 20px;
+  text-align: center;
+}
+
+/* --- Responsividade Global --- */
+@media (max-width: 991px) {
+  .page {
+    padding: 14px;
+  }
+
+  .page-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .metric-grid,
+  .grid-two {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .page {
+    padding: 12px;
+  }
+
+  .metric-grid {
+    gap: 10px;
+  }
+
+  .metric-card {
+    padding: 13px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}

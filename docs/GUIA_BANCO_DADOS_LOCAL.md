@@ -7,7 +7,7 @@ O backend Spring Boot usa MySQL em `localhost:2705` e o schema `apex_db`.
 Na raiz do projeto:
 
 ```powershell
-docker compose up -d apex-mysql
+docker compose up -d apex-db
 docker compose ps
 ```
 

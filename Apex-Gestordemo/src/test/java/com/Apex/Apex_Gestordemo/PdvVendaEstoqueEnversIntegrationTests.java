@@ -7,6 +7,7 @@ import Model.Produto;
 import Model.ProdutoVenda;
 import Model.Usuario;
 import Model.Venda;
+import Model.VendaStatus;
 import Repository.CategoriaRepository;
 import Repository.ClienteRepository;
 import Repository.PerfilRepository;
@@ -51,7 +52,9 @@ class PdvVendaEstoqueEnversIntegrationTests {
     private EntityManagerFactory entityManagerFactory;
 
     @Test
-    void pdvSaleDebitsStockAndCreatesForensicEnversRevisions() {
+    void pdvSalePreservesStockUntilCashierAndCreatesForensicSaleRevision() {
+        long empresaId = 91L;
+        long filialId = 92L;
         Perfil perfil = new Perfil();
         perfil.setNome("vendedor-e2e");
         perfil.setStatus(1);
@@ -63,6 +66,8 @@ class PdvVendaEstoqueEnversIntegrationTests {
         usuario.setSenha("$2a$12$e2e");
         usuario.setDataNascimento(LocalDate.of(1990, 1, 1));
         usuario.setStatus(1);
+        usuario.setEmpresaId(empresaId);
+        usuario.setFilialId(filialId);
         usuario.setPerfil(perfil);
         usuario = usuarioRepository.save(usuario);
 
@@ -73,11 +78,15 @@ class PdvVendaEstoqueEnversIntegrationTests {
         cliente.setCpfCnpj("00000000000191");
         cliente.setDataCadastro(LocalDateTime.now());
         cliente.setStatus(1);
+        cliente.setEmpresaId(empresaId);
+        cliente.setFilialId(filialId);
         cliente = clienteRepository.save(cliente);
 
         Categoria categoria = new Categoria();
         categoria.setDescricao("E2E");
         categoria.setStatus(1);
+        categoria.setEmpresaId(empresaId);
+        categoria.setFilialId(filialId);
         categoria = categoriaRepository.save(categoria);
 
         Produto produto = new Produto();
@@ -86,6 +95,10 @@ class PdvVendaEstoqueEnversIntegrationTests {
         produto.setValorVenda(BigDecimal.valueOf(25));
         produto.setQuantidadeEstoque(10);
         produto.setEstoqueMinimo(1);
+        produto.setCodigoBarras("7890000091092");
+        produto.setCodigoInterno("E2E-91092");
+        produto.setEmpresaId(empresaId);
+        produto.setFilialId(filialId);
         produto.setStatus(1);
         produto.setCategoria(categoria);
         produto = produtoRepository.save(produto);
@@ -100,18 +113,19 @@ class PdvVendaEstoqueEnversIntegrationTests {
         venda.setUsuario(usuario);
         venda.setCliente(cliente);
         venda.setDesconto(BigDecimal.ZERO);
+        venda.setEmpresaId(empresaId);
+        venda.setFilialId(filialId);
         venda.setItens(List.of(item));
 
         Venda vendaSalva = vendaService.realizarVenda(venda);
 
         Produto produtoAtualizado = produtoRepository.findById(produto.getIdProduto()).orElseThrow();
-        assertThat(produtoAtualizado.getQuantidadeEstoque()).isEqualTo(7);
+        assertThat(produtoAtualizado.getQuantidadeEstoque()).isEqualTo(10);
+        assertThat(vendaSalva.getStatusOperacional()).isEqualTo(VendaStatus.AGUARDANDO_CAIXA);
         assertThat(vendaRepository.findById(vendaSalva.getIdVenda())).isPresent();
 
         EntityManager auditEntityManager = entityManagerFactory.createEntityManager();
         try {
-            assertThat(AuditReaderFactory.get(auditEntityManager).getRevisions(Produto.class, produto.getIdProduto()))
-                    .isNotEmpty();
             assertThat(AuditReaderFactory.get(auditEntityManager).getRevisions(Venda.class, vendaSalva.getIdVenda()))
                     .isNotEmpty();
         } finally {

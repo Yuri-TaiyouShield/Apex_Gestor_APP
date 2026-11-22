@@ -23,4 +23,6 @@ public class VendaPagamento {
     private BigDecimal valorPago;
     @Column(name = "numero_parcelas")
     private Integer numeroParcelas;
+    @Column(name = "credito_id")
+    private Long creditoId;
 }

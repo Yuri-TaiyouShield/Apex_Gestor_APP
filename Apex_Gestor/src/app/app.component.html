@@ -8,31 +8,45 @@
       </ion-header>
 
       <ion-content>
-        <section class="brand-panel">
-          <div class="brand-mark">A</div>
-          <div>
-            <strong>{{ title() }}</strong>
-            <span>{{ platformLabel() }} | {{ session.roleLabel() }}</span>
-          </div>
-        </section>
+        <div class="sidebar-shell">
+          <section class="brand-panel">
+            <div class="brand-mark" aria-hidden="true">A</div>
+            <div class="brand-copy">
+              <strong>{{ title() }}</strong>
+              <span>{{ platformLabel() }} | {{ session.roleLabel() }}</span>
+            </div>
+            <span class="tenant-chip">{{ tenantFeatures.context().subscriptionTier }}</span>
+          </section>
 
-        <ion-list lines="none">
-          @for (item of visibleNavItems(); track item.path) {
-            <ion-menu-toggle auto-hide="true">
-              <ion-item
-                button
-                detail="false"
-                [routerLink]="item.path"
-                routerLinkActive="selected"
-                [routerLinkActiveOptions]="{ exact: item.path === '/' }"
-                (click)="closeMenu()"
-              >
-                <ion-icon slot="start" [name]="item.icon"></ion-icon>
-                <ion-label>{{ item.label }}</ion-label>
-              </ion-item>
-            </ion-menu-toggle>
-          }
-        </ion-list>
+          <nav class="sidebar-nav" aria-label="Menu principal">
+            @for (section of visibleNavGroups(); track section.group) {
+              <div class="nav-label">{{ section.label }}</div>
+              <ion-list lines="none">
+                @for (item of section.items; track item.path) {
+                  <ion-menu-toggle [autoHide]="false">
+                    <ion-item
+                      button
+                      detail="false"
+                      [routerLink]="item.path"
+                      routerLinkActive="selected"
+                      [routerLinkActiveOptions]="{ exact: item.path === '/' }"
+                      (click)="closeMenu()"
+                    >
+                      <ion-icon slot="start" [name]="item.icon"></ion-icon>
+                      <ion-label>{{ item.label }}</ion-label>
+                    </ion-item>
+                  </ion-menu-toggle>
+                }
+              </ion-list>
+            }
+          </nav>
+
+          <section class="sidebar-footer">
+            <span>Ambiente</span>
+            <strong>{{ tenantFeatures.context().tenantName }}</strong>
+            <a routerLink="/login" (click)="closeMenu()">Acesso e troca de perfil</a>
+          </section>
+        </div>
       </ion-content>
     </ion-menu>
 
@@ -42,22 +56,49 @@
           <ion-buttons slot="start">
             <ion-menu-button menu="main-menu" [autoHide]="false" aria-label="Abrir menu principal"></ion-menu-button>
           </ion-buttons>
-          <ion-title>{{ title() }}</ion-title>
+          <ion-title>
+            <span class="toolbar-title">
+              <strong>{{ title() }}</strong>
+              <small>{{ session.roleLabel() }} | {{ tenantFeatures.context().subscriptionTier }}</small>
+            </span>
+          </ion-title>
           <ion-buttons slot="end" class="header-actions">
-            <ion-button routerLink="/store">
-              <ion-icon slot="icon-only" name="storefront-outline"></ion-icon>
+            <span class="privacy-badge" title="Controles automáticos de privacidade, auditoria e mascaramento ativos">
+              <ion-icon name="shield-checkmark-outline" aria-hidden="true"></ion-icon>
+              <span>Privacidade ativa</span>
+            </span>
+            @if (canOpenPdv()) {
+              <ion-button routerLink="/pos" aria-label="Abrir PDV" title="Abrir PDV">
+                <ion-icon name="cart-outline" aria-hidden="true"></ion-icon>
+                <span>PDV</span>
+              </ion-button>
+            }
+            <ion-button
+              fill="clear"
+              (click)="theme.toggleLightDark()"
+              [attr.aria-label]="theme.isDark() ? 'Alternar para tema claro' : 'Alternar para tema escuro'"
+              [attr.title]="theme.isDark() ? 'Alternar para tema claro' : 'Alternar para tema escuro'"
+            >
+              <ion-icon slot="icon-only" [name]="theme.isDark() ? 'sunny-outline' : 'moon-outline'" aria-hidden="true"></ion-icon>
             </ion-button>
-            <ion-button routerLink="/cart">
-              <ion-icon slot="icon-only" name="cart-outline"></ion-icon>
-            </ion-button>
-            <ion-button routerLink="/login">
-              <ion-icon slot="icon-only" name="log-in-outline"></ion-icon>
+            <ion-button fill="clear" routerLink="/settings" aria-label="Abrir configurações" title="Configurações">
+              <ion-icon slot="icon-only" name="settings-outline" aria-hidden="true"></ion-icon>
             </ion-button>
           </ion-buttons>
         </ion-toolbar>
+        @if (session.accessIssue()) {
+          <div class="access-banner">
+            <ion-icon name="warning-outline" aria-hidden="true"></ion-icon>
+            <span>{{ session.accessIssue() }}</span>
+            <button type="button" (click)="session.setAccessIssue(null)" aria-label="Fechar aviso">Fechar</button>
+          </div>
+        }
       </ion-header>
 
-      <ion-router-outlet></ion-router-outlet>
+      <ion-router-outlet [animated]="false"></ion-router-outlet>
     </div>
   </ion-split-pane>
+
+  <app-dialog-host></app-dialog-host>
+  <app-toast-host></app-toast-host>
 </ion-app>

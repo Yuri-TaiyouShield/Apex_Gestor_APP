@@ -2,19 +2,22 @@ package com.Apex.Apex_Gestordemo;
 
 import DTO.LicenseValidationResponseDTO;
 import Service.LicenseService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.Set;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.Set;
-
 @Component
+@ConditionalOnProperty(name = "apex.license.enforcement.enabled", havingValue = "true", matchIfMissing = true)
 public class LicenseEnforcementFilter extends OncePerRequestFilter {
 
     public static final String LICENSE_KEY_HEADER = "X-Apex-License-Key";
@@ -24,13 +27,20 @@ public class LicenseEnforcementFilter extends OncePerRequestFilter {
     private static final Set<String> PUBLIC_API_PREFIXES = Set.of(
             "/api/auth/",
             "/api/licenses/",
-            "/api/privacy/"
+            "/api/privacy/consents"
     );
 
     private final LicenseService licenseService;
+    private final ObjectMapper objectMapper;
 
+    @Autowired
     public LicenseEnforcementFilter(LicenseService licenseService) {
+        this(licenseService, new ObjectMapper().findAndRegisterModules());
+    }
+
+    public LicenseEnforcementFilter(LicenseService licenseService, ObjectMapper objectMapper) {
         this.licenseService = licenseService;
+        this.objectMapper = objectMapper != null ? objectMapper : new ObjectMapper().findAndRegisterModules();
     }
 
     @Override
@@ -42,7 +52,10 @@ public class LicenseEnforcementFilter extends OncePerRequestFilter {
     }
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+    protected void doFilterInternal(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            FilterChain filterChain) throws ServletException, IOException {
         LicenseValidationResponseDTO license = licenseService.checkActivation(
                 request.getHeader(LICENSE_KEY_HEADER),
                 request.getHeader(DEVICE_FINGERPRINT_HEADER),
@@ -52,45 +65,12 @@ public class LicenseEnforcementFilter extends OncePerRequestFilter {
 
         if (!license.valid()) {
             response.setStatus(402);
+            response.setCharacterEncoding(StandardCharsets.UTF_8.name());
             response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-            response.getWriter().write(toJson(license));
+            response.getWriter().write(objectMapper.writeValueAsString(license));
             return;
         }
 
         filterChain.doFilter(request, response);
-    }
-
-    private String toJson(LicenseValidationResponseDTO license) {
-        return "{"
-                + "\"valid\":" + license.valid()
-                + ",\"status\":\"" + escape(license.status()) + "\""
-                + ",\"message\":\"" + escape(license.message()) + "\""
-                + ",\"appId\":\"" + escape(license.appId()) + "\""
-                + ",\"licensePlan\":\"" + escape(license.licensePlan()) + "\""
-                + ",\"allowedApps\":" + array(license.allowedApps())
-                + ",\"activatedApps\":" + array(license.activatedApps())
-                + "}";
-    }
-
-    private String array(List<String> values) {
-        if (values == null || values.isEmpty()) {
-            return "[]";
-        }
-        return values.stream()
-                .map(value -> "\"" + escape(value) + "\"")
-                .toList()
-                .toString()
-                .replace(" ", "");
-    }
-
-    private String escape(String value) {
-        if (value == null) {
-            return "";
-        }
-        return value
-                .replace("\\", "\\\\")
-                .replace("\"", "\\\"")
-                .replace("\n", "\\n")
-                .replace("\r", "\\r");
     }
 }

@@ -45,6 +45,18 @@ public class FinancialDocumentDeliveryOutbox {
     @Column(name = "last_error", length = 255)
     private String lastError;
 
+    @Column(name = "next_attempt_at")
+    private LocalDateTime nextAttemptAt;
+
+    @Column(name = "dead_lettered_at")
+    private LocalDateTime deadLetteredAt;
+
+    @Column(name = "empresa_id")
+    private Long empresaId;
+
+    @Column(name = "filial_id")
+    private Long filialId;
+
     public Long getIdFinancialDocumentOutbox() {
         return idFinancialDocumentOutbox;
     }
@@ -103,5 +115,37 @@ public class FinancialDocumentDeliveryOutbox {
 
     public void setLastError(String lastError) {
         this.lastError = lastError;
+    }
+
+    public LocalDateTime getNextAttemptAt() {
+        return nextAttemptAt;
+    }
+
+    public void setNextAttemptAt(LocalDateTime nextAttemptAt) {
+        this.nextAttemptAt = nextAttemptAt;
+    }
+
+    public LocalDateTime getDeadLetteredAt() {
+        return deadLetteredAt;
+    }
+
+    public void setDeadLetteredAt(LocalDateTime deadLetteredAt) {
+        this.deadLetteredAt = deadLetteredAt;
+    }
+
+    public Long getEmpresaId() {
+        return empresaId;
+    }
+
+    public void setEmpresaId(Long empresaId) {
+        this.empresaId = empresaId;
+    }
+
+    public Long getFilialId() {
+        return filialId;
+    }
+
+    public void setFilialId(Long filialId) {
+        this.filialId = filialId;
     }
 }

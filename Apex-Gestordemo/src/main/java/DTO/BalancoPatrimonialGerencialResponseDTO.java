@@ -1,0 +1,51 @@
+package DTO;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
+public record BalancoPatrimonialGerencialResponseDTO(
+        Long idBalancoPatrimonial,
+        Long empresaId,
+        Long filialId,
+        String competenciaAnoMes,
+        LocalDate dataReferencia,
+        BigDecimal disponibilidadesCaixaBancos,
+        BigDecimal contasReceberOperacionais,
+        BigDecimal estoquesOperacionais,
+        BigDecimal adiantamentosOperacionais,
+        BigDecimal despesasAntecipadas,
+        BigDecimal outrosAtivosCirculantes,
+        BigDecimal ativoCirculanteTotal,
+        BigDecimal realizavelLongoPrazo,
+        BigDecimal investimentosLongoPrazo,
+        BigDecimal imobilizadoBruto,
+        BigDecimal depreciacaoAcumulada,
+        BigDecimal imobilizadoLiquido,
+        BigDecimal intangivel,
+        BigDecimal ativoNaoCirculanteTotal,
+        BigDecimal ativoTotal,
+        BigDecimal fornecedoresOperacionaisCp,
+        BigDecimal obrigacoesTributariasTrabalhistasCp,
+        BigDecimal outrasObrigacoesOperacionaisCp,
+        BigDecimal emprestimosFinanciamentosCp,
+        BigDecimal passivoCirculanteTotal,
+        BigDecimal emprestimosFinanciamentosLp,
+        BigDecimal outrasObrigacoesLp,
+        BigDecimal passivoNaoCirculanteTotal,
+        BigDecimal passivoExigivelTotal,
+        BigDecimal capitalSocial,
+        BigDecimal reservasCapitalLucros,
+        BigDecimal lucrosPrejuizosAcumulados,
+        BigDecimal patrimonioLiquidoTotal,
+        BigDecimal passivoMaisPatrimonioLiquido,
+        BigDecimal diferencaEquilibrioPatrimonial,
+        BigDecimal depreciacaoAmortizacaoPeriodo,
+        BigDecimal amortizacaoPrincipalDividaPeriodo,
+        boolean sincronizadoOperacional,
+        boolean confirmadoGestor,
+        boolean consistenteContabilmente,
+        String observacoes,
+        String atualizadoPor,
+        LocalDateTime atualizadoEm) {
+}
