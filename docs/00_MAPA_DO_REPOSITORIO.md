@@ -9,6 +9,7 @@ Este mapa existe para deixar o GitHub legivel mesmo com varias plataformas no me
 | `Apex-Gestordemo/` | Backend Spring Boot, API REST, seguranca, Flyway, Envers, testes JUnit. | Caminho ativo do CI. |
 | `Apex_Gestor/` | Angular/Ionic, Electron, Capacitor Android, builds web/mobile/desktop. | Caminho ativo do CI. |
 | `apps/` | Organizacao alvo por produto: backend, web, desktop, mobile cliente e mobile gestao. | Guia de transicao. |
+| `apps/gestor-apex-bootstrap/` | Prototipo HTML/CSS/Bootstrap do Gestor Apex para lojas de material de construcao. | Ativo como referencia UX/UI. |
 | `packages/shared/` | Contratos de API, DTOs e utilitarios compartilhados planejados. | Guia de transicao. |
 | `docs/` | Documentacao tecnica, runbooks, arquitetura, banco, releases e seguranca. | Ativo. |
 | `docs/database/` | Dump historico, modelo do banco e scripts SQL de referencia. | Ativo. |
@@ -22,6 +23,7 @@ Este mapa existe para deixar o GitHub legivel mesmo com varias plataformas no me
 3. SQL de referencia fica em `docs/database/`; migrations reais ficam no backend em `Apex-Gestordemo/src/main/resources/db/migration`.
 4. Scripts executaveis ficam em `scripts/`.
 5. Caminhos usados pela CI (`Apex-Gestordemo` e `Apex_Gestor`) so devem ser renomeados quando o workflow, Docker, Capacitor e Electron forem migrados juntos.
+6. Prototipos estaticos de UX/UI devem ficar dentro de `apps/` com README proprio e documentacao complementar em `docs/`.
 
 ## Como abrir cada parte
 
@@ -36,6 +38,9 @@ npm run start:web
 
 # Ambiente completo
 docker compose up -d --build
+
+# Prototipo Gestor Apex Bootstrap
+start apps/gestor-apex-bootstrap/index.html
 ```
 
 ## Materiais movidos da raiz

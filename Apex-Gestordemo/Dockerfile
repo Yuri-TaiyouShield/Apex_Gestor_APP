@@ -1,22 +1,21 @@
-FROM eclipse-temurin:21-jdk-jammy AS build
+FROM eclipse-temurin:25-jdk AS build
 
 WORKDIR /workspace
 COPY .mvn .mvn
 COPY mvnw pom.xml ./
-RUN chmod +x mvnw
-RUN ./mvnw -q -DskipTests dependency:go-offline
-
+RUN chmod +x mvnw && ./mvnw -q -DskipTests dependency:go-offline
 COPY src src
 RUN ./mvnw -q -DskipTests package
 
-FROM eclipse-temurin:21-jre-jammy
-
-RUN apt-get update \
-  && apt-get install -y --no-install-recommends curl \
-  && rm -rf /var/lib/apt/lists/*
+FROM eclipse-temurin:25-jre
 
 WORKDIR /app
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
+
+ENV JAVA_OPTS="-XX:MaxRAMPercentage=75 -Djava.security.egd=file:/dev/./urandom"
 COPY --from=build /workspace/target/*.jar /app/apex-gestor-api.jar
 
 EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "/app/apex-gestor-api.jar"]
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar /app/apex-gestor-api.jar"]
